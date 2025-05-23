@@ -35,10 +35,18 @@ const getRuleData = async (filename: string) => {
       relativePath: filename + "/rule.md",
     });
 
+    //TODO: This is hard coded for PoC, will definitely be moved to a config file
+    const mappingRes = await fetch(
+      "https://raw.githubusercontent.com/SSWConsulting/SSW.Rules.Content/tina/main/scripts/tina-migration/rule-category-mapping.json"
+    );
+    const mappingJson = await mappingRes.json();
+    const relatedCategories = mappingJson[tinaProps.data.rule.uri] || [];
+
     return {
       data: tinaProps.data,
       query: tinaProps.query,
       variables: tinaProps.variables,
+      relatedCategories,
     };
   } catch (error) {
     console.error("Error fetching rule data:", error);
@@ -92,7 +100,7 @@ export default async function Page({
     return (
       <Layout>
         <Section>
-          <ClientRulePage ruleQueryProps={rule} />
+          <ClientRulePage ruleQueryProps={rule} relatedCategories={rule.relatedCategories} />
         </Section>
       </Layout>
     );
