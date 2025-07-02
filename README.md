@@ -1,6 +1,10 @@
 # SSW.Rules.Tina.Nextjs.POC
 A POC that will validate the compatibility between Rules and Tina – using Next.js.
 
+### Architecture Diagram
+
+![architecture diagram](./docs/architecture-diagram-ssw-rules.drawio.png)
+
 ### F5 experience
 
 **1. Clone SSW.Rules.Content repo to your local, and switch to `tina/main` branch**
