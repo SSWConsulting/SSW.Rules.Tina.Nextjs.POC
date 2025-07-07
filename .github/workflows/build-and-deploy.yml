@@ -10,6 +10,7 @@ concurrency:
     group: 1794-Migrage_Static_Web_App_To_Web_App_And_Docker
 
 permissions:
+    id-token: write
     contents: read
 
 jobs:
