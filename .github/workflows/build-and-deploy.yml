@@ -1,48 +1,27 @@
 name: Deploy POC application on Azure Web App x Docker Container
 
 on:
-  push:
-    branches:
-      - 1794-Migrage_Static_Web_App_To_Web_App_And_Docker
-  workflow_dispatch:
+    push:
+        branches:
+            - 1794-Migrage_Static_Web_App_To_Web_App_And_Docker
+    workflow_dispatch:
 
 concurrency:
-  group: 1794-Migrage_Static_Web_App_To_Web_App_And_Docker
+    group: 1794-Migrage_Static_Web_App_To_Web_App_And_Docker
 
 permissions:
-  contents: read
+    contents: read
 
 jobs:
-  build:
-    name: Build artifacts
-    uses: ./.github/workflows/build-artifacts.yml
-    with:
-      tag: staging
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    build:
+        name: Build artifacts
+        uses: ./.github/workflows/build-artifacts.yml
+        with:
+            tag: staging
+        secrets:
+            AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+            AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+            AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 #     inputs:
 #       branch_name:
 #         description: This is the branch name of the workflow
