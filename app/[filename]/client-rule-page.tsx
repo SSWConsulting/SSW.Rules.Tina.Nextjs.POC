@@ -72,6 +72,7 @@ export default function ClientRulePage(props: ClientRulePageProps) {
                 </h1>
                 <p className="mt-4">
                   Updated by <b>{rule?.lastUpdatedBy}</b> {relativeTime}.{" "}
+                  {/* TODO: update link when migration is done (path will be wrong as reules will be in public folder) */}
                   <a
                     href={`https://github.com/SSWConsulting/SSW.Rules.Content/commits/main/rules/${rule.uri}/rule.md`}
                     target="_blank"
