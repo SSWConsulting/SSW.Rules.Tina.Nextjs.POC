@@ -50,9 +50,76 @@ To test changes to MDX rules:
   - **main** to the **staging** site: https://salmon-tree-0bbb96a00.6.azurestaticapps.net/
 
 
-### 📝 Adding Editorial Workflow
-We've integrated TinaCMS with an editorial workflow to support content editing in a more structured way. If you're unfamiliar with how editorial workflows work in Tina, please refer to the official documentation:
 
-👉 [TinaCMS Editorial Workflow Documentation](https://tina.io/docs/tina-cloud/editorial-workflow)
 
-This workflow allows for content changes to be reviewed before being published, improving collaboration and content quality.
+
+
+
+## POC Progress Checklist
+
+- [x] Content editing UI working with Tina
+- [x] Deployment pipeline for PoC website
+- [x] Migration scripts for rule content (Markdown → MDX)
+- [x] Rule-to-category JSON generation
+- [x] Category URI-title mapping
+- [x] Automated content processing via GitHub Actions
+- [x] Media content management
+- [x] Basic component creation (e.g. Email, YouTube)
+- [ ] Algolia search integration
+- [ ] Vercel deployment setup
+- [ ] Azure deployment setup
+- [ ] Full deployment with all rules
+- [ ] Editorial workflow on Vercel
+- [ ] Editorial workflow on Azure
+
+
+---
+
+### Python Scripts
+
+#### In the PoC Repository
+
+- **`build-rule-category-map.py`**  
+  Generates two JSON files:
+  - `rule-to-categories.json` (maps rules to categories)  
+  - `category-uri-title-map.json` (maps category URIs to titles)  
+  Reads rule data from the `SSW.Rules.Content` repo and runs during the build process (via GitHub Actions) or manually from `scripts/tina-migration`.
+
+- **`prepare-content.js`**  
+  A Node.js script that runs `build-rule-category-map.py` and moves the JSON files to the correct location for use by the website.  
+  Uses the `LOCAL_CONTENT_RELATIVE_PATH` environment variable to locate the content repo.
+
+#### In the Content Repository
+
+- **`build-rule-category-map.py`**  
+  Similar logic to the version in PoC. It processes the `categories/` folder and `.mdx` files to create the same JSON maps.
+
+- **`convert-rule-md-to-mdx.py`**  
+  Converts `.md` rule files to MDX format compatible with TinaCMS.  
+  Replaces custom markdown patterns (e.g., `Figure`, `good/bad/ok` boxes) with structured MDX components like `<asideEmbed>` and escapes special characters for valid formatting.
+
+- **`modify-sub-categories-frontmatter.py`**  
+  Updates frontmatter in sub-category files (excluding `index.md`) to ensure consistency.
+
+- **`modify-top-categories-frontmatter.py`**  
+  Targets `index.md` files in sub-category folders and updates frontmatter to match the expected format.
+
+---
+
+### 📁 Public Content Folder
+
+**We moved all rule content (including .mdx files and images) into the public/ folder. Check this PBI for more details: [Media - Implement Media Management Option C](https://github.com/SSWConsulting/SSW.Rules/issues/1775)**
+
+```
+public/
+└── uploads/
+    └── rules/
+        ├── rule-a/
+        │   ├── rule.mdx
+        │   └── img.png
+        └── rule-b/
+            ├── rule.mdx
+            └── img.png
+```
+🎥 [The 3 options for storing markdown in GitHub for TinaCMS](https://www.youtube.com/watch?v=JX90jbgAvRw&t=7s)
+---
