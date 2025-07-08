@@ -14,7 +14,7 @@ async function fetchAllCategories() {
   const allCategories: any[] = [];
 
   while (hasNextPage) {
-    const res = await client.queries.categoryConnection({ first: 50, after });
+    const res = await client.queries.categoryConnection({ first: 30, after });
     const edges = res.data.categoryConnection.edges || [];
 
     allCategories.push(
@@ -26,7 +26,7 @@ async function fetchAllCategories() {
     hasNextPage = res.data.categoryConnection.pageInfo.hasNextPage;
     after = res.data.categoryConnection.pageInfo.endCursor;
 
-    await new Promise(r => setTimeout(r, 100));
+    await new Promise(r => setTimeout(r, 300));
   }
 
   return allCategories;
