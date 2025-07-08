@@ -65,7 +65,7 @@ To test changes to MDX rules:
 - [x] Automated content processing via GitHub Actions
 - [x] Media content management
 - [x] Basic component creation (e.g. Email, YouTube)
-- [ ] Algolia search integration
+- [x] Algolia search integration
 - [ ] Vercel deployment setup
 - [ ] Azure deployment setup
 - [ ] Full deployment with all rules
