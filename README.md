@@ -67,11 +67,12 @@ To test changes to MDX rules:
 - [x] Basic component creation (e.g. Email, YouTube)
 - [x] Algolia search integration
 - [x] Editorial workflow enabled
-- [ ] Vercel deployment setup
+- [x] Vercel deployment setup
 - [ ] Azure deployment setup
 - [ ] Full deployment with all rules
 - [ ] Preview deployment on Vercel
 - [ ] Preview deployment on Azure
+- [ ] Migration script all rules md to mdx
 
 
 ---
