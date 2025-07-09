@@ -87,19 +87,6 @@ const Rule: Collection = {
       list: true,
     },
     {
-      type: "boolean",
-      name: "archived",
-      label: "Archived",
-      description:
-        "If this rule is no longer relevant, you can archive it. Archived rules will not appear in the list of rules.",
-    },
-    {
-      type: "string",
-      name: "archivedreason",
-      label: "Archived Reason",
-      description: "If this rule has been archived, summarise why here.",
-    },
-    {
       type: "string",
       name: "guid",
       label: "Guid",
@@ -122,6 +109,29 @@ const Rule: Collection = {
       label: "Body",
       isBody: true,
       templates: embedTemplates,
+    },
+    {
+      type: "boolean",
+      name: "archived",
+      label: "Archived",
+      description: "Mark this rule as archived.",
+    },
+    {
+      type: "string",
+      name: "archivedreason",
+      label: "Archived Reason",
+      description: "If this rule has been archived, summarise why here. Only required if 'Archived' is checked.",
+      ui: {
+        validate: (value, allValue) => {
+          if (!allValue.archived && value?.length) {
+            return "You cannot provide an archived reason if the rule is not archived.";
+          }
+
+          if (allValue.archived && !value?.length) {
+            return "Please provide a reason when archiving this rule.";
+          }
+        },
+      },
     },
     ...historyFields
   ],
