@@ -66,11 +66,12 @@ To test changes to MDX rules:
 - [x] Media content management
 - [x] Basic component creation (e.g. Email, YouTube)
 - [x] Algolia search integration
+- [x] Editorial workflow enabled
 - [ ] Vercel deployment setup
 - [ ] Azure deployment setup
 - [ ] Full deployment with all rules
-- [ ] Editorial workflow on Vercel
-- [ ] Editorial workflow on Azure
+- [ ] Preview deployment on Vercel
+- [ ] Preview deployment on Azure
 
 
 ---
@@ -123,3 +124,11 @@ public/
 ```
 🎥 [The 3 options for storing markdown in GitHub for TinaCMS](https://www.youtube.com/watch?v=JX90jbgAvRw&t=7s)
 ---
+
+
+### 📝 Adding Editorial Workflow
+We've integrated TinaCMS with an editorial workflow to support content editing in a more structured way. If you're unfamiliar with how editorial workflows work in Tina, please refer to the official documentation:
+
+👉 [TinaCMS Editorial Workflow Documentation](https://tina.io/docs/tina-cloud/editorial-workflow)
+
+This workflow allows for content changes to be reviewed before being published, improving collaboration and content quality.
