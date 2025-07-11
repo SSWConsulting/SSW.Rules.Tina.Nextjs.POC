@@ -106,7 +106,6 @@ export default async function Page({
 }: {
   params: Promise<{ filename: string }>;
 }) {
-  const res = await params
   const { filename } = await params;
 
   const category = await getCategoryData(filename);
