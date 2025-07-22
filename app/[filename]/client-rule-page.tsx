@@ -46,8 +46,14 @@ export default function ClientRulePage(props: ClientRulePageProps) {
   useEffect(() => {
     const fetchApiData = async () => {
       try {
+        // Get branch from environment variables with Vercel fallbacks
+        const currentBranch = 
+          process.env.NEXT_PUBLIC_TINA_BRANCH || 
+          process.env.VERCEL_GIT_COMMIT_REF || 
+          'main'; 
+        
         const response = await fetch(
-          `https://api.github.com/repos/SSWConsulting/SSW.Rules.Content/commits?sha=tina/migration-main-content&path=public/uploads/rules/${rule.uri}/rule.mdx&per_page=1`
+          `https://api.github.com/repos/SSWConsulting/SSW.Rules.Content/commits?sha=${currentBranch}&path=public/uploads/rules/${rule.uri}/rule.mdx&per_page=1`
         );
         const data = await response.json();
         
