@@ -7,14 +7,34 @@ import HomeClientPage from './client-page';
 
 export const revalidate = 300;
 
+async function fetchAllCategories() {
+  let hasNextPage = true;
+  let after: string | null = null;
+  const allCategories: any[] = [];
+
+  while (hasNextPage) {
+    const res = await client.queries.homepageCategoriesQuery({
+      first: 50,
+      after,
+    });
+
+    const edges = res?.data?.categoryConnection?.edges || [];
+
+    allCategories.push(
+      ...edges
+        .filter((edge: any) => edge && edge.node)
+        .map((edge: any) => edge.node)
+    );
+
+    hasNextPage = res?.data?.categoryConnection?.pageInfo?.hasNextPage;
+    after = res?.data?.categoryConnection?.pageInfo?.endCursor;
+  }
+
+  return allCategories;
+}
+
 export default async function Home() {
-  const categoriesConnectionData = await client.queries.categoryConnection({
-    first: 500
-  });
-  const categories =
-    categoriesConnectionData.data.categoryConnection.edges?.map(
-      (edge: any) => edge.node
-    ) || [];
+  const categories = await fetchAllCategories();
 
   const layout = await Layout({
     children: (

@@ -6,16 +6,16 @@
     "dev": "pnpm prepare:content && tinacms dev -c \"next dev --turbopack\"",
     "build": "tinacms build && next build",
     "build-local": "tinacms build --local --skip-indexing --skip-cloud-checks && next build",
-    "start": "pnpm dev",
+    "start": "next start",
     "export": "npm run build && next export",
     "lint": "biome lint",
     "dev:build": "next build",
-    "prepare:content":"cross-env node ./scripts/prepare-content.js"
+    "prepare:content": "cross-env node ./scripts/prepare-content.js"
   },
   "devDependencies": {
     "@biomejs/biome": "^1.9.4",
     "@svgr/webpack": "^8.1.0",
-    "@tinacms/cli": "^1.9.9",
+    "@tinacms/cli": "^1.10.1",
     "@types/js-cookie": "^3.0.6",
     "@types/node": "^22.13.10",
     "@types/react": "^18.3.18",
@@ -56,7 +56,7 @@
     "styled-jsx": "^5.1.6",
     "tailwind-merge": "^2.6.0",
     "tailwindcss": "^4.0.17",
-    "tinacms": "^2.7.9",
+    "tinacms": "^2.8.1",
     "tw-animate-css": "^1.2.4",
     "usehooks-ts": "^3.1.1"
   },

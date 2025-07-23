@@ -1,6 +1,7 @@
 import { embedTemplates } from "@/components/embeds";
 import { generateGuid } from "@/utils/guidGenerationUtils";
 import { Collection, Form, TinaCMS } from "tinacms";
+import { historyBeforeSubmit, historyFields } from "./shared/historyFields";
 
 const Rule: Collection = {
   name: "rule",
@@ -20,26 +21,7 @@ const Rule: Collection = {
     router: ({ document }) => {
       return document._sys.relativePath.split("/")[0];
     },
-    beforeSubmit: async ({
-      form,
-      values,
-    }: {
-      form: Form
-      cms: TinaCMS
-      values: Record<string, any>
-    }) => {
-      if (form.crudType === 'create') {
-        return {
-          ...values,
-          created: new Date().toISOString(),
-        }
-      }
-
-      return {
-        ...values,
-        lastUpdated: new Date().toISOString(),
-      }
-    }
+    beforeSubmit: historyBeforeSubmit,
   },
   fields: [
     {
@@ -50,8 +32,8 @@ const Rule: Collection = {
       required: true,
     },
     {
-      type:"image",
-      label:"Rule thumbnail",
+      type: "image",
+      label: "Rule thumbnail",
       name: "thumbnail",
       description: "Use a JPG or PNG image that is at least 175 x 175px",
     },
@@ -105,32 +87,6 @@ const Rule: Collection = {
       list: true,
     },
     {
-      type: "datetime",
-      name: "created",
-      description:
-        "If you see this field, contact a dev immediately 😳 (should be a hidden field generated in the background).",
-      label: "Created",
-      ui: {
-        component: "hidden",
-      },
-    },
-    {
-      type: "datetime",
-      name: "lastUpdated",
-      description:
-        "If you see this field, contact a dev immediately 😳 (should be a hidden field generated in the background).",
-      label: "Last Updated",
-      ui: {
-        component: "hidden",
-      },
-    },
-    {
-      type: "string",
-      name: "archivedreason",
-      label: "Archived Reason",
-      description: "If this rule has been archived, summarise why here.",
-    },
-    {
       type: "string",
       name: "guid",
       label: "Guid",
@@ -154,6 +110,30 @@ const Rule: Collection = {
       isBody: true,
       templates: embedTemplates,
     },
+    {
+      type: "boolean",
+      name: "archived",
+      label: "Archived",
+      description: "Mark this rule as archived.",
+    },
+    {
+      type: "string",
+      name: "archivedreason",
+      label: "Archived Reason",
+      description: "If this rule has been archived, summarise why here. Only required if 'Archived' is checked.",
+      ui: {
+        validate: (value, allValue) => {
+          if (!allValue.archived && value?.length) {
+            return "You cannot provide an archived reason if the rule is not archived.";
+          }
+
+          if (allValue.archived && !value?.length) {
+            return "Please provide a reason when archiving this rule.";
+          }
+        },
+      },
+    },
+    ...historyFields
   ],
 };
 
