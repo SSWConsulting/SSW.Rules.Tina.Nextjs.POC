@@ -29,6 +29,8 @@ on:
                 required: false
             NEXT_PUBLIC_TINA_CLIENT_ID:
                 required: false
+            TOKEN:
+                required: true
 
 defaults:
     run:
@@ -44,6 +46,32 @@ jobs:
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
+
+            # Checkout the Content repository to get the Python script
+            - name: Checkout SSW.Rules.Content
+              uses: actions/checkout@v4
+              with:
+                  repository: SSWConsulting/SSW.Rules.Content
+                  ref: ${{ inputs.tina_branch }}
+                  token: ${{ secrets.TOKEN }}
+                  path: content
+
+            # Setup Python for the script
+            - name: Setup Python
+              uses: actions/setup-python@v4
+              with:
+                  python-version: '3.x'
+
+            # Run Python script to generate the JSON files
+            - name: Generate rule-category mapping files
+              working-directory: content/scripts/tina-migration
+              run: python build-rule-category-map.py
+
+            # Copy generated files to the main directory for Docker build
+            - name: Copy generated files to build context
+              run: |
+                  cp content/scripts/tina-migration/rule-to-categories.json ./
+                  cp content/scripts/tina-migration/category-uri-title-map.json ./
 
             - name: Get current date
               id: date
