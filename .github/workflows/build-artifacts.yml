@@ -17,7 +17,7 @@ on:
             tina_branch:
                 type: string
                 required: false
-                default: "tina/migration-main-content"
+                default: "tina/migration-dev-content"
         secrets:
             AZURE_CLIENT_ID:
                 required: true
