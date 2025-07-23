@@ -56,13 +56,14 @@ jobs:
               uses: actions/checkout@v4
 
             # Checkout the Content repository to get the Python script
+            # NOTE: We're checking it out to a temporary location first
             - name: Checkout SSW.Rules.Content
               uses: actions/checkout@v4
               with:
                   repository: SSWConsulting/SSW.Rules.Content
                   ref: ${{ inputs.tina_branch }}
                   token: ${{ secrets.TOKEN }}
-                  path: content
+                  path: content-temp
 
             # Setup Python for the script
             - name: Setup Python
@@ -72,16 +73,16 @@ jobs:
 
             # Run Python script to generate the JSON files
             - name: Generate rule-category mapping files
-              working-directory: content/scripts/tina-migration
+              working-directory: content-temp/scripts/tina-migration
               run: python build-rule-category-map.py
 
             # Copy generated files to the main directory for Docker build
             - name: Copy generated files to build context
               run: |
-                  cp content/scripts/tina-migration/rule-to-categories.json ./
-                  cp content/scripts/tina-migration/category-uri-title-map.json ./
-                  # Copy the entire content directory for TinaCMS to access during build
-                  cp -r content ./content
+                  cp content-temp/scripts/tina-migration/rule-to-categories.json ./
+                  cp content-temp/scripts/tina-migration/category-uri-title-map.json ./
+                  # Move the entire content directory to avoid self-reference
+                  mv content-temp ./content
 
             - name: Get current date
               id: date
@@ -144,17 +145,17 @@ jobs:
                   ARG TINA_TOKEN
                   ARG NEXT_PUBLIC_TINA_CLIENT_ID
                   ARG NEXT_PUBLIC_TINA_BRANCH
-                  ARG NEXT_PUBLIC_ALGOLIA_APP_ID:
-                  ARG NEXT_PUBLIC_ALGOLIA_ADMIN_KEY:
-                  ARG NEXT_PUBLIC_ALGOLIA_INDEX_NAME:
-                  ARG NEXT_PUBLIC_ALGOLIA_API_KEY:
+                  ARG NEXT_PUBLIC_ALGOLIA_APP_ID
+                  ARG NEXT_PUBLIC_ALGOLIA_ADMIN_KEY
+                  ARG NEXT_PUBLIC_ALGOLIA_INDEX_NAME
+                  ARG NEXT_PUBLIC_ALGOLIA_API_KEY
                   ENV TINA_TOKEN=$TINA_TOKEN
                   ENV NEXT_PUBLIC_TINA_CLIENT_ID=$NEXT_PUBLIC_TINA_CLIENT_ID
                   ENV NEXT_PUBLIC_TINA_BRANCH=$NEXT_PUBLIC_TINA_BRANCH
-                  ENV NEXT_PUBLIC_ALGOLIA_APP_ID:
-                  ENV NEXT_PUBLIC_ALGOLIA_ADMIN_KEY:
-                  ENV NEXT_PUBLIC_ALGOLIA_INDEX_NAME:
-                  ENV NEXT_PUBLIC_ALGOLIA_API_KEY:
+                  ENV NEXT_PUBLIC_ALGOLIA_APP_ID=$NEXT_PUBLIC_ALGOLIA_APP_ID
+                  ENV NEXT_PUBLIC_ALGOLIA_ADMIN_KEY=$NEXT_PUBLIC_ALGOLIA_ADMIN_KEY
+                  ENV NEXT_PUBLIC_ALGOLIA_INDEX_NAME=$NEXT_PUBLIC_ALGOLIA_INDEX_NAME
+                  ENV NEXT_PUBLIC_ALGOLIA_API_KEY=$NEXT_PUBLIC_ALGOLIA_API_KEY
                   ENV NEXT_TELEMETRY_DISABLED=1
 
                   # Build the application
@@ -192,7 +193,7 @@ jobs:
                   ENV PORT=3000
                   ENV HOSTNAME="0.0.0.0"
 
-                  # Use dumb-init to handle signals properly
+                  # Use node to run the server
                   CMD ["node", "server.js"]
                   EOF
 
