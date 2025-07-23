@@ -70,89 +70,89 @@ jobs:
                       type=raw,value=${{ inputs.tag }}-{{sha}}
                       type=raw,value=${{ inputs.tag }}-{{date 'YYYYMMDD-HHmmss'}}
 
-            # - name: Create Dockerfile
-            #   run: |
-            #       cat > Dockerfile << 'EOF'
-            #       # Use Node.js 18 Alpine as base image
-            #       FROM node:18-alpine AS base
+            - name: Create Dockerfile
+              run: |
+                  cat > Dockerfile << 'EOF'
+                  # Use Node.js 18 Alpine as base image
+                  FROM node:18-alpine AS base
 
-            #       # Install dependencies only when needed
-            #       FROM base AS deps
-            #       RUN apk add --no-cache libc6-compat
-            #       WORKDIR /app
+                  # Install dependencies only when needed
+                  FROM base AS deps
+                  RUN apk add --no-cache libc6-compat
+                  WORKDIR /app
 
-            #       # Copy package files
-            #       COPY package*.json ./
-            #       COPY yarn.lock* ./
+                  # Copy package files
+                  COPY package*.json ./
+                  COPY yarn.lock* ./
 
-            #       # Install dependencies
-            #       RUN \
-            #         if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-            #         elif [ -f package-lock.json ]; then npm ci; \
-            #         else npm install; \
-            #         fi
+                  # Install dependencies
+                  RUN \
+                    if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+                    elif [ -f package-lock.json ]; then npm ci; \
+                    else npm install; \
+                    fi
 
-            #       # Rebuild the source code only when needed
-            #       FROM base AS builder
-            #       WORKDIR /app
-            #       COPY --from=deps /app/node_modules ./node_modules
-            #       COPY . .
+                  # Rebuild the source code only when needed
+                  FROM base AS builder
+                  WORKDIR /app
+                  COPY --from=deps /app/node_modules ./node_modules
+                  COPY . .
 
-            #       # Set environment variables for build
-            #       ARG TINA_TOKEN
-            #       ARG NEXT_PUBLIC_TINA_CLIENT_ID
-            #       ENV TINA_TOKEN=$TINA_TOKEN
-            #       ENV NEXT_PUBLIC_TINA_CLIENT_ID=$NEXT_PUBLIC_TINA_CLIENT_ID
-            #       ENV NEXT_TELEMETRY_DISABLED=1
+                  # Set environment variables for build
+                  ARG TINA_TOKEN
+                  ARG NEXT_PUBLIC_TINA_CLIENT_ID
+                  ENV TINA_TOKEN=$TINA_TOKEN
+                  ENV NEXT_PUBLIC_TINA_CLIENT_ID=$NEXT_PUBLIC_TINA_CLIENT_ID
+                  ENV NEXT_TELEMETRY_DISABLED=1
 
-            #       # Build the application
-            #       RUN \
-            #         if [ -f yarn.lock ]; then yarn build; \
-            #         else npm run build; \
-            #         fi
+                  # Build the application
+                  RUN \
+                    if [ -f yarn.lock ]; then yarn build; \
+                    else npm run build; \
+                    fi
 
-            #       # Production image, copy all the files and run next
-            #       FROM base AS runner
-            #       WORKDIR /app
+                  # Production image, copy all the files and run next
+                  FROM base AS runner
+                  WORKDIR /app
 
-            #       ENV NODE_ENV=production
-            #       ENV NEXT_TELEMETRY_DISABLED=1
+                  ENV NODE_ENV=production
+                  ENV NEXT_TELEMETRY_DISABLED=1
 
-            #       RUN addgroup --system --gid 1001 nodejs
-            #       RUN adduser --system --uid 1001 nextjs
+                  RUN addgroup --system --gid 1001 nodejs
+                  RUN adduser --system --uid 1001 nextjs
 
-            #       # Copy the built application
-            #       COPY --from=builder /app/public ./public
-            #       COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-            #       COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+                  # Copy the built application
+                  COPY --from=builder /app/public ./public
+                  COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+                  COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-            #       USER nextjs
+                  USER nextjs
 
-            #       EXPOSE 3000
+                  EXPOSE 3000
 
-            #       ENV PORT=3000
-            #       ENV HOSTNAME="0.0.0.0"
+                  ENV PORT=3000
+                  ENV HOSTNAME="0.0.0.0"
 
-            #       CMD ["node", "server.js"]
-            #       EOF
+                  CMD ["node", "server.js"]
+                  EOF
 
-            # - name: Build and push Docker image
-            #   id: build
-            #   uses: docker/build-push-action@v5
-            #   with:
-            #       context: .
-            #       platforms: linux/amd64
-            #       push: true
-            #       tags: ${{ steps.meta.outputs.tags }}
-            #       labels: ${{ steps.meta.outputs.labels }}
-            #       build-args: |
-            #           TINA_TOKEN=${{ secrets.TINA_TOKEN }}
-            #           NEXT_PUBLIC_TINA_CLIENT_ID=${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}
-            #       cache-from: type=gha
-            #       cache-to: type=gha,mode=max
+            - name: Build and push Docker image
+              id: build
+              uses: docker/build-push-action@v5
+              with:
+                  context: .
+                  platforms: linux/amd64
+                  push: true
+                  tags: ${{ steps.meta.outputs.tags }}
+                  labels: ${{ steps.meta.outputs.labels }}
+                  build-args: |
+                      TINA_TOKEN=${{ secrets.TINA_TOKEN }}
+                      NEXT_PUBLIC_TINA_CLIENT_ID=${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
 
-            # - name: Output image info
-            #   run: |
-            #       echo "Image built and pushed successfully!"
-            #       echo "Tags: ${{ steps.meta.outputs.tags }}"
-            #       echo "Digest: ${{ steps.build.outputs.digest }}"
+            - name: Output image info
+              run: |
+                  echo "Image built and pushed successfully!"
+                  echo "Tags: ${{ steps.meta.outputs.tags }}"
+                  echo "Digest: ${{ steps.build.outputs.digest }}"
