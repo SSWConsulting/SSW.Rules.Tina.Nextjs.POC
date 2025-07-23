@@ -158,7 +158,7 @@ jobs:
                   build-args: |
                       TINA_TOKEN=${{ secrets.TINA_TOKEN }}
                       NEXT_PUBLIC_TINA_CLIENT_ID=${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}
-                      NEXT_PUBLIC_TINA_BRANCH=${{ secrets.NEXT_PUBLIC_TINA_BRANCH }}
+                      NEXT_PUBLIC_TINA_BRANCH=${{ inputs.tina_branch }}
                   cache-from: type=gha
                   cache-to: type=gha,mode=max
 
