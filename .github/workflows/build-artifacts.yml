@@ -1,4 +1,4 @@
-name: Building Artifact depending on environement passed in parameter
+name: Building Artifact depending on environment passed in parameter
 
 on:
     workflow_call:
@@ -6,6 +6,14 @@ on:
             tag:
                 type: string
                 required: true
+            registry_name:
+                type: string
+                required: false
+                default: "sswrulesregistry"
+            image_name:
+                type: string
+                required: false
+                default: "ssw-rules-tina-nextjs"
         secrets:
             AZURE_CLIENT_ID:
                 required: true
@@ -13,14 +21,22 @@ on:
                 required: true
             AZURE_SUBSCRIPTION_ID:
                 required: true
+            TINA_TOKEN:
+                required: false
+            NEXT_PUBLIC_TINA_CLIENT_ID:
+                required: false
 
 defaults:
     run:
-        shell: pwsh
+        shell: bash
 
 jobs:
-    build-artifact:
+    build-and-push:
         runs-on: ubuntu-latest
+        environment: staging
+        outputs:
+            image_tag: ${{ steps.meta.outputs.tags }}
+            image_digest: ${{ steps.build.outputs.digest }}
         steps:
             - name: Checkout code
               uses: actions/checkout@v4
@@ -28,7 +44,7 @@ jobs:
             - name: Get current date
               id: date
               run: |
-                  echo "date=$(Get-Date -Format yyyy-MM-ddThh:mm:ssZ -AsUtc)" >> $env:GITHUB_OUTPUT
+                  echo "date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
 
             - name: Azure CLI - Login
               uses: azure/login@v2
@@ -36,100 +52,107 @@ jobs:
                   client-id: ${{ secrets.AZURE_CLIENT_ID }}
                   tenant-id: ${{ secrets.AZURE_TENANT_ID }}
                   subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-#     inputs:
-#       branch_name:
-#         description: This is the branch name of the workflow
-#         required: true
-#         type: string
 
-# permissions:
-#   contents: write
-#   pages: write
-#   id-token: write
+            - name: Login to Azure Container Registry
+              run: |
+                  az acr login --name ${{ inputs.registry_name }}
 
-# concurrency:
-#   group: pages
-#   cancel-in-progress: false
+            - name: Set up Docker Buildx
+              uses: docker/setup-buildx-action@v3
 
-# jobs:
-#   build:
-#     runs-on: ubuntu-latest
+            - name: Extract metadata
+              id: meta
+              uses: docker/metadata-action@v5
+              with:
+                  images: ${{ inputs.registry_name }}.azurecr.io/${{ inputs.image_name }}
+                  tags: |
+                      type=raw,value=${{ inputs.tag }}
+                      type=raw,value=${{ inputs.tag }}-{{sha}}
+                      type=raw,value=${{ inputs.tag }}-{{date 'YYYYMMDD-HHmmss'}}
 
-#     env:
-#       NEXT_PUBLIC_ALGOLIA_APP_ID:    ${{ secrets.NEXT_PUBLIC_ALGOLIA_APP_ID }}
-#       NEXT_PUBLIC_ALGOLIA_ADMIN_KEY: ${{ secrets.NEXT_PUBLIC_ALGOLIA_ADMIN_KEY }}
-#       NEXT_PUBLIC_ALGOLIA_INDEX_NAME: ${{ secrets.NEXT_PUBLIC_ALGOLIA_INDEX_NAME }}
-#       NEXT_PUBLIC_ALGOLIA_API_KEY: ${{ secrets.NEXT_PUBLIC_ALGOLIA_API_KEY }}
-#       CONTENT_REPO: SSWConsulting/SSW.Rules.Content
+            # - name: Create Dockerfile
+            #   run: |
+            #       cat > Dockerfile << 'EOF'
+            #       # Use Node.js 18 Alpine as base image
+            #       FROM node:18-alpine AS base
 
-#     steps:
-#       # TODO - Uncomment this while we'll get GitHub Token
-#       # - name: Generate a token
-#       #   id: generate-token
-#       #   uses: actions/create-github-app-token@v2
-#       #   with:
-#       #     app-id: ${{ vars.POC_APP_ID }}
-#       #     private-key: ${{ secrets.POC_APP_PRIVATE_KEY }}
-#       #     owner: SSWConsulting
-#       #     repositories: SSW.Rules.Tina.Nextjs.POC
+            #       # Install dependencies only when needed
+            #       FROM base AS deps
+            #       RUN apk add --no-cache libc6-compat
+            #       WORKDIR /app
 
-#       # Checkout du repo Content
-#       - name: Checkout SSW.Rules.Content
-#         uses: actions/checkout@v4
-#         with:
-#           repository: SSWConsulting/SSW.Rules.Content
-#           ref: ${{ github.event.inputs.branch_name || 'main' }}
-#           token: ${{ secrets.POC_PAT_GILLES }} # TODO - Change that with the GitHub Token when configured
-#           path: content
+            #       # Copy package files
+            #       COPY package*.json ./
+            #       COPY yarn.lock* ./
 
-#       # Checkout of POC repo
-#       - uses: actions/checkout@v4
-#         with:
-#           path: website
+            #       # Install dependencies
+            #       RUN \
+            #         if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+            #         elif [ -f package-lock.json ]; then npm ci; \
+            #         else npm install; \
+            #         fi
 
-#       - uses: actions/setup-node@v4
-#         with:
-#           node-version-file: website/.nvmrc
+            #       # Rebuild the source code only when needed
+            #       FROM base AS builder
+            #       WORKDIR /app
+            #       COPY --from=deps /app/node_modules ./node_modules
+            #       COPY . .
 
-#       # Setup Python for the script
-#       - uses: actions/setup-python@v4
-#         with:
-#           python-version: '3.x'
+            #       # Set environment variables for build
+            #       ARG TINA_TOKEN
+            #       ARG NEXT_PUBLIC_TINA_CLIENT_ID
+            #       ENV TINA_TOKEN=$TINA_TOKEN
+            #       ENV NEXT_PUBLIC_TINA_CLIENT_ID=$NEXT_PUBLIC_TINA_CLIENT_ID
+            #       ENV NEXT_TELEMETRY_DISABLED=1
 
-#       - uses: pnpm/action-setup@v4
-#         with:
-#           version: 10.10.0
-#           run_install: false
+            #       # Build the application
+            #       RUN \
+            #         if [ -f yarn.lock ]; then yarn build; \
+            #         else npm run build; \
+            #         fi
 
-#       - run: pnpm install --frozen-lockfile
-#         working-directory: website
+            #       # Production image, copy all the files and run next
+            #       FROM base AS runner
+            #       WORKDIR /app
 
-#       # Run Python script from Content repo
-#       - name: Generate rule-category mapping files
-#         working-directory: content/scripts/tina-migration
-#         run: python build-rule-category-map.py
+            #       ENV NODE_ENV=production
+            #       ENV NEXT_TELEMETRY_DISABLED=1
 
-#       # Move the file to the Website directory
-#       - name: Copy generated files to website directory
-#         run: |
-#           cp content/scripts/tina-migration/rule-to-categories.json website/
-#           cp content/scripts/tina-migration/category-uri-title-map.json website/
+            #       RUN addgroup --system --gid 1001 nodejs
+            #       RUN adduser --system --uid 1001 nextjs
 
-#       - run: pnpm build
-#         working-directory: website
-#         env:
-#           NEXT_PUBLIC_TINA_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}
-#           NEXT_PUBLIC_TINA_BRANCH:    ${{ github.event.inputs.branch_name || 'tina/migration-dev-content' }}
-#           TINA_TOKEN:                 ${{ secrets.TINA_TOKEN }}
-#           # TINA_SEARCH_TOKEN:          ${{ secrets.TINA_SEARCH_TOKEN }} TODO: uncomment when we fix build problem because of tina search
+            #       # Copy the built application
+            #       COPY --from=builder /app/public ./public
+            #       COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+            #       COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-#       - run: cp website/staticwebapp.config.json website/out/
+            #       USER nextjs
 
-#       - uses: Azure/static-web-apps-deploy@v1
-#         with:
-#           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-#           repo_token: ${{ secrets.GITHUB_TOKEN }}
-#           action: upload
-#           skip_app_build: true
-#           skip_api_build: true
-#           app_location: website/out
+            #       EXPOSE 3000
+
+            #       ENV PORT=3000
+            #       ENV HOSTNAME="0.0.0.0"
+
+            #       CMD ["node", "server.js"]
+            #       EOF
+
+            # - name: Build and push Docker image
+            #   id: build
+            #   uses: docker/build-push-action@v5
+            #   with:
+            #       context: .
+            #       platforms: linux/amd64
+            #       push: true
+            #       tags: ${{ steps.meta.outputs.tags }}
+            #       labels: ${{ steps.meta.outputs.labels }}
+            #       build-args: |
+            #           TINA_TOKEN=${{ secrets.TINA_TOKEN }}
+            #           NEXT_PUBLIC_TINA_CLIENT_ID=${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}
+            #       cache-from: type=gha
+            #       cache-to: type=gha,mode=max
+
+            # - name: Output image info
+            #   run: |
+            #       echo "Image built and pushed successfully!"
+            #       echo "Tags: ${{ steps.meta.outputs.tags }}"
+            #       echo "Digest: ${{ steps.build.outputs.digest }}"
