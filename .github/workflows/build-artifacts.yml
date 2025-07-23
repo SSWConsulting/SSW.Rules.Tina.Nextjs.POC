@@ -14,6 +14,10 @@ on:
                 type: string
                 required: false
                 default: "ssw-rules-tina-nextjs"
+            tina_branch:
+                type: string
+                required: false
+                default: "tina/migration-main-content"
         secrets:
             AZURE_CLIENT_ID:
                 required: true
