@@ -25,6 +25,8 @@ on:
                 required: false
             NEXT_PUBLIC_TINA_CLIENT_ID:
                 required: false
+            NEXT_PUBLIC_TINA_BRANCH:
+                required: false
 
 defaults:
     run:
@@ -103,6 +105,7 @@ jobs:
                   ARG NEXT_PUBLIC_TINA_CLIENT_ID
                   ENV TINA_TOKEN=$TINA_TOKEN
                   ENV NEXT_PUBLIC_TINA_CLIENT_ID=$NEXT_PUBLIC_TINA_CLIENT_ID
+                  ENV NEXT_PUBLIC_TINA_BRANCH=$NEXT_PUBLIC_TINA_BRANCH
                   ENV NEXT_TELEMETRY_DISABLED=1
 
                   # Build the application
