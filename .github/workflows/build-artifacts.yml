@@ -80,6 +80,8 @@ jobs:
               run: |
                   cp content/scripts/tina-migration/rule-to-categories.json ./
                   cp content/scripts/tina-migration/category-uri-title-map.json ./
+                  # Copy the entire content directory for TinaCMS to access during build
+                  cp -r content ./content
 
             - name: Get current date
               id: date
@@ -142,9 +144,17 @@ jobs:
                   ARG TINA_TOKEN
                   ARG NEXT_PUBLIC_TINA_CLIENT_ID
                   ARG NEXT_PUBLIC_TINA_BRANCH
+                  ARG NEXT_PUBLIC_ALGOLIA_APP_ID:
+                  ARG NEXT_PUBLIC_ALGOLIA_ADMIN_KEY:
+                  ARG NEXT_PUBLIC_ALGOLIA_INDEX_NAME:
+                  ARG NEXT_PUBLIC_ALGOLIA_API_KEY:
                   ENV TINA_TOKEN=$TINA_TOKEN
                   ENV NEXT_PUBLIC_TINA_CLIENT_ID=$NEXT_PUBLIC_TINA_CLIENT_ID
                   ENV NEXT_PUBLIC_TINA_BRANCH=$NEXT_PUBLIC_TINA_BRANCH
+                  ENV NEXT_PUBLIC_ALGOLIA_APP_ID:
+                  ENV NEXT_PUBLIC_ALGOLIA_ADMIN_KEY:
+                  ENV NEXT_PUBLIC_ALGOLIA_INDEX_NAME:
+                  ENV NEXT_PUBLIC_ALGOLIA_API_KEY:
                   ENV NEXT_TELEMETRY_DISABLED=1
 
                   # Build the application
