@@ -66,14 +66,14 @@ jobs:
             - name: Deploy to Azure Web App
               uses: azure/webapps-deploy@v3
               with:
-                  app-name: ${{ vars.AZURE_WEBAPP_NAME }}
+                  app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
                   images: ${{ needs.build.outputs.image_tag }}
 
             - name: Verify deployment
               run: |
                   echo "Application deployed successfully!"
                   echo "Image: ${{ needs.build.outputs.image_tag }}"
-                  echo "App URL: https://${{ vars.AZURE_WEBAPP_NAME }}.azurewebsites.net"
+                  echo "App URL: https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net"
 
 
 #     inputs:
