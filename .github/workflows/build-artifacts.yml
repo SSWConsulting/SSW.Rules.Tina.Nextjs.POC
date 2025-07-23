@@ -85,11 +85,11 @@ jobs:
                   COPY package*.json ./
                   COPY yarn.lock* ./
 
-                  # Install dependencies
+                  # Install dependencies with legacy peer deps to handle conflicts
                   RUN \
                     if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-                    elif [ -f package-lock.json ]; then npm ci; \
-                    else npm install; \
+                    elif [ -f package-lock.json ]; then npm ci --force; \
+                    else npm install --force; \
                     fi
 
                   # Rebuild the source code only when needed
@@ -123,6 +123,13 @@ jobs:
 
                   # Copy the built application
                   COPY --from=builder /app/public ./public
+
+                  # Set the correct permission for prerender cache
+                  RUN mkdir .next
+                  RUN chown nextjs:nodejs .next
+
+                  # Automatically leverage output traces to reduce image size
+                  # https://nextjs.org/docs/advanced-features/output-file-tracing
                   COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
                   COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
@@ -133,6 +140,7 @@ jobs:
                   ENV PORT=3000
                   ENV HOSTNAME="0.0.0.0"
 
+                  # Use dumb-init to handle signals properly
                   CMD ["node", "server.js"]
                   EOF
 
