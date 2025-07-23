@@ -9,15 +9,15 @@ on:
             registry_name:
                 type: string
                 required: false
-                default: "sswrulesregistry"
+                default: 'sswrulesregistry'
             image_name:
                 type: string
                 required: false
-                default: "ssw-rules-tina-nextjs"
+                default: 'ssw-rules-tina-nextjs'
             tina_branch:
                 type: string
                 required: false
-                default: "tina/migration-dev-content"
+                default: 'tina/migration-dev-content'
         secrets:
             AZURE_CLIENT_ID:
                 required: true
@@ -39,6 +39,12 @@ on:
                 required: false
             NEXT_PUBLIC_ALGOLIA_API_KEY:
                 required: false
+        outputs:
+            image_tag:
+                description: 'Docker tag to deploy'
+                value: ${{ jobs.build-and-push.outputs.image_tag }}
+            image_digest:
+                value: ${{ jobs.build-and-push.outputs.image_digest }}
 
 defaults:
     run:
@@ -55,8 +61,6 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v4
 
-            # Checkout the Content repository to get the Python script
-            # NOTE: We're checking it out to a temporary location first
             - name: Checkout SSW.Rules.Content
               uses: actions/checkout@v4
               with:
@@ -65,29 +69,20 @@ jobs:
                   token: ${{ secrets.TOKEN }}
                   path: content-temp
 
-            # Setup Python for the script
             - name: Setup Python
               uses: actions/setup-python@v4
               with:
                   python-version: '3.x'
 
-            # Run Python script to generate the JSON files
             - name: Generate rule-category mapping files
               working-directory: content-temp/scripts/tina-migration
               run: python build-rule-category-map.py
 
-            # Copy generated files to the main directory for Docker build
             - name: Copy generated files to build context
               run: |
                   cp content-temp/scripts/tina-migration/rule-to-categories.json ./
                   cp content-temp/scripts/tina-migration/category-uri-title-map.json ./
-                  # Move the entire content directory to avoid self-reference
                   mv content-temp ./content
-
-            - name: Get current date
-              id: date
-              run: |
-                  echo "date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
 
             - name: Azure CLI - Login
               uses: azure/login@v2
@@ -97,8 +92,7 @@ jobs:
                   subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
             - name: Login to Azure Container Registry
-              run: |
-                  az acr login --name ${{ inputs.registry_name }}
+              run: az acr login --name ${{ inputs.registry_name }}
 
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v3
@@ -110,38 +104,26 @@ jobs:
                   images: ${{ inputs.registry_name }}.azurecr.io/${{ inputs.image_name }}
                   tags: |
                       type=raw,value=${{ inputs.tag }}
-                      type=raw,value=${{ inputs.tag }}-{{sha}}
-                      type=raw,value=${{ inputs.tag }}-{{date 'YYYYMMDD-HHmmss'}}
 
             - name: Create Dockerfile
               run: |
                   cat > Dockerfile << 'EOF'
-                  # Use Node.js 18 Alpine as base image
                   FROM node:18-alpine AS base
 
-                  # Install dependencies only when needed
                   FROM base AS deps
                   RUN apk add --no-cache libc6-compat
                   WORKDIR /app
-
-                  # Copy package files
                   COPY package*.json ./
                   COPY yarn.lock* ./
+                  RUN if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+                      elif [ -f package-lock.json ]; then npm ci --force; \
+                      else npm install --force; fi
 
-                  # Install dependencies with legacy peer deps to handle conflicts
-                  RUN \
-                    if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-                    elif [ -f package-lock.json ]; then npm ci --force; \
-                    else npm install --force; \
-                    fi
-
-                  # Rebuild the source code only when needed
                   FROM base AS builder
                   WORKDIR /app
                   COPY --from=deps /app/node_modules ./node_modules
                   COPY . .
 
-                  # Set environment variables for build
                   ARG TINA_TOKEN
                   ARG NEXT_PUBLIC_TINA_CLIENT_ID
                   ARG NEXT_PUBLIC_TINA_BRANCH
@@ -157,44 +139,20 @@ jobs:
                   ENV NEXT_PUBLIC_ALGOLIA_INDEX_NAME=$NEXT_PUBLIC_ALGOLIA_INDEX_NAME
                   ENV NEXT_PUBLIC_ALGOLIA_API_KEY=$NEXT_PUBLIC_ALGOLIA_API_KEY
                   ENV NEXT_TELEMETRY_DISABLED=1
+                  RUN if [ -f yarn.lock ]; then yarn build; else npm run build; fi
 
-                  # Build the application
-                  RUN \
-                    if [ -f yarn.lock ]; then yarn build; \
-                    else npm run build; \
-                    fi
-
-                  # Production image, copy all the files and run next
                   FROM base AS runner
                   WORKDIR /app
-
                   ENV NODE_ENV=production
                   ENV NEXT_TELEMETRY_DISABLED=1
-
-                  RUN addgroup --system --gid 1001 nodejs
-                  RUN adduser --system --uid 1001 nextjs
-
-                  # Copy the built application
+                  RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
                   COPY --from=builder /app/public ./public
-
-                  # Set the correct permission for prerender cache
-                  RUN mkdir .next
-                  RUN chown nextjs:nodejs .next
-
-                  # Automatically leverage output traces to reduce image size
-                  # https://nextjs.org/docs/advanced-features/output-file-tracing
-                  COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-                  COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-
+                  RUN mkdir .next && chown nextjs:nodejs .next
+                  COPY --from=builder --chown=nextjs:nodejs /app/.next ./.next
                   USER nextjs
-
                   EXPOSE 3000
-
                   ENV PORT=3000
-                  ENV HOSTNAME="0.0.0.0"
-
-                  # Use node to run the server
-                  CMD ["node", "server.js"]
+                  CMD ["node", "node_modules/next/dist/bin/next", "start", "-p", "3000"]
                   EOF
 
             - name: Build and push Docker image
@@ -220,5 +178,5 @@ jobs:
             - name: Output image info
               run: |
                   echo "Image built and pushed successfully!"
-                  echo "Tags: ${{ steps.meta.outputs.tags }}"
+                  echo "Tag: ${{ steps.meta.outputs.tags }}"
                   echo "Digest: ${{ steps.build.outputs.digest }}"

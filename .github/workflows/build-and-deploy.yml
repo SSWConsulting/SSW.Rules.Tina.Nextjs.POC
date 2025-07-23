@@ -13,8 +13,8 @@ on:
                 default: 'staging'
                 type: choice
                 options:
-                - staging
-                - production
+                    - staging
+                    - production
             tina_branch:
                 description: 'Tina branch to use'
                 required: false
@@ -35,8 +35,8 @@ jobs:
         uses: ./.github/workflows/build-artifacts.yml
         with:
             tag: ${{ github.event.inputs.environment || 'staging' }}
-            registry_name: "sswrulestinastaging"
-            image_name: "ssw-rules-tina-staging-nextjs"
+            registry_name: 'sswrulestinastaging'
+            image_name: 'ssw-rules-tina-staging-nextjs'
             tina_branch: ${{ github.event.inputs.tina_branch || 'tina/migration-dev-content' }}
         secrets:
             AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
