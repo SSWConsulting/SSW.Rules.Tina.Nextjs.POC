@@ -172,11 +172,11 @@ jobs:
                   build-args: |
                       TINA_TOKEN=${{ secrets.TINA_TOKEN }}
                       NEXT_PUBLIC_TINA_CLIENT_ID=${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}
-                      NEXT_PUBLIC_TINA_BRANCH=${{ inputs.tina_branch }}
                       NEXT_PUBLIC_ALGOLIA_APP_ID=${{ secrets.NEXT_PUBLIC_ALGOLIA_APP_ID }}
                       NEXT_PUBLIC_ALGOLIA_ADMIN_KEY=${{ secrets.NEXT_PUBLIC_ALGOLIA_ADMIN_KEY }}
                       NEXT_PUBLIC_ALGOLIA_INDEX_NAME=${{ secrets.NEXT_PUBLIC_ALGOLIA_INDEX_NAME }}
                       NEXT_PUBLIC_ALGOLIA_API_KEY=${{ secrets.NEXT_PUBLIC_ALGOLIA_API_KEY }}
+                      NEXT_PUBLIC_TINA_BRANCH=${{ inputs.tina_branch || secrets.NEXT_PUBLIC_TINA_BRANCH }}
                   cache-from: type=gha
                   cache-to: type=gha,mode=max
 

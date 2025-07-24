@@ -37,7 +37,7 @@ jobs:
             tag: ${{ github.event.inputs.environment || 'staging' }}
             registry_name: 'sswrulestinastaging'
             image_name: 'ssw-rules-tina-staging-nextjs'
-            tina_branch: ${{ github.event.inputs.tina_branch || secrets.NEXT_PUBLIC_TINA_BRANCH }}
+            tina_branch: ${{ github.event.inputs.tina_branch }}
         secrets:
             AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
             AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
