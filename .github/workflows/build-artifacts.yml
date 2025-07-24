@@ -17,7 +17,7 @@ on:
             tina_branch:
                 type: string
                 required: false
-                default: 'tina/migration-dev-content'
+                default: ''
         secrets:
             AZURE_CLIENT_ID:
                 required: true
@@ -38,6 +38,8 @@ on:
             NEXT_PUBLIC_ALGOLIA_INDEX_NAME:
                 required: false
             NEXT_PUBLIC_ALGOLIA_API_KEY:
+                required: false
+            NEXT_PUBLIC_TINA_BRANCH:
                 required: false
         outputs:
             image_tag:

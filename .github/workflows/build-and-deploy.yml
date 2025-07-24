@@ -18,7 +18,7 @@ on:
             tina_branch:
                 description: 'Tina branch to use'
                 required: false
-                default: 'tina/migration-dev-content'
+                default: ''
                 type: string
 
 concurrency:
@@ -37,13 +37,14 @@ jobs:
             tag: ${{ github.event.inputs.environment || 'staging' }}
             registry_name: 'sswrulestinastaging'
             image_name: 'ssw-rules-tina-staging-nextjs'
-            tina_branch: ${{ github.event.inputs.tina_branch || 'tina/migration-dev-content' }}
+            tina_branch: ${{ github.event.inputs.tina_branch || secrets.NEXT_PUBLIC_TINA_BRANCH }}
         secrets:
             AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
             AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
             AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
             TINA_TOKEN: ${{ secrets.TINA_TOKEN }}
             NEXT_PUBLIC_TINA_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}
+            NEXT_PUBLIC_TINA_BRANCH: ${{ secrets.NEXT_PUBLIC_TINA_BRANCH }}
             TOKEN: ${{ secrets.POC_PAT_GILLES }}
             NEXT_PUBLIC_ALGOLIA_APP_ID: ${{ secrets.NEXT_PUBLIC_ALGOLIA_APP_ID }}
             NEXT_PUBLIC_ALGOLIA_ADMIN_KEY: ${{ secrets.NEXT_PUBLIC_ALGOLIA_ADMIN_KEY }}
@@ -74,102 +75,3 @@ jobs:
                   echo "Application deployed successfully!"
                   echo "Image: ${{ needs.build.outputs.image_tag }}"
                   echo "App URL: https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net"
-
-
-#     inputs:
-#       branch_name:
-#         description: This is the branch name of the workflow
-#         required: true
-#         type: string
-
-# permissions:
-#   contents: write
-#   pages: write
-#   id-token: write
-
-# concurrency:
-#   group: pages
-#   cancel-in-progress: false
-
-# jobs:
-#   build:
-#     runs-on: ubuntu-latest
-
-#     env:
-#       NEXT_PUBLIC_ALGOLIA_APP_ID:    ${{ secrets.NEXT_PUBLIC_ALGOLIA_APP_ID }}
-#       NEXT_PUBLIC_ALGOLIA_ADMIN_KEY: ${{ secrets.NEXT_PUBLIC_ALGOLIA_ADMIN_KEY }}
-#       NEXT_PUBLIC_ALGOLIA_INDEX_NAME: ${{ secrets.NEXT_PUBLIC_ALGOLIA_INDEX_NAME }}
-#       NEXT_PUBLIC_ALGOLIA_API_KEY: ${{ secrets.NEXT_PUBLIC_ALGOLIA_API_KEY }}
-#       CONTENT_REPO: SSWConsulting/SSW.Rules.Content
-
-#     steps:
-#       # TODO - Uncomment this while we'll get GitHub Token
-#       # - name: Generate a token
-#       #   id: generate-token
-#       #   uses: actions/create-github-app-token@v2
-#       #   with:
-#       #     app-id: ${{ vars.POC_APP_ID }}
-#       #     private-key: ${{ secrets.POC_APP_PRIVATE_KEY }}
-#       #     owner: SSWConsulting
-#       #     repositories: SSW.Rules.Tina.Nextjs.POC
-
-#       # Checkout du repo Content
-#       - name: Checkout SSW.Rules.Content
-#         uses: actions/checkout@v4
-#         with:
-#           repository: SSWConsulting/SSW.Rules.Content
-#           ref: ${{ github.event.inputs.branch_name || 'main' }}
-#           token: ${{ secrets.POC_PAT_GILLES }} # TODO - Change that with the GitHub Token when configured
-#           path: content
-
-#       # Checkout of POC repo
-#       - uses: actions/checkout@v4
-#         with:
-#           path: website
-
-#       - uses: actions/setup-node@v4
-#         with:
-#           node-version-file: website/.nvmrc
-
-#       # Setup Python for the script
-#       - uses: actions/setup-python@v4
-#         with:
-#           python-version: '3.x'
-
-#       - uses: pnpm/action-setup@v4
-#         with:
-#           version: 10.10.0
-#           run_install: false
-
-#       - run: pnpm install --frozen-lockfile
-#         working-directory: website
-
-#       # Run Python script from Content repo
-#       - name: Generate rule-category mapping files
-#         working-directory: content/scripts/tina-migration
-#         run: python build-rule-category-map.py
-
-#       # Move the file to the Website directory
-#       - name: Copy generated files to website directory
-#         run: |
-#           cp content/scripts/tina-migration/rule-to-categories.json website/
-#           cp content/scripts/tina-migration/category-uri-title-map.json website/
-
-#       - run: pnpm build
-#         working-directory: website
-#         env:
-#           NEXT_PUBLIC_TINA_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}
-#           NEXT_PUBLIC_TINA_BRANCH:    ${{ github.event.inputs.branch_name || 'tina/migration-dev-content' }}
-#           TINA_TOKEN:                 ${{ secrets.TINA_TOKEN }}
-#           # TINA_SEARCH_TOKEN:          ${{ secrets.TINA_SEARCH_TOKEN }} TODO: uncomment when we fix build problem because of tina search
-
-#       - run: cp website/staticwebapp.config.json website/out/
-
-#       - uses: Azure/static-web-apps-deploy@v1
-#         with:
-#           azure_static_web_apps_api_token: ${{ secrets.AZURE_STATIC_WEB_APPS_API_TOKEN }}
-#           repo_token: ${{ secrets.GITHUB_TOKEN }}
-#           action: upload
-#           skip_app_build: true
-#           skip_api_build: true
-#           app_location: website/out
