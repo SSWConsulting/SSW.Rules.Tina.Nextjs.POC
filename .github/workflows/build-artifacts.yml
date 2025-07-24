@@ -67,7 +67,7 @@ jobs:
               uses: actions/checkout@v4
               with:
                   repository: SSWConsulting/SSW.Rules.Content
-                  ref: ${{ inputs.tina_branch }}
+                  ref: ${{ inputs.tina_branch || secrets.NEXT_PUBLIC_TINA_BRANCH }}
                   token: ${{ secrets.TOKEN }}
                   path: content-temp
 
