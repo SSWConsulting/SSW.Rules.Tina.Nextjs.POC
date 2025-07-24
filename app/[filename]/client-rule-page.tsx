@@ -35,13 +35,13 @@ export default function ClientRulePage(props: ClientRulePageProps) {
   const iconSize = 32;
 
   const relativeTime = useMemo(() => {
-    return rule?.lastUpdated ? timeAgo(rule.lastUpdated) : "";
+    return rule?.lastUpdated ? timeAgo(rule?.lastUpdated) : "";
   }, [rule?.lastUpdated]);
 
   const historyTooltip = useMemo(() => {
-    const created = rule?.created ? formatDateLong(rule.created) : "Unknown";
+    const created = rule?.created ? formatDateLong(rule?.created) : "Unknown";
     const updated = rule?.lastUpdated
-      ? formatDateLong(rule.lastUpdated)
+      ? formatDateLong(rule?.lastUpdated)
       : "Unknown";
     return `Created ${created}\nLast Updated ${updated}`;
   }, [rule?.created, rule?.lastUpdated]);
@@ -51,11 +51,11 @@ export default function ClientRulePage(props: ClientRulePageProps) {
       <div className="flex gap-8">
         <Card dropShadow className="flex-2">
           <div className="flex border-b-2 pb-4">
-            {rule.thumbnail && (
+            {rule?.thumbnail && (
               <div className="w-[175px] h-[175px] relative mr-4">
                 <Image
                   data-tina-field={tinaField(rule, "thumbnail")}
-                  src={rule.thumbnail}
+                  src={rule?.thumbnail}
                   alt="thumbnail image for the rule"
                   fill
                   className="object-cover object-center"
@@ -74,7 +74,7 @@ export default function ClientRulePage(props: ClientRulePageProps) {
                   Updated by <b>{rule?.lastUpdatedBy}</b> {relativeTime}.{" "}
                   {/* TODO: update link when migration is done (path will be wrong as reules will be in public folder) */}
                   <a
-                    href={`https://github.com/SSWConsulting/SSW.Rules.Content/commits/main/rules/${rule.uri}/rule.md`}
+                    href={`https://github.com/SSWConsulting/SSW.Rules.Content/commits/main/rules/${rule?.uri}/rule.md`}
                     target="_blank"
                     className="inline-flex items-center gap-1"
                     title={historyTooltip}
@@ -112,7 +112,7 @@ export default function ClientRulePage(props: ClientRulePageProps) {
           </div>
           <div data-tina-field={tinaField(rule, "body")} className="mt-8">
             <TinaMarkdown
-              content={rule.body}
+              content={rule?.body}
               components={{
                 ...embedComponents,
                 ...typographyComponents,
