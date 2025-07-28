@@ -2,9 +2,7 @@ name: Deploy POC application on Azure Web App x Docker Container
 
 on:
     push:
-        branches:
-            - 1794-Migrage_Static_Web_App_To_Web_App_And_Docker
-            - main
+        branches: [main]
     workflow_dispatch:
         inputs:
             environment:
