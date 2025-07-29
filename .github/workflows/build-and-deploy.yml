@@ -2,7 +2,9 @@ name: Deploy POC application on Azure Web App x Docker Container
 
 on:
     push:
-        branches: [main]
+        branches:
+            - 1851-Page_Not-Found
+            - main
     workflow_dispatch:
         inputs:
             environment:
