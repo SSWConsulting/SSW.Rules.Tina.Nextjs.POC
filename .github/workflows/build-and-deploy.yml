@@ -65,9 +65,10 @@ jobs:
         steps:
             - name: Log deployment info
               run: |
-                  echo "Deploying from source branch: ${{ github.event.inputs.branch_name || 'Direct push/PR merge' }}"
+                  echo "🚀 Deploying POC Application"
+                  echo "Triggered by source branch: ${{ github.event.inputs.branch_name || github.ref_name }}"
                   echo "Target environment: ${{ github.event.inputs.environment || 'staging' }}"
-                  echo "Tina branch: ${{ github.event.inputs.tina_branch || 'default' }}"
+                  echo "Tina content branch: ${{ github.event.inputs.tina_branch || 'default' }}"
 
             - name: Azure CLI - Login
               uses: azure/login@v2
@@ -84,7 +85,7 @@ jobs:
 
             - name: Verify deployment
               run: |
-                  echo "Application deployed successfully!"
+                  echo "✅ Application deployed successfully!"
                   echo "Image: ${{ needs.build.outputs.image_tag }}"
                   echo "App URL: https://${{ secrets.AZURE_WEBAPP_NAME }}.azurewebsites.net"
-                  echo "Triggered by branch: ${{ github.event.inputs.branch_name || github.ref_name }}"
+                  echo "Source: ${{ github.event.inputs.branch_name || github.ref_name }}"
