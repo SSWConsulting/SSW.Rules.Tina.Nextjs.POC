@@ -35,12 +35,9 @@ permissions:
 jobs:
     build:
         name: Build and Push Container
-        environment: ${{ github.event.inputs.environment || 'staging' }}
         uses: ./.github/workflows/build-artifacts.yml
         with:
             tag: ${{ github.event.inputs.environment || 'staging' }}
-            registry_name: ${{ vars.REGISTRY_NAME }}
-            image_name: ${{ vars.IMAGE_NAME }}
             tina_branch: ${{ github.event.inputs.tina_branch }}
             source_branch: ${{ github.event.inputs.branch_name }}
         secrets:
