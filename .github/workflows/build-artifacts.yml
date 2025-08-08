@@ -60,7 +60,7 @@ defaults:
 jobs:
     build-and-push:
         runs-on: ubuntu-latest
-        environment: staging
+        environment: ${{ inputs.tag }}
         outputs:
             image_tag: ${{ steps.meta.outputs.tags }}
             image_digest: ${{ steps.build.outputs.digest }}
