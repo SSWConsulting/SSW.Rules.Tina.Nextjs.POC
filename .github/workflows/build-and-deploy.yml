@@ -38,8 +38,8 @@ jobs:
         uses: ./.github/workflows/build-artifacts.yml
         with:
             tag: ${{ github.event.inputs.environment || 'staging' }}
-            registry_name: 'sswrulestinastaging'
-            image_name: 'ssw-rules-tina-staging-nextjs'
+            registry_name: ${{ vars.REGISTRY_NAME }}
+            image_name: ${{ vars.IMAGE_NAME }}
             tina_branch: ${{ github.event.inputs.tina_branch }}
             source_branch: ${{ github.event.inputs.branch_name }}
         secrets:
