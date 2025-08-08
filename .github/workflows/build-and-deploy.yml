@@ -35,6 +35,7 @@ permissions:
 jobs:
     build:
         name: Build and Push Container
+        environment: ${{ github.event.inputs.environment || 'staging' }}
         uses: ./.github/workflows/build-artifacts.yml
         with:
             tag: ${{ github.event.inputs.environment || 'staging' }}
