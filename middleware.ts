@@ -3,15 +3,15 @@ import { NextRequest, NextResponse } from 'next/server'
 import { auth0 } from './lib/auth0'
 
 export function middleware(request: NextRequest) {
-  // Only run in development mode
-  if (process.env.NODE_ENV !== 'development') {
-    return NextResponse.next()
-  }
-
   const { pathname } = request.nextUrl
 
   if (pathname.startsWith('/auth')) {
     return auth0.middleware(request)
+  }
+
+  // Only run in development mode
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.next()
   }
 
   // Check if this is an image request that might be from TinaCMS
