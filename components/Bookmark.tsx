@@ -1,0 +1,71 @@
+'use client';
+
+import { useUser } from '@auth0/nextjs-auth0';
+import { useRouter } from 'next/navigation';
+import { BookmarkService } from '@/lib/bookmarkService';
+import { RiBookmarkLine, RiBookmarkFill } from 'react-icons/ri';
+
+interface BookmarkProps {
+  ruleId: string;
+  isBookmarked: boolean;
+  onBookmarkToggle: (ruleId: string, newStatus: boolean) => void;
+  size?: number;
+  className?: string;
+}
+
+export default function Bookmark({ ruleId, isBookmarked, onBookmarkToggle, size = 32, className = '' }: BookmarkProps) {
+  const { user, isLoading: authLoading } = useUser();
+  const router = useRouter();
+
+  const handleBookmarkToggle = async () => {
+    if (!user) {
+      const currentPath = window.location.pathname;
+      router.push(`/auth/login?returnTo=${encodeURIComponent(currentPath)}`);
+      return;
+    }
+
+    try {
+      const data = { ruleGuid: ruleId, UserId: user.sub };
+      
+      if (isBookmarked) {
+        const result = await BookmarkService.removeBookmark(data, user.sub);
+        if (!result.error) {
+          onBookmarkToggle(ruleId, false);
+        } else {
+          console.error('Failed to remove bookmark:', result.message);
+        }
+      } else {
+        const result = await BookmarkService.addBookmark(data, user.sub);
+        if (!result.error) {
+          onBookmarkToggle(ruleId, true);
+        } else {
+          console.error('Failed to add bookmark:', result.message);
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+    }
+  };
+
+  if (authLoading) {
+    return (
+      <div className={`animate-pulse ${className}`}>
+        <div className="w-8 h-8 bg-gray-200 rounded"></div>
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={handleBookmarkToggle}
+      className={`rule-icon ${className}`}
+      title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
+    >
+      {isBookmarked ? (
+        <RiBookmarkFill size={size} className="text-red-500" />
+      ) : (
+        <RiBookmarkLine size={size} />
+      )}
+    </button>
+  );
+}

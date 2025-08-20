@@ -10,16 +10,18 @@ import {
   RiThumbUpLine,
   RiThumbDownLine,
   RiPencilLine,
-  RiBookmarkLine,
   RiGithubLine,
   RiHistoryLine,
 } from "react-icons/ri";
+import Bookmark from "@/components/Bookmark";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { formatDateLong, timeAgo } from "@/lib/dateUtils";
 import MarkdownComponentMapping from "@/components/tina-markdown/markdown-component-mapping";
 import HelpCard from "@/components/HelpCard";
 import Acknowledgements from "@/components/Acknowledgements";
+import { useUser } from "@auth0/nextjs-auth0";
+import { BookmarkService } from "@/lib/bookmarkService";
 
 export interface ClientRulePageProps {
   ruleQueryProps;
@@ -28,6 +30,9 @@ export interface ClientRulePageProps {
 
 export default function ClientRulePage(props: ClientRulePageProps) {
   const { ruleQueryProps } = props;
+  const { user } = useUser();
+  const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
+
   const ruleData = useTina({
     query: ruleQueryProps?.query,
     variables: ruleQueryProps?.variables,
@@ -47,6 +52,21 @@ export default function ClientRulePage(props: ClientRulePageProps) {
       : "Unknown";
     return `Created ${created}\nLast Updated ${updated}`;
   }, [rule?.created, rule?.lastUpdated]);
+
+  useEffect(() => {
+    (async () => {
+      if (user?.sub && rule?.uri) {
+        try {
+          const result = await BookmarkService.getBookmarkStatus(rule.uri, user.sub, user.sub);
+          if (!result.error) {
+            setIsBookmarked(result.bookmarkStatus || false);
+          }
+        } catch (error) {
+          console.error('Error fetching bookmarks:', error);
+        }
+      }
+    })();
+  }, [user?.sub, rule?.uri]);
 
   return (
     <>
@@ -97,18 +117,25 @@ export default function ClientRulePage(props: ClientRulePageProps) {
                 ></RiThumbDownLine>
                 <span className="-ml-3">3</span>
                 <div className="flex-1"></div>
-                <RiPencilLine
-                  size={iconSize}
-                  className="rule-icon"
-                ></RiPencilLine>
-                <RiBookmarkLine
-                  size={iconSize}
-                  className="rule-icon"
-                ></RiBookmarkLine>
-                <RiGithubLine
-                  size={iconSize}
-                  className="rule-icon"
-                ></RiGithubLine>
+                <button>
+                  <Link href={`./admin#/~/${rule?.uri}`}>
+                    <RiPencilLine
+                      size={iconSize}
+                      className="rule-icon"
+                    ></RiPencilLine>
+                  </Link>
+                </button>
+                <Bookmark 
+                  ruleId={rule?.uri || ''} 
+                  isBookmarked={isBookmarked}
+                  onBookmarkToggle={(ruleId, newStatus) => setIsBookmarked(newStatus)}
+                  size={iconSize} 
+                />
+                <button>
+                  <Link href={`https://github.com/SSWConsulting/SSW.Rules.Content/blob/main/rules/${rule?.uri}/rule.md`} target="_blank">
+                    <RiGithubLine size={iconSize} className="rule-icon"></RiGithubLine>
+                  </Link>
+                </button>
               </div>
             </div>
           </div>
