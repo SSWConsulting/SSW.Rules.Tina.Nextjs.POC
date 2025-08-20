@@ -1,6 +1,6 @@
 'use client';
 
-import { useUser } from '@auth0/nextjs-auth0';
+import { useUser, getAccessToken } from '@auth0/nextjs-auth0';
 import { useRouter } from 'next/navigation';
 import { BookmarkService } from '@/lib/bookmarkService';
 import { RiBookmarkLine, RiBookmarkFill } from 'react-icons/ri';
@@ -25,17 +25,24 @@ export default function Bookmark({ ruleId, isBookmarked, onBookmarkToggle, size 
     }
 
     try {
+      const accessToken = await getAccessToken();
+      
+      if (!accessToken) {
+        console.error('No access token available');
+        return;
+      }
+
       const data = { ruleGuid: ruleId, UserId: user.sub };
       
       if (isBookmarked) {
-        const result = await BookmarkService.removeBookmark(data, user.sub);
+        const result = await BookmarkService.removeBookmark(data, accessToken);
         if (!result.error) {
           onBookmarkToggle(ruleId, false);
         } else {
           console.error('Failed to remove bookmark:', result.message);
         }
       } else {
-        const result = await BookmarkService.addBookmark(data, user.sub);
+        const result = await BookmarkService.addBookmark(data, accessToken);
         if (!result.error) {
           onBookmarkToggle(ruleId, true);
         } else {

@@ -20,7 +20,7 @@ import { formatDateLong, timeAgo } from "@/lib/dateUtils";
 import MarkdownComponentMapping from "@/components/tina-markdown/markdown-component-mapping";
 import HelpCard from "@/components/HelpCard";
 import Acknowledgements from "@/components/Acknowledgements";
-import { useUser } from "@auth0/nextjs-auth0";
+import { useUser, getAccessToken } from "@auth0/nextjs-auth0";
 import { BookmarkService } from "@/lib/bookmarkService";
 
 export interface ClientRulePageProps {
@@ -57,9 +57,13 @@ export default function ClientRulePage(props: ClientRulePageProps) {
     (async () => {
       if (user?.sub && rule?.uri) {
         try {
-          const result = await BookmarkService.getBookmarkStatus(rule.uri, user.sub, user.sub);
-          if (!result.error) {
-            setIsBookmarked(result.bookmarkStatus || false);
+          const accessToken = await getAccessToken();
+          
+          if (accessToken) {
+            const result = await BookmarkService.getBookmarkStatus(rule.guid, user.sub, accessToken);
+            if (!result.error) {
+              setIsBookmarked(result.bookmarkStatus || false);
+            }
           }
         } catch (error) {
           console.error('Error fetching bookmarks:', error);
@@ -126,7 +130,7 @@ export default function ClientRulePage(props: ClientRulePageProps) {
                   </Link>
                 </button>
                 <Bookmark 
-                  ruleId={rule?.uri || ''} 
+                  ruleId={rule?.guid || ''} 
                   isBookmarked={isBookmarked}
                   onBookmarkToggle={(ruleId, newStatus) => setIsBookmarked(newStatus)}
                   size={iconSize} 
