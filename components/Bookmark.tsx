@@ -61,7 +61,7 @@ export default function Bookmark({ ruleId, isBookmarked, onBookmarkToggle, size 
       title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
     >
       {isBookmarked ? (
-        <RiBookmarkFill size={size} className="text-[#cc4141]" />
+        <RiBookmarkFill size={size} className="text-ssw-red" />
       ) : (
         <RiBookmarkLine size={size} />
       )}
