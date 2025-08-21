@@ -1,6 +1,15 @@
-import { BookmarkData, BookmarkResponse, UserBookmarksResponse } from '@/types';
-
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL + '/api';
+
+export interface BookmarkData {
+  ruleGuid: string;
+  UserId: string;
+}
+
+export interface BookmarkResponse {
+  error?: boolean;
+  message?: string;
+  bookmarkStatus?: boolean;
+}
 
 export class BookmarkService {
   static async getBookmarkStatus(ruleGuid: string, userId: string, token: string): Promise<BookmarkResponse> {
@@ -27,7 +36,7 @@ export class BookmarkService {
     }
   }
 
-  static async getUserBookmarks(userId: string, token: string): Promise<UserBookmarksResponse> {
+  static async getUserBookmarks(userId: string, token: string): Promise<BookmarkResponse> {
     try {
       const response = await fetch(
         `${API_BASE_URL}/GetAllBookmarkedFunction?user_id=${userId}`,

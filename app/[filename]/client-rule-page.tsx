@@ -70,7 +70,7 @@ export default function ClientRulePage(props: ClientRulePageProps) {
         }
       }
     })();
-  }, [user?.sub, rule?.uri]);
+  }, [user?.sub, rule?.guid]);
 
   return (
     <>
