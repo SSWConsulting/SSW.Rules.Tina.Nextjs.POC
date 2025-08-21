@@ -10,18 +10,20 @@ import {
   RiThumbUpLine,
   RiThumbDownLine,
   RiPencilLine,
-  RiBookmarkLine,
   RiGithubLine,
   RiHistoryLine,
 } from "react-icons/ri";
+import Bookmark from "@/components/Bookmark";
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { formatDateLong, timeAgo } from "@/lib/dateUtils";
 import MarkdownComponentMapping from "@/components/tina-markdown/markdown-component-mapping";
 import HelpCard from "@/components/HelpCard";
 import Acknowledgements from "@/components/Acknowledgements";
 import { useRouter } from "next/navigation";
 import { createGitHubService } from "@/lib/services/github";
+import { useUser, getAccessToken } from "@auth0/nextjs-auth0";
+import { BookmarkService } from "@/lib/bookmarkService";
 
 export interface ClientRulePageProps {
   ruleQueryProps;
@@ -33,6 +35,9 @@ export default function ClientRulePage(props: ClientRulePageProps) {
   const router = useRouter();
   const [githubService] = useState(() => createGitHubService());
   const [isLoadingUsername, setIsLoadingUsername] = useState(false);
+  const { user } = useUser();
+  const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
+
   const ruleData = useTina({
     query: ruleQueryProps?.query,
     variables: ruleQueryProps?.variables,
@@ -67,6 +72,24 @@ export default function ClientRulePage(props: ClientRulePageProps) {
       setIsLoadingUsername(false);
     }
   };
+  useEffect(() => {
+    (async () => {
+      if (user?.sub && rule?.uri) {
+        try {
+          const accessToken = await getAccessToken();
+          
+          if (accessToken) {
+            const result = await BookmarkService.getBookmarkStatus(rule.guid, user.sub, accessToken);
+            if (!result.error) {
+              setIsBookmarked(result.bookmarkStatus || false);
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching bookmarks:', error);
+        }
+      }
+    })();
+  }, [user?.sub, rule?.guid]);
 
   return (
     <>
@@ -137,18 +160,25 @@ export default function ClientRulePage(props: ClientRulePageProps) {
                 ></RiThumbDownLine>
                 <span className="-ml-3">3</span>
                 <div className="flex-1"></div>
-                <RiPencilLine
-                  size={iconSize}
-                  className="rule-icon"
-                ></RiPencilLine>
-                <RiBookmarkLine
-                  size={iconSize}
-                  className="rule-icon"
-                ></RiBookmarkLine>
-                <RiGithubLine
-                  size={iconSize}
-                  className="rule-icon"
-                ></RiGithubLine>
+                <button>
+                  <Link href={`./admin#/~/${rule?.uri}`}>
+                    <RiPencilLine
+                      size={iconSize}
+                      className="rule-icon"
+                    ></RiPencilLine>
+                  </Link>
+                </button>
+                <Bookmark 
+                  ruleId={rule?.guid || ''} 
+                  isBookmarked={isBookmarked}
+                  onBookmarkToggle={(ruleId, newStatus) => setIsBookmarked(newStatus)}
+                  size={iconSize} 
+                />
+                <button>
+                  <Link href={`https://github.com/SSWConsulting/SSW.Rules.Content/blob/main/rules/${rule?.uri}/rule.md`} target="_blank">
+                    <RiGithubLine size={iconSize} className="rule-icon"></RiGithubLine>
+                  </Link>
+                </button>
               </div>
             </div>
           </div>
