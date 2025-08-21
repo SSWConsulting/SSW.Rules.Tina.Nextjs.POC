@@ -7,7 +7,7 @@ import RadioButton from '@/components/radio-button';
 import { RiFileTextFill, RiBookOpenFill, RiDoubleQuotesL } from 'react-icons/ri';
 
 export interface RuleListProps {
-  rules: Rule[];
+  rules: any[];
   type: string;
   noContentMessage?: string;
   onBookmarkRemoved?: (ruleGuid: string) => void;

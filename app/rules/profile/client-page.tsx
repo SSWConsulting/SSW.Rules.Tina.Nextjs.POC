@@ -1,11 +1,13 @@
 'use client';
 
-import { useUser } from '@auth0/nextjs-auth0';
-import React, { useState } from 'react';
-import ProfileContent from '@/components/profile-content';
+import { useUser, getAccessToken } from '@auth0/nextjs-auth0';
+import React, { useState, useEffect } from 'react';
+import RuleList from '@/components/rule-list';
+import { BookmarkedRule, UserBookmarksResponse, Rule } from '@/types';
+import { BookmarkService } from '@/lib/bookmarkService';
+import client from '@/tina/__generated__/client';
 import Image from 'next/image';
 import { RiGithubFill, RiBookmarkFill } from 'react-icons/ri';
-
 
 interface ProfileData {
   [key: string]: any;
@@ -16,11 +18,107 @@ interface ProfileClientPageProps {
 }
 
 export default function ProfileClientPage({ data }: ProfileClientPageProps) {
-  const [bookmarkedRulesCount, setBookmarkedRulesCount] = useState<number | undefined>();
-  const { user, isLoading } = useUser();
+  const [bookmarkedRules, setBookmarkedRules] = useState<BookmarkedRule[]>([]);
+  const [rules, setRules] = useState<Rule[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [bookmarkCount, setBookmarkCount] = useState(0);
+  const { user, isLoading: authLoading } = useUser();
   const isAuthenticated = !!user;
 
-  //if (isAuthenticated) {
+  async function getBookmarkList() {
+    if (!user?.sub) {
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const accessToken = await getAccessToken();
+      
+      if (!accessToken) {
+        console.error('No access token available');
+        setIsLoading(false);
+        return;
+      }
+
+      // First, get all bookmarked rules (just the metadata)
+      const bookmarkResult: UserBookmarksResponse = await BookmarkService.getUserBookmarks(user.sub, accessToken);
+      
+      if (!bookmarkResult.error && bookmarkResult.bookmarkedRules) {
+        setBookmarkedRules(bookmarkResult.bookmarkedRules);
+        setBookmarkCount(bookmarkResult.bookmarkedRules.length);
+        
+        if (bookmarkResult.bookmarkedRules.length > 0) {
+          try {
+            const allRulesResponse = await client.queries.ruleConnection();
+            const allRules = allRulesResponse?.data?.ruleConnection?.edges || [];
+            
+            const matchedRules: any[] = [];
+            bookmarkResult.bookmarkedRules.forEach(bookmark => {
+              const fullRule = allRules.find(edge => edge?.node?.guid === bookmark.ruleGuid)?.node;
+              if (fullRule && fullRule.guid && fullRule.title && fullRule.uri) {
+                matchedRules.push({
+                  guid: fullRule.guid,
+                  title: fullRule.title,
+                  uri: fullRule.uri,
+                  body: fullRule.body,
+                  authors: fullRule.authors?.map(author => author && author.title ? { title: author.title } : null).filter((author): author is { title: string } => author !== null) || [],
+                });
+              } else {
+                console.warn(`No rule found for bookmark with URI: ${bookmark.ruleGuid}`);
+              }
+            });
+            
+            setRules(matchedRules);
+
+            if (matchedRules.length !== bookmarkResult.bookmarkedRules.length) {
+              const foundUris = matchedRules.map(rule => rule.uri);
+              const missingUris = bookmarkResult.bookmarkedRules.map(bookmark => bookmark.ruleGuid).filter(uri => !foundUris.includes(uri));
+              console.warn(`Some bookmarked rules not found:`, missingUris);
+            }
+          } catch (ruleError) {
+            console.error('Error fetching rule data:', ruleError);
+            setRules([]);
+          }
+        } else {
+          setRules([]);
+        }
+        
+      } else {
+        console.error('Failed to fetch bookmarks:', bookmarkResult.message);
+        setBookmarkedRules([]);
+        setBookmarkCount(0);
+        setRules([]);
+      }
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      setBookmarkedRules([]);
+      setBookmarkCount(0);
+      setRules([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  const handleBookmarkRemoved = (ruleGuid: string) => {
+    setBookmarkedRules(prevRules => {
+      const updatedRules = prevRules.filter(bookmark => bookmark.ruleGuid !== ruleGuid);
+      setBookmarkCount(updatedRules.length);
+      return updatedRules;
+    });
+    
+    setRules(prevRules => {
+      return prevRules.filter(rule => rule.guid !== ruleGuid);
+    });
+  };
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      getBookmarkList();
+    }
+  }, [authLoading, user]);
+
+  if (isAuthenticated) {
     return (
       <>
         <div className="shadow-lg rounded">
@@ -37,12 +135,10 @@ export default function ProfileClientPage({ data }: ProfileClientPageProps) {
                   />
                 <div>
                     <div className="text-3xl">
-                    {/* {isAuthenticated ? user?.name : ''} */}
-                    Jake Bayliss [SSW]
+                    {isAuthenticated ? user?.name : ''}
                     </div>
                     <a className="flex align-center text-[#cc4141]"
-                      //href={`https://www.github.com/${user?.nickname}`}
-                      href={`https://www.github.com/jakebayliss`}
+                      href={`https://www.github.com/${user?.nickname}`}
                       target="_blank"
                       rel="noreferrer"
                       >
@@ -51,29 +147,45 @@ export default function ProfileClientPage({ data }: ProfileClientPageProps) {
                     </a>
                 </div>
               </div>
-              <button className="w-fit flex items-center px-2 pt-2 pb-1 border-b-4 border-[#cc4141]">
+              <div className="w-fit flex items-center px-2 pt-2 pb-1 border-b-4 border-[#cc4141]">
                 Bookmarks 
-                <RiBookmarkFill size={16} className="ml-2 mr-1 text-[#cc4141]" /> {bookmarkedRulesCount || 0}
-              </button>
+                <RiBookmarkFill size={16} className="ml-2 mr-1 text-[#cc4141]" /> {bookmarkCount}
+              </div>
             </div>
             
             <div className="bg-white">
-              <ProfileContent
-                 data={data}
-                 setBookmarkedRulesCount={setBookmarkedRulesCount}
-               />
+              {authLoading || isLoading ? (
+                <div className="flex items-center justify-center min-h-[400px] p-12">
+                  <p className="text-xl text-gray-600">
+                    Loading your bookmarks...
+                  </p>
+                </div>
+              ) : (
+                <>
+                  {rules && rules.length > 0 ? (
+                    <RuleList
+                      rules={rules}
+                      type={'bookmark'}
+                      noContentMessage="No bookmarks? Use them to save rules for later!"
+                      onBookmarkRemoved={handleBookmarkRemoved}
+                    />
+                  ) : (
+                    <p className="no-content-message">No bookmarks? Use them to save rules for later!</p>
+                  )}
+                </>
+              )}
             </div>
           </section>
         </div>
       </>
     );
-//   } else {
-//     return (
-//       <div className="flex items-center justify-center min-h-[400px]">
-//         <p className="text-xl text-gray-600">
-//           Please first login to view profile
-//         </p>
-//       </div>
-//     );
-//   }
+  } else {
+    return (
+      <div className="flex items-center justify-center min-h-[400px]">
+        <p className="text-xl text-gray-600">
+          Please first login to view profile
+        </p>
+      </div>
+    );
+  }
 }

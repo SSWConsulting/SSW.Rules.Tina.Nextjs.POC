@@ -43,7 +43,7 @@ const RuleListItemHeader: React.FC<RuleListItemHeaderProps> = ({ rule, type, onB
     <section className="bg-[#f5f5f5] p-5 border-l-2 border-l-red-700">
       <div className="flex items-center justify-between">
         <h2 className="m-0 text-2xl">
-          <Link href={`./${rule.uri}`} ref={linkRef} className="no-underline">
+          <Link href={`../${rule.uri}`} ref={linkRef} className="no-underline">
             {rule.title}
           </Link>
         </h2>
@@ -54,7 +54,7 @@ const RuleListItemHeader: React.FC<RuleListItemHeaderProps> = ({ rule, type, onB
             disabled={isRemoving}
             className={isRemoving ? 'opacity-50' : ''}
           >
-            <RiBookmarkFill size={26} className="bookmark-icon-pressed" />
+            <RiBookmarkFill size={26} className="text-[#cc4141]" />
           </IconButton>
          </div>
       </div>

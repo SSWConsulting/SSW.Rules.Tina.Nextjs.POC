@@ -3,6 +3,7 @@
 import { useUser, getAccessToken } from '@auth0/nextjs-auth0';
 import { useRouter } from 'next/navigation';
 import { BookmarkService } from '@/lib/bookmarkService';
+import { BookmarkData } from '@/types';
 import { RiBookmarkLine, RiBookmarkFill } from 'react-icons/ri';
 
 interface BookmarkProps {
@@ -32,7 +33,7 @@ export default function Bookmark({ ruleId, isBookmarked, onBookmarkToggle, size 
         return;
       }
 
-      const data = { ruleGuid: ruleId, UserId: user.sub };
+      const data: BookmarkData = { ruleGuid: ruleId, UserId: user.sub };
       
       if (isBookmarked) {
         const result = await BookmarkService.removeBookmark(data, accessToken);
