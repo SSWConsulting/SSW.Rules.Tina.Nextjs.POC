@@ -2,9 +2,8 @@
 
 import { useUser } from '@auth0/nextjs-auth0';
 import React, { useState } from 'react';
-
-import ProfileBadge from '@/components/profile-badge/profile-badge';
 import ProfileContent from '@/components/profile-content';
+import Image from 'next/image';
 import { RiGithubFill, RiBookmarkFill } from 'react-icons/ri';
 
 
@@ -28,9 +27,14 @@ export default function ProfileClientPage({ data }: ProfileClientPageProps) {
           <section className="mb-20 rounded">
             <div className="flex flex-col gap-8 px-12 pt-12 bg-[#f5f5f5] rounded-t">
               <div className="flex gap-8">
-                <div>
-                  <ProfileBadge size="6.25rem" />
-                </div>
+                <Image
+                    src={`https://avatars.githubusercontent.com/${user?.nickname}`}
+                    alt={user?.nickname || ''}
+                    title={user?.nickname}
+                    width={100}
+                    height={100}
+                    className="rounded-full object-cover"
+                  />
                 <div>
                     <div className="text-3xl">
                     {/* {isAuthenticated ? user?.name : ''} */}
