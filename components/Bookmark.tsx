@@ -54,14 +54,6 @@ export default function Bookmark({ ruleId, isBookmarked, onBookmarkToggle, size 
     }
   };
 
-  if (authLoading) {
-    return (
-      <div className={`animate-pulse ${className}`}>
-        <div className="w-8 h-8 bg-gray-200 rounded"></div>
-      </div>
-    );
-  }
-
   return (
     <button
       onClick={handleBookmarkToggle}
@@ -69,7 +61,7 @@ export default function Bookmark({ ruleId, isBookmarked, onBookmarkToggle, size 
       title={isBookmarked ? 'Remove bookmark' : 'Add bookmark'}
     >
       {isBookmarked ? (
-        <RiBookmarkFill size={size} className="text-red-500" />
+        <RiBookmarkFill size={size} className="text-[#cc4141]" />
       ) : (
         <RiBookmarkLine size={size} />
       )}

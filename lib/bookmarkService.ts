@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.API_BASE_URL + '/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL + '/api';
 
 export interface BookmarkData {
   ruleGuid: string;
@@ -62,6 +62,7 @@ export class BookmarkService {
 
   static async addBookmark(data: BookmarkData, token: string): Promise<BookmarkResponse> {
     try {
+      console.log('Adding bookmark', token);
       const response = await fetch(`${API_BASE_URL}/BookmarkRuleFunction`, {
         method: 'POST',
         headers: {
@@ -84,6 +85,7 @@ export class BookmarkService {
 
   static async removeBookmark(data: BookmarkData, token: string): Promise<BookmarkResponse> {
     try {
+      console.log('Removing bookmark', token);
       const response = await fetch(`${API_BASE_URL}/RemoveBookmarkFunction`, {
         method: 'POST',
         headers: {
