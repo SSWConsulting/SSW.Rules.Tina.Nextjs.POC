@@ -41,6 +41,7 @@ export default function ClientRulePage(props: ClientRulePageProps) {
   }).data;
   const rule = ruleData?.rule;
   const iconSize = 32;
+  console.log(rule);
 
   const relativeTime = useMemo(() => {
     return rule?.lastUpdated ? timeAgo(rule?.lastUpdated) : "";
@@ -98,7 +99,19 @@ export default function ClientRulePage(props: ClientRulePageProps) {
                   {rule?.title}
                 </h1>
                 <p className="mt-4">
-                  Updated by <b>{rule?.lastUpdatedBy}</b> {relativeTime}.{" "}
+                  Updated by{" "}
+                  {rule?.lastUpdatedBy ? (
+                    <a
+                      href={`/rules/user?author=${encodeURIComponent(rule.lastUpdatedBy)}`}
+                      className="font-semibold text-ssw-red hover:text-red-700 hover:underline transition-colors duration-200"
+                      title={`View ${rule.lastUpdatedBy}'s rules`}
+                    >
+                      {rule.lastUpdatedBy}
+                    </a>
+                  ) : (
+                    <b>Unknown</b>
+                  )}{" "}
+                  {relativeTime}.{" "}
                   {/* TODO: update link when migration is done (path will be wrong as reules will be in public folder) */}
                   <a
                     href={`https://github.com/SSWConsulting/SSW.Rules.Content/commits/main/rules/${rule?.uri}/rule.md`}
