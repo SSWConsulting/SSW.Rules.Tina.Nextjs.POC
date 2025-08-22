@@ -29,7 +29,7 @@ export function YouTubePlayer({
     <div className="my-4 space-y-2">
       <div className="relative w-full aspect-video">
         <iframe
-          src={`https://www.youtube.com/embed/${id}`}
+          src={`https://www.youtube.com/embed/${videoId}`}
           title={description || "YouTube video"}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
