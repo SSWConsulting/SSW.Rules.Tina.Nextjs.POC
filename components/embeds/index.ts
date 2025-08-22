@@ -3,7 +3,7 @@ import { emailEmbedComponent,  emailEmbedTemplate } from "./emailEmbed";
 import { figureEmbedComponent,  figureEmbedTemplate } from "./figureEmbed";
 import { imageEmbedComponent,  imageEmbedTemplate } from "./imageEmbed";
 import { asideEmbedComponent, asideEmbedTemplate } from "./asideEmbed";
-import { youtubeEmbedComponents, youtubeEmbedTemplate } from "./youtubeEmbed";
+import { youtubeEmbedComponent, youtubeEmbedTemplate } from "./youtubeEmbed";
 import { introEmbedComponent, introEmbedTemplate } from "./IntroEmbed";
 
 
@@ -12,7 +12,7 @@ export const embedComponents={
     ...imageEmbedComponent,
     ...figureEmbedComponent,
     ...asideEmbedComponent,
-    ...youtubeEmbedComponents,
+    ...youtubeEmbedComponent,
     ...introEmbedComponent,
 }
 
