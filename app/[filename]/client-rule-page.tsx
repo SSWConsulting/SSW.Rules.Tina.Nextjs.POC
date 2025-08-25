@@ -23,6 +23,8 @@ import Acknowledgements from "@/components/Acknowledgements";
 import { useUser, getAccessToken } from "@auth0/nextjs-auth0";
 import { BookmarkService } from "@/lib/bookmarkService";
 import Discussion from "@/components/Discussion";
+import { useRouter } from "next/navigation";
+import { createGitHubService } from "@/lib/services/github";
 
 export interface ClientRulePageProps {
   ruleQueryProps;
@@ -34,6 +36,9 @@ export default function ClientRulePage(props: ClientRulePageProps) {
   const { user } = useUser();
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
 
+  const router = useRouter();
+  const [githubService] = useState(() => createGitHubService());
+  const [isLoadingUsername, setIsLoadingUsername] = useState(false);
   const ruleData = useTina({
     query: ruleQueryProps?.query,
     variables: ruleQueryProps?.variables,
@@ -41,7 +46,7 @@ export default function ClientRulePage(props: ClientRulePageProps) {
   }).data;
   const rule = ruleData?.rule;
   const iconSize = 32;
-  console.log(rule);
+  console.log(ruleQueryProps);
 
   const relativeTime = useMemo(() => {
     return rule?.lastUpdated ? timeAgo(rule?.lastUpdated) : "";
@@ -73,6 +78,20 @@ export default function ClientRulePage(props: ClientRulePageProps) {
       }
     })();
   }, [user?.sub, rule?.guid]);
+  
+  const openUserRule = async (ruleUri: string, state: number) => {
+    if (!ruleUri) return;
+    
+    try {
+      setIsLoadingUsername(true);
+      const lastModifiedByUsername = await githubService.fetchGitHubUsernameForRule(ruleUri, state);
+      router.push(`/rules/user?author=${encodeURIComponent(lastModifiedByUsername)}`);
+    } catch (error) {
+      console.error('Failed to fetch GitHub username:', error);
+    } finally {
+      setIsLoadingUsername(false);
+    }
+  };
 
   return (
     <>
@@ -102,11 +121,19 @@ export default function ClientRulePage(props: ClientRulePageProps) {
                   Updated by{" "}
                   {rule?.lastUpdatedBy ? (
                     <a
-                      href={`/rules/user?author=${encodeURIComponent(rule.lastUpdatedBy)}`}
-                      className="font-semibold text-ssw-red hover:text-red-700 hover:underline transition-colors duration-200"
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (!isLoadingUsername) {
+                          openUserRule(rule?.uri || '', 1);
+                        }
+                      }}
+                      className={`font-semibold hover:text-ssw-red hover:underline transition-colors duration-200 ${
+                        isLoadingUsername ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
                       title={`View ${rule.lastUpdatedBy}'s rules`}
                     >
-                      {rule.lastUpdatedBy}
+                      {isLoadingUsername ? 'Loading...' : rule.lastUpdatedBy}
                     </a>
                   ) : (
                     <b>Unknown</b>
