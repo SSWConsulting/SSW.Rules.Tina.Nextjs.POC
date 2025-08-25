@@ -112,11 +112,8 @@ export default function ClientCategoryPage(props: ClientCategoryPageProps) {
 
             return (
               <li key={uri}>
-                <Link
-                  href={`/${uri}`}
-                  className="font-medium underline underline-offset-4"
-                >
-                  {title}
+                <Link href={`/${uri}`} className="underline underline-offset-4">
+                  <h2 className="font-medium">{title}</h2>
                 </Link>
 
                 {shouldShowBody && (
