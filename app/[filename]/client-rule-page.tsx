@@ -15,11 +15,13 @@ import {
   RiHistoryLine,
 } from "react-icons/ri";
 import Link from "next/link";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { formatDateLong, timeAgo } from "@/lib/dateUtils";
 import MarkdownComponentMapping from "@/components/tina-markdown/markdown-component-mapping";
 import HelpCard from "@/components/HelpCard";
 import Acknowledgements from "@/components/Acknowledgements";
+import { useRouter } from "next/navigation";
+import { createGitHubService } from "@/lib/services/github";
 
 export interface ClientRulePageProps {
   ruleQueryProps;
@@ -28,6 +30,9 @@ export interface ClientRulePageProps {
 
 export default function ClientRulePage(props: ClientRulePageProps) {
   const { ruleQueryProps } = props;
+  const router = useRouter();
+  const [githubService] = useState(() => createGitHubService());
+  const [isLoadingUsername, setIsLoadingUsername] = useState(false);
   const ruleData = useTina({
     query: ruleQueryProps?.query,
     variables: ruleQueryProps?.variables,
@@ -35,7 +40,7 @@ export default function ClientRulePage(props: ClientRulePageProps) {
   }).data;
   const rule = ruleData?.rule;
   const iconSize = 32;
-  console.log(rule);
+  console.log(ruleQueryProps);
 
   const relativeTime = useMemo(() => {
     return rule?.lastUpdated ? timeAgo(rule?.lastUpdated) : "";
@@ -48,6 +53,20 @@ export default function ClientRulePage(props: ClientRulePageProps) {
       : "Unknown";
     return `Created ${created}\nLast Updated ${updated}`;
   }, [rule?.created, rule?.lastUpdated]);
+
+  const openUserRule = async (ruleUri: string, state: number) => {
+    if (!ruleUri) return;
+    
+    try {
+      setIsLoadingUsername(true);
+      const lastModifiedByUsername = await githubService.fetchGitHubUsernameForRule(ruleUri, state);
+      router.push(`/rules/user?author=${encodeURIComponent(lastModifiedByUsername)}`);
+    } catch (error) {
+      console.error('Failed to fetch GitHub username:', error);
+    } finally {
+      setIsLoadingUsername(false);
+    }
+  };
 
   return (
     <>
@@ -77,11 +96,19 @@ export default function ClientRulePage(props: ClientRulePageProps) {
                   Updated by{" "}
                   {rule?.lastUpdatedBy ? (
                     <a
-                      href={`/rules/user?author=${encodeURIComponent(rule.lastUpdatedBy)}`}
-                      className="font-semibold text-ssw-red hover:text-red-700 hover:underline transition-colors duration-200"
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        if (!isLoadingUsername) {
+                          openUserRule(rule?.uri || '', 1);
+                        }
+                      }}
+                      className={`font-semibold hover:text-ssw-red hover:underline transition-colors duration-200 ${
+                        isLoadingUsername ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
                       title={`View ${rule.lastUpdatedBy}'s rules`}
                     >
-                      {rule.lastUpdatedBy}
+                      {isLoadingUsername ? 'Loading...' : rule.lastUpdatedBy}
                     </a>
                   ) : (
                     <b>Unknown</b>

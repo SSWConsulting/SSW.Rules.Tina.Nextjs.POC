@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { createGitHubService } from "@/lib/services/github";
 
 const ActionTypes = {
   BEFORE: 'before',
@@ -34,18 +35,10 @@ export default function UserRulesClientPage() {
   const [tempCursor, setTempCursor] = useState('');
   const [hasNext, setHasNext] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [githubService] = useState(() => createGitHubService());
 
-  const filterTitle = 'Results';
   const queryStringRulesAuthor = searchParams.get('author') || '';
-
-  const normalizeName = (name: string): string => {
-    return name
-      .normalize('NFD')
-      .replace(/\s*[({[].*?[})\]]/g, '') // Remove anything inside (), [], {} and the (),[],{} themselves
-      .replace(/ø/g, 'oe') // replace all 'ø' with 'oe'
-      .replace(/\p{Diacritic}/gu, '')
-      .trim();
-  };
 
   useEffect(() => {
     if (queryStringRulesAuthor) {
@@ -57,164 +50,83 @@ export default function UserRulesClientPage() {
         gitHubUrl: `https://github.com/${queryStringRulesAuthor}`
       };
       setAuthor(mockAuthor);
+
+      fetchGithubData(ActionTypes.AFTER);
     }
   }, [queryStringRulesAuthor]);
 
-  useEffect(() => {
-    if (author.fullName) {
-      fetchPageData();
-    }
-  }, [author]);
-
-  const fetchPageData = async (action?: string): Promise<void> => {
+  const fetchGithubData = async (action?: string): Promise<any> => {
     try {
       setLoading(true);
-      const searchData = await fetchGithubData(action);
-      const resultList = searchData.nodes;
-      const extractedFiles = getExtractedFiles(resultList);
-      const filteredRules = filterUniqueRules(extractedFiles);
-      updateFilteredItems(filteredRules);
-    } catch (err) {
+      
+      let cursor: string | undefined;
+      let direction: 'after' | 'before' = 'after';
+
+      if (action === ActionTypes.BEFORE) {
+        cursor = previousPageCursor[previousPageCursor.length - 1];
+        direction = 'before';
+      } else if (action === ActionTypes.AFTER) {
+        cursor = nextPageCursor;
+        direction = 'after';
+      }
+
+      const searchData = await githubService.searchPullRequestsByAuthor(
+        queryStringRulesAuthor, 
+        cursor, 
+        direction
+      );
+
+      const resultList = searchData.search.nodes;
+      const allRules = resultList
+        .flatMap(pr => pr.files.nodes)
+        .filter(file => file.path.endsWith('rule.md'));
+      const uniqueRules = getUniqueRules(allRules);
+      updateFilteredItems(uniqueRules);
+
+      const { endCursor, startCursor, hasNextPage } = searchData.search.pageInfo;
+      
+      if (action === ActionTypes.AFTER) {
+        setPreviousPageCursor([...previousPageCursor, nextPageCursor]);
+      } else if (action === ActionTypes.BEFORE) {
+        previousPageCursor.pop();
+      }
+
+      setNextPageCursor(endCursor || '');
+      setTempCursor(startCursor || '');
+      setHasNext(hasNextPage || false);
+
+    } catch (error) {
+      console.error('Failed to fetch GitHub data:', error);
+      setError('Failed to fetch rules data. Please try again later.');
       setNotFound(true);
-      console.error('Error fetching data:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchGithubData = async (action?: string): Promise<any> => {
-    // This is a mock implementation since we don't have the actual GitHub API setup
-    // In a real implementation, you'd use the GitHub GraphQL API
-    const githubOwner = process.env.NEXT_PUBLIC_GITHUB_ORG || 'SSWConsulting';
-    const githubRepo = process.env.NEXT_PUBLIC_GITHUB_REPO || 'SSW.Rules.Content';
-    const token = process.env.NEXT_PUBLIC_GITHUB_API_PAT;
-    const resultPerPage = 40;
-    const filesPerPullRequest = 20;
+  const getUniqueRules = (files: any[]) => {
+    const uniqueRulesMap = new Map();
+    
+    files.forEach(file => {
+      const path = file.path;
+      const ruleName = path.replace(/^rules\//, '').replace(/\/rule\.md$/, '');
+      
+      if (!uniqueRulesMap.has(ruleName) || 
+          new Date(file.lastUpdated) > new Date(uniqueRulesMap.get(ruleName).lastUpdated)) {
+        uniqueRulesMap.set(ruleName, file);
+      }
+    });
 
-    let cursorQuery = '';
-    if (action === ActionTypes.BEFORE) {
-      cursorQuery = `before: "${
-        previousPageCursor[previousPageCursor.length - 1]
-      }"`;
-    } else if (action === ActionTypes.AFTER) {
-      setPreviousPageCursor([...previousPageCursor, tempCursor]);
-      cursorQuery = `after: "${nextPageCursor}"`;
-    }
+    return Array.from(uniqueRulesMap.values());
+  }
 
-    // Mock response for now - replace with actual GitHub API call
-    const mockData = {
-      data: {
-        search: {
-          pageInfo: {
-            endCursor: 'mock-cursor',
-            startCursor: 'mock-start',
-            hasNextPage: false,
-          },
-          nodes: [],
-        },
-      },
-    };
-
-    if (action === ActionTypes.BEFORE) {
-      previousPageCursor.pop();
-    }
-
-    const { endCursor, startCursor, hasNextPage } = mockData.data.search.pageInfo;
-
-    setNextPageCursor(endCursor || '');
-    setTempCursor(startCursor || '');
-    setHasNext(hasNextPage || false);
-
-    return mockData.data?.search;
-  };
-
-  const getExtractedFiles = (resultList: any[]): any[] => {
-    const extractedFiles: any[] = [];
-
-    for (let i = 0; i < resultList.length; i++) {
-      const nodes = [...resultList[i].files.nodes];
-      const updatedTime = resultList[i].mergedAt;
-
-      nodes.forEach((path: any) => {
-        extractedFiles.push({
-          file: {
-            node: {
-              path: getRulePath(path.path),
-              lastUpdated: updatedTime,
-            },
-          },
-        });
-      });
-    }
-
-    return extractedFiles;
-  };
-
-  const getRulePath = (path: string): string => {
-    const lastSlashIndex = path.lastIndexOf('/');
-    if (
-      path.includes('.md') &&
-      !path.includes('categories') &&
-      lastSlashIndex !== -1
-    ) {
-      return path.substring(0, lastSlashIndex + 1);
-    } else {
-      return path;
-    }
-  };
-
-  const filterUniqueRules = (extractedFiles: any[]): any[] => {
-    // Mock rules data - replace with actual data from your CMS
-    const mockRules = [
-      {
-        frontmatter: {
-          title: 'Sample Rule 1',
-          authors: [{ title: author.fullName }],
-        },
-        fields: {
-          slug: '/sample-rule-1/',
-        },
-      },
-      {
-        frontmatter: {
-          title: 'Sample Rule 2',
-          authors: [{ title: author.fullName }],
-        },
-        fields: {
-          slug: '/sample-rule-2/',
-        },
-      },
-    ];
-
-    const uniqueRuleTitles = new Set();
-    const filteredRules = extractedFiles
-      .map((r) => {
-        const rule = mockRules.find((rule) => {
-          const newSlug = rule.fields.slug.slice(
-            1,
-            rule.fields.slug.length - 5
-          );
-          return newSlug === r.file.node.path;
-        });
-
-        if (rule && !uniqueRuleTitles.has(rule.frontmatter.title)) {
-          uniqueRuleTitles.add(rule.frontmatter.title);
-          return { item: rule, file: r.file };
-        } else {
-          return null;
-        }
-      })
-      .filter((result) => result !== null);
-
-    return filteredRules;
-  };
-
+  // TODO
   const updateFilteredItems = (filteredRule: any[]): void => {
     const mergedList = [...filteredItems.list];
 
     filteredRule.forEach((ruleItem) => {
       const isDuplicate = mergedList.some(
-        (mergedItem) => mergedItem.file.node.path === ruleItem.file.node.path
+        (mergedItem) => mergedItem.path === ruleItem.path
       );
 
       if (!isDuplicate) {
@@ -222,16 +134,14 @@ export default function UserRulesClientPage() {
       }
     });
 
-    const acknowledgmentsList = mergedList.filter((ruleItem) => {
-      const authorList = ruleItem.item.frontmatter.authors?.flatMap((author: any) =>
-        normalizeName(author.title)
-      );
-
-      return authorList.includes(author.fullName);
-    });
-
+    // For now, we'll set the filtered items directly since we don't have the old structure
+    // In a real implementation, you'd need to match these files with your CMS data
+    setFilteredItems({ list: mergedList, filter: {} });
+    
+    // Since we don't have author information in the GitHub data yet,
+    // we'll need to implement this differently
     setNotFound(mergedList.length === 0);
-    setNoAuthorRules(acknowledgmentsList.length === 0);
+    setNoAuthorRules(false); // We'll need to implement this logic differently
   };
 
   const toggleSortOrder = (order: boolean): void => {
@@ -314,7 +224,7 @@ export default function UserRulesClientPage() {
                     ? 'bg-ssw-red text-white'
                     : 'bg-ssw-grey text-gray-400'
                 }`}
-                onClick={() => fetchPageData(ActionTypes.AFTER)}
+                onClick={() => fetchGithubData(ActionTypes.AFTER)}
                 disabled={!hasNext || loading}
               >
                 {loading ? 'Loading...' : 'Load More'}
