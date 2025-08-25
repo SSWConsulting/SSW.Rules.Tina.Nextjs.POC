@@ -49,31 +49,45 @@ export default function ProfileClientPage({ data }: ProfileClientPageProps) {
         
         if (bookmarkResult.bookmarkedRules.length > 0) {
           try {
-            const allRulesResponse = await client.queries.ruleConnection();
-            const allRules = allRulesResponse?.data?.ruleConnection?.edges || [];
-            
-            const matchedRules: any[] = [];
-            bookmarkResult.bookmarkedRules.forEach(bookmark => {
-              const fullRule = allRules.find(edge => edge?.node?.guid === bookmark.ruleGuid)?.node;
-              if (fullRule && fullRule.guid && fullRule.title && fullRule.uri) {
-                matchedRules.push({
-                  guid: fullRule.guid,
-                  title: fullRule.title,
-                  uri: fullRule.uri,
-                  body: fullRule.body,
-                  authors: fullRule.authors?.map(author => author && author.title ? { title: author.title } : null).filter((author): author is { title: string } => author !== null) || [],
-                });
-              } else {
-                console.warn(`No rule found for bookmark with URI: ${bookmark.ruleGuid}`);
-              }
-            });
-            
+            const guids = Array.from(
+              new Set(
+                bookmarkResult.bookmarkedRules
+                  .map((b) => b.ruleGuid)
+                  .filter((g): g is string => Boolean(g))
+              )
+            );
+        
+            const res = await client.queries.rulesByGuidQuery({ guids });
+            const edges = res?.data?.ruleConnection?.edges ?? [];
+            const byGuid = new Map<string, any>(
+              edges
+                .map((e: any) => e?.node)
+                .filter(Boolean)
+                .map((n: any) => [n.guid, n])
+            );
+        
+            const matchedRules: any[] = guids
+              .map((g) => byGuid.get(g))
+              .filter(Boolean)
+              .map((fullRule: any) => ({
+                guid: fullRule.guid,
+                title: fullRule.title,
+                uri: fullRule.uri,
+                body: fullRule.body,
+                authors:
+                  fullRule.authors
+                    ?.map((a: any) => (a && a.title ? { title: a.title } : null))
+                    .filter((a: any): a is { title: string } => a !== null) || [],
+              }));
+        
             setRules(matchedRules);
-
+        
             if (matchedRules.length !== bookmarkResult.bookmarkedRules.length) {
-              const foundUris = matchedRules.map(rule => rule.uri);
-              const missingUris = bookmarkResult.bookmarkedRules.map(bookmark => bookmark.ruleGuid).filter(uri => !foundUris.includes(uri));
-              console.warn(`Some bookmarked rules not found:`, missingUris);
+              const foundGuids = new Set(matchedRules.map((r) => r.guid));
+              const missingGuids = bookmarkResult.bookmarkedRules
+                .map((b) => b.ruleGuid)
+                .filter((g) => !foundGuids.has(g));
+              console.warn(`Some bookmarked rules not found:`, missingGuids);
             }
           } catch (ruleError) {
             console.error('Error fetching rule data:', ruleError);
