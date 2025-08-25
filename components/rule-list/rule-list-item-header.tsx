@@ -51,7 +51,7 @@ const RuleListItemHeader: React.FC<RuleListItemHeaderProps> = ({ rule, type, onB
             disabled={isRemoving}
             className={isRemoving ? 'opacity-50' : ''}
           >
-            <RiBookmarkFill size={26} className="text-[#cc4141]" />
+            <RiBookmarkFill size={26} className="text-ssw-red" />
           </IconButton>
          </div>
       </div>

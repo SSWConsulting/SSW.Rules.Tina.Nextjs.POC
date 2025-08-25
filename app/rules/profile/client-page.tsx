@@ -176,7 +176,7 @@ export default function ProfileClientPage({ data }: ProfileClientPageProps) {
                     <div className="text-3xl">
                     {isAuthenticated ? user?.name : ''}
                     </div>
-                    <a className="flex align-center text-[#cc4141]"
+                    <a className="flex align-center text-ssw-red"
                       href={`https://www.github.com/${user?.nickname}`}
                       target="_blank"
                       rel="noreferrer"
@@ -186,9 +186,9 @@ export default function ProfileClientPage({ data }: ProfileClientPageProps) {
                     </a>
                 </div>
               </div>
-              <div className="w-fit flex items-center px-2 pt-2 pb-1 border-b-4 border-[#cc4141]">
+              <div className="w-fit flex items-center px-2 pt-2 pb-1 border-b-4 border-ssw-red">
                 Bookmarks 
-                <RiBookmarkFill size={16} className="ml-2 mr-1 text-[#cc4141]" /> {bookmarkCount}
+                <RiBookmarkFill size={16} className="ml-2 mr-1 text-ssw-red" /> {bookmarkCount}
               </div>
             </div>
             
