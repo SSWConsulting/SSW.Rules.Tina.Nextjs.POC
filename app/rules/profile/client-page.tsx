@@ -41,7 +41,6 @@ export default function ProfileClientPage({ data }: ProfileClientPageProps) {
         return;
       }
 
-      // First, get all bookmarked rules (just the metadata)
       const bookmarkResult: UserBookmarksResponse = await BookmarkService.getUserBookmarks(user.sub, accessToken);
       
       if (!bookmarkResult.error && bookmarkResult.bookmarkedRules) {
@@ -100,16 +99,42 @@ export default function ProfileClientPage({ data }: ProfileClientPageProps) {
     }
   }
 
-  const handleBookmarkRemoved = (ruleGuid: string) => {
-    setBookmarkedRules(prevRules => {
-      const updatedRules = prevRules.filter(bookmark => bookmark.ruleGuid !== ruleGuid);
-      setBookmarkCount(updatedRules.length);
-      return updatedRules;
-    });
-    
-    setRules(prevRules => {
-      return prevRules.filter(rule => rule.guid !== ruleGuid);
-    });
+  const handleBookmarkRemoved = async (ruleGuid: string) => {
+    if (!user?.sub) {
+      console.error('No user ID available');
+      return;
+    }
+
+    try {
+      const accessToken = await getAccessToken();
+      
+      if (!accessToken) {
+        console.error('No access token available');
+        return;
+      }
+
+      const removeResult = await BookmarkService.removeBookmark(
+        { ruleGuid, UserId: user.sub },
+        accessToken
+      );
+
+      if (removeResult.error) {
+        console.error('Failed to remove bookmark:', removeResult.message);
+        return;
+      }
+
+      setBookmarkedRules(prevRules => {
+        const updatedRules = prevRules.filter(bookmark => bookmark.ruleGuid !== ruleGuid);
+        setBookmarkCount(updatedRules.length);
+        return updatedRules;
+      });
+      
+      setRules(prevRules => {
+        return prevRules.filter(rule => rule.guid !== ruleGuid);
+      });
+    } catch (error) {
+      console.error('Error removing bookmark:', error);
+    }
   };
 
   useEffect(() => {
@@ -158,21 +183,15 @@ export default function ProfileClientPage({ data }: ProfileClientPageProps) {
                 <div className="flex items-center justify-center min-h-[400px] p-12">
                   <p className="text-xl text-gray-600">
                     Loading your bookmarks...
-                  </p>
-                </div>
+                    </p>
+                  </div>
               ) : (
-                <>
-                  {rules && rules.length > 0 ? (
-                    <RuleList
-                      rules={rules}
-                      type={'bookmark'}
-                      noContentMessage="No bookmarks? Use them to save rules for later!"
-                      onBookmarkRemoved={handleBookmarkRemoved}
-                    />
-                  ) : (
-                    <p className="no-content-message">No bookmarks? Use them to save rules for later!</p>
-                  )}
-                </>
+                <RuleList
+                  rules={rules}
+                  type={'bookmark'}
+                  noContentMessage="No bookmarks? Use them to save rules for later!"
+                  onBookmarkRemoved={handleBookmarkRemoved}
+                />
               )}
             </div>
           </section>

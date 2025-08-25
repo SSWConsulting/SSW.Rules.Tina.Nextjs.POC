@@ -26,9 +26,6 @@ const RuleListItemHeader: React.FC<RuleListItemHeaderProps> = ({ rule, type, onB
     
     setIsRemoving(true);
     try {
-      // TODO: Implement actual bookmark removal logic using BookmarkService
-      console.log('Removing bookmark for rule:', ruleGuid);
-      
       if (onBookmarkRemoved) {
         onBookmarkRemoved(ruleGuid);
       }
