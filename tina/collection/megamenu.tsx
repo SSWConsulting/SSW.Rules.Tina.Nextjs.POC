@@ -27,12 +27,6 @@ export const MegaMenu: Collection = {
       },
       fields: [
         {
-          type: "string",
-          name: "name",
-          label: "Name",
-          required: true,
-        },
-        {
           type: "object",
           name: "menuColumns",
           label: "Menu Columns",
