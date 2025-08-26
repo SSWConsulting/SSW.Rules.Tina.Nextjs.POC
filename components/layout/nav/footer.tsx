@@ -1,38 +1,115 @@
-"use client";
-import React from "react";
-import Link from "next/link";
-import { Icon } from "../../icon";
-import { useLayout } from "../layout-context";
+import moment from 'moment';
+import React from 'react';
+import { pathPrefix } from '../../../site-config';
+import { GitHubButtonWrapper } from '@/components/GitHubButtonWrapper';
+import { FaFacebook, FaHeart, FaInstagram, FaLinkedin, FaTiktok, FaXTwitter, FaYoutube } from 'react-icons/fa6';
+
+const buildTimestamp = process.env.BUILD_TIMESTAMP ? parseInt(process.env.BUILD_TIMESTAMP) : Date.now() - 1000 * 60 * 30;
 
 export const Footer = () => {
-  const { globalSettings } = useLayout();
-  const { header, footer } = globalSettings!;
+    return (
+        <>
+            <div className='p-4 text-center bg-grey-translucent text-sm'>
+                <section className='main-container flex items-center justify-center gap-2'>
+                    <span>
+                        We <FaHeart className='text-ssw-red inline' size={12} /> open source.
+                    </span>
+                    <span>
+                        Loving SSW Rules?{' '}
+                        <a href='https://github.com/SSWConsulting/SSW.Rules' target='_blank' rel='noreferrer' className='action-button-label footer-greybar-link'>
+                            Star us on GitHub.
+                        </a>{' '}
+                    </span>
+                    <GitHubButtonWrapper />
+                </section>
+            </div>
+            <footer className='bg-[var(--footer-background)] text-[var(--footer-foreground)] py-6 md:py-4 lg:py-2  [&_a]:no-underline text-xs'>
+                <section className='main-container'>
+                    <div className='xl:mx-6'>
+                        <div className='mx-6 flex flex-col-reverse md:flex-row justify-between align-middle leading-6'>
+                            <div className='py-2'>&copy; 1990-{new Date().getFullYear()} SSW. All rights reserved.</div>
+                            <div className='w-full md:w-3/6 md:text-right py-2 flex items-center justify-center md:justify-end'>
+                                <a className='footer-link' href='https://github.com/SSWConsulting/SSW.Rules/issues'>
+                                    FEEDBACK / SUGGEST A FEATURE
+                                </a>
+                                <span className='px-2'>|</span>
+                                <a className='footer-link' href='https://www.ssw.com.au/terms-and-conditions'>
+                                    TERMS AND CONDITIONS
+                                </a>
+                                <span className='px-2'>|</span>
+                                <div className='inline-flex flex-row-reverse justify-end flex-nowrap'>
+                                    <a className='unstyled social-media-icon' id='tiktok-icon' title='SSW on TikTok' href='https://www.tiktok.com/@ssw_tv' target='_blank' rel='noreferrer'>
+                                        <FaTiktok size={24} />
+                                    </a>
+                                    <a className='unstyled social-media-icon' id='twitter-icon' title='SSW on Twitter' href='https://twitter.com/SSW_TV' target='_blank' rel='noreferrer'>
+                                        <FaXTwitter size={24} />
+                                    </a>
+                                    <a className='unstyled social-media-icon' id='instagram-icon' title='SSW on Instagram' href='https://www.instagram.com/ssw_tv' target='_blank' rel='noreferrer'>
+                                        <FaInstagram size={24} />
+                                    </a>
+                                    <a className='unstyled social-media-icon' id='facebook-icon' title='SSW on Facebook' href='https://www.facebook.com/SSW.page' target='_blank' rel='noreferrer'>
+                                        <FaFacebook size={24} />
+                                    </a>
+                                    <a className='unstyled social-media-icon' id='linkedin-icon' title='SSW on LinkedIn' href='https://www.linkedin.com/company/ssw' target='_blank' rel='noreferrer'>
+                                        <FaLinkedin size={24} />
+                                    </a>
+                                    <a
+                                        className='unstyled social-media-icon'
+                                        id='youtube-icon'
+                                        title='SSW on YouTube'
+                                        href='https://www.youtube.com/user/sswtechtalks'
+                                        target='_blank'
+                                        rel='noreferrer'
+                                    >
+                                        <FaYoutube size={24} />
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        <hr className='border-gray-800 my-2'></hr>
+                        <div className='flex flex-col md:flex-row justify-between mx-6'>
+                            <div className='py-2'>
+                                This website is under{' '}
+                                <a className='footer-link' href={`${pathPrefix}/rules-to-better-websites-deployment`}>
+                                    CONSTANT CONTINUOUS DEPLOYMENT
+                                </a>
+                                . Last deployed {getLastDeployTime()} ago (Build #{' '}
+                                <a className='footer-link' href={process.env.DEPLOYMENT_URL || 'https://dev.azure.com/ssw/SSW.Rules/_release?_a=releases&view=mine&definitionId=3'}>
+                                    {process.env.VERSION_DEPLOYED}
+                                </a>
+                                )
+                            </div>
+                            <div className='md:text-right py-2'>
+                                Powered by{' '}
+                                <a className='footer-link' href={`${pathPrefix}/rules-to-better-azure`}>
+                                    Azure
+                                </a>{' '}
+                                and{' '}
+                                <a className='footer-link' href={`${pathPrefix}/static-site-generator`}>
+                                    {' '}
+                                    GitHub
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </footer>
+        </>
+    );
+};
 
-  return (
-    <footer className="border-b bg-white pt-20 dark:bg-transparent">
-      <div className="mx-auto max-w-screen-xl px-8">
-        <div className="mt-12 flex flex-wrap items-center gap-6 border-t py-6 flex-col md:flex-row md:justify-between">
+const getLastDeployTime = () => {
+    const lastDeployDuration = moment.duration(Date.now() - buildTimestamp);
+    let delta = Math.abs(lastDeployDuration.asMilliseconds()) / 1000;
 
-          <div className="order-last flex justify-center md:order-first md:justify-start">
-            <Link href="/" aria-label="go home">
-              <Icon
-                parentColor={header!.color!}
-                data={header!.icon}
-              />
-            </Link>
-            <span className="self-center text-muted-foreground text-sm ml-2">© {new Date().getFullYear()} {header?.name}, All rights reserved</span>
-          </div>
+    const days = Math.floor(delta / 86400);
+    delta -= days * 86400;
 
-          <div className="order-first flex justify-center gap-6 text-sm md:order-last md:justify-end">
-            {footer?.social?.map((link, index) => (
-              <Link key={`${link!.icon}${index}`} href={link!.url!} target="_blank" rel="noopener noreferrer" >
-                <Icon data={{ ...link!.icon, size: 'small' }} className="text-muted-foreground hover:text-primary block" />
-              </Link>
-            ))}
-          </div>
+    var hours = Math.floor(delta / 3600) % 24;
+    delta -= hours * 3600;
 
-        </div>
-      </div>
-    </footer>
-  );
-}
+    var minutes = Math.floor(delta / 60) % 60;
+    delta -= minutes * 60;
+
+    return days !== 0 ? `${days} day(s)` : hours !== 0 ? `${hours} hour(s)` : minutes > 1 ? `${minutes} minutes` : '1 minute';
+};

@@ -24,11 +24,9 @@ export default async function Layout({ children, rawPageData }: LayoutProps) {
 
     return (
         <LayoutProvider globalSettings={globalData.global} pageData={rawPageData}>
-            <div className='flex flex-col min-h-screen main-container'>
                 <Header />
-                <main className='overflow-x-hidden pt-20'>{children}</main>
+                <main className='overflow-x-hidden py-20 main-container'>{children}</main>
                 <Footer />
-            </div>
         </LayoutProvider>
     );
 }
