@@ -10,7 +10,7 @@ export const Footer = () => {
     return (
         <>
             <div className='p-4 text-center bg-grey-translucent text-sm'>
-                <section className='main-container flex items-center justify-center gap-2'>
+                <section className='main-container flex max-sm:flex-col items-center justify-center gap-2'>
                     <span>
                         We <FaHeart className='text-ssw-red inline' size={12} /> open source.
                     </span>
@@ -28,15 +28,15 @@ export const Footer = () => {
                     <div className='xl:mx-6'>
                         <div className='mx-6 flex flex-col-reverse md:flex-row justify-between align-middle leading-6'>
                             <div className='py-2'>&copy; 1990-{new Date().getFullYear()} SSW. All rights reserved.</div>
-                            <div className='w-full md:w-3/6 md:text-right py-2 flex items-center justify-center md:justify-end'>
-                                <a className='footer-link' href='https://github.com/SSWConsulting/SSW.Rules/issues'>
+                            <div className='w-full md:w-3/6 md:text-right py-2 flex max-sm:flex-col max-sm:items-start items-center max-sm:justify-start justify-center md:justify-end'>
+                                <a className='footer-link max-sm:mb-3' href='https://github.com/SSWConsulting/SSW.Rules/issues'>
                                     FEEDBACK / SUGGEST A FEATURE
                                 </a>
-                                <span className='px-2'>|</span>
-                                <a className='footer-link' href='https://www.ssw.com.au/terms-and-conditions'>
+                                <span className='px-2 hidden sm:inline'>|</span>
+                                <a className='footer-link max-sm:mb-3' href='https://www.ssw.com.au/terms-and-conditions'>
                                     TERMS AND CONDITIONS
                                 </a>
-                                <span className='px-2'>|</span>
+                                <span className='px-2 hidden sm:inline'>|</span>
                                 <div className='inline-flex flex-row-reverse justify-end flex-nowrap'>
                                     <a className='unstyled social-media-icon' id='tiktok-icon' title='SSW on TikTok' href='https://www.tiktok.com/@ssw_tv' target='_blank' rel='noreferrer'>
                                         <FaTiktok size={24} />

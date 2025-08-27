@@ -39,7 +39,7 @@ export const Header = () => {
 
     return (
         <AnimatedContainer>
-            <header className='no-print z-1 main-container'>
+            <header className='no-print z-1 main-container max-sm:!m-4'>
                 <MenuWrapper>
                     <MegaMenuWrapper menu={menuGroups} />
                 </MenuWrapper>
