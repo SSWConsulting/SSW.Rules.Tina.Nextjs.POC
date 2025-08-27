@@ -11,7 +11,7 @@ export default function SignIn() {
         return (
             <a
                 href={href}
-                className='text-white cursor-pointer no-underline m-6 px-3.5 py-3 text-center align-middle flex items-center justify-center bg-ssw-red text-sm font-medium shadow hover:bg-ssw-red/90 w-full h-full'
+                className='text-white cursor-pointer no-underline ml-6 px-3.5 py-2 text-center align-middle flex items-center justify-center bg-ssw-red text-sm font-medium shadow hover:bg-ssw-red/90 w-full h-full'
             >
                 LOG IN
             </a>
