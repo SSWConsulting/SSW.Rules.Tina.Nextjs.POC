@@ -141,7 +141,7 @@ export class GitHubService {
 export function createGitHubService(): GitHubService {
   const owner = process.env.NEXT_PUBLIC_GITHUB_ORG || 'SSWConsulting';
   const repo = process.env.NEXT_PUBLIC_GITHUB_REPO || 'SSW.Rules.Content';
-  const branch = 'main';
+  const branch = process.env.NEXT_PUBLIC_TINA_BRANCH || 'main';
   const token = process.env.NEXT_PUBLIC_GITHUB_API_PAT;
 
   if (!token) {

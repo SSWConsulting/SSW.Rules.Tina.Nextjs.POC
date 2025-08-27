@@ -35,6 +35,7 @@ export default function ClientRulePage(props: ClientRulePageProps) {
   const { ruleQueryProps } = props;
   const { user } = useUser();
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
+  const [authorUsername, setAuthorUsername] = useState<string | null>(null);
 
   const router = useRouter();
   const [githubService] = useState(() => createGitHubService());
@@ -60,6 +61,43 @@ export default function ClientRulePage(props: ClientRulePageProps) {
     return `Created ${created}\nLast Updated ${updated}`;
   }, [rule?.created, rule?.lastUpdated]);
 
+  const openUserRule = async (ruleUri: string, state: number) => {
+    if (!ruleUri) return;
+
+    try {
+      if (authorUsername) {
+        router.push(`/rules/user?author=${encodeURIComponent(authorUsername)}`);
+        return;
+      }
+      setIsLoadingUsername(true);
+      const lastModifiedByUsername = await githubService.fetchGitHubUsernameForRule(ruleUri, state);
+      if (lastModifiedByUsername) setAuthorUsername(lastModifiedByUsername);
+      router.push(`/rules/user?author=${encodeURIComponent(lastModifiedByUsername)}`);
+    } catch (error) {
+      console.error('Failed to fetch GitHub username:', error);
+    } finally {
+      setIsLoadingUsername(false);
+    }
+  };
+
+  // Prefetch the GitHub username as soon as we know the rule URI
+  useEffect(() => {
+    let isMounted = true;
+    (async () => {
+      const uri = rule?.uri;
+      if (!uri) return;
+      try {
+        const username = await githubService.fetchGitHubUsernameForRule(uri, 1);
+        if (username && isMounted) setAuthorUsername(username);
+      } catch {
+        // Silently ignore prefetch errors; click fallback will handle
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [rule?.uri, githubService]);
+  
   useEffect(() => {
     (async () => {
       if (user?.sub && rule?.uri) {
@@ -78,20 +116,6 @@ export default function ClientRulePage(props: ClientRulePageProps) {
       }
     })();
   }, [user?.sub, rule?.guid]);
-  
-  const openUserRule = async (ruleUri: string, state: number) => {
-    if (!ruleUri) return;
-    
-    try {
-      setIsLoadingUsername(true);
-      const lastModifiedByUsername = await githubService.fetchGitHubUsernameForRule(ruleUri, state);
-      router.push(`/rules/user?author=${encodeURIComponent(lastModifiedByUsername)}`);
-    } catch (error) {
-      console.error('Failed to fetch GitHub username:', error);
-    } finally {
-      setIsLoadingUsername(false);
-    }
-  };
 
   return (
     <>
