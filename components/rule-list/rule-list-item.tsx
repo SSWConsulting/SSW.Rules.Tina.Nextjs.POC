@@ -12,18 +12,17 @@ import MarkdownComponentMapping from '../tina-markdown/markdown-component-mappin
 export interface RuleListItemProps {
   rule: any;
   viewStyle: string;
-  type: string;
   onBookmarkRemoved?: (ruleGuid: string) => void;
 }
 
-const RuleListItem: React.FC<RuleListItemProps> = ({ rule, viewStyle, type, onBookmarkRemoved }) => {
+const RuleListItem: React.FC<RuleListItemProps> = ({ rule, viewStyle, onBookmarkRemoved }) => {
 
   return (
     <div className="mb-3">
       <li key={rule.guid}>
         <RuleListItemHeader 
           rule={rule} 
-          type={type} 
+          showBookmark={true}
           onBookmarkRemoved={onBookmarkRemoved}
         />
         

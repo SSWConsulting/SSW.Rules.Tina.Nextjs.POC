@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { createGitHubService } from "@/lib/services/github";
+import client from '@/tina/__generated__/client';
+import { RuleListItemHeader } from '@/components/rule-list';
 
 const ActionTypes = {
   BEFORE: 'before',
@@ -12,52 +14,65 @@ const ActionTypes = {
 export default function UserRulesClientPage() {
   const searchParams = useSearchParams();
   const [notFound, setNotFound] = useState(false);
-  const [noAuthorRules, setNoAuthorRules] = useState(false);
-  const [filteredItems, setFilteredItems] = useState<{
-    list: any[];
-    filter: any;
-  }>({ list: [], filter: {} });
+  const [lastModifiedRules, setLastModifiedRules] = useState<any[]>([]);
+  const [authoredRules, setAuthoredRules] = useState<any[]>([]);
   const [author, setAuthor] = useState<{
     fullName?: string;
     slug?: string;
     gitHubUrl?: string;
   }>({});
-  const [authorRules, setAuthorRules] = useState<{
-    list: any[];
-    filter: any;
-  }>({
-    list: [],
-    filter: {},
-  });
-  const [isAscending, setIsAscending] = useState(true);
+  
   const [previousPageCursor, setPreviousPageCursor] = useState<string[]>([]);
   const [nextPageCursor, setNextPageCursor] = useState('');
   const [tempCursor, setTempCursor] = useState('');
   const [hasNext, setHasNext] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [loadingLastModified, setLoadingLastModified] = useState(false);
+  const [loadingAuthored, setLoadingAuthored] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [githubService] = useState(() => createGitHubService());
 
   const queryStringRulesAuthor = searchParams.get('author') || '';
 
-  useEffect(() => {
-    if (queryStringRulesAuthor) {
-      // For now, we'll set a mock author since we don't have CRM data
-      // In a real implementation, you'd fetch this from your data source
-      const mockAuthor = {
-        fullName: queryStringRulesAuthor,
-        slug: queryStringRulesAuthor.toLowerCase().replace(/\s+/g, '-'),
-        gitHubUrl: `https://github.com/${queryStringRulesAuthor}`
-      };
-      setAuthor(mockAuthor);
-
-      fetchGithubData(ActionTypes.AFTER);
-    }
-  }, [queryStringRulesAuthor]);
-
-  const fetchGithubData = async (action?: string): Promise<any> => {
+  const loadAuthorFromCrm = async (): Promise<string> => {
     try {
-      setLoading(true);
+      const res = await fetch('/api/crm/employees');
+      if (!res.ok) throw new Error('Failed to fetch CRM employees');
+      const data = await res.json();
+      const employees = Array.isArray(data?.value) ? data.value : [];
+
+      const queryLower = queryStringRulesAuthor.toLowerCase();
+      const match = employees.find((e: any) => (e?.gitHubUrl || '').toLowerCase().includes(queryLower));
+
+      if (match) {
+        setAuthor({
+          fullName: match.fullName,
+          slug: toSlug(match.fullName || queryStringRulesAuthor),
+          gitHubUrl: match.gitHubUrl,
+        });
+        return match.fullName as string;
+      } else {
+        // Fallback to GitHub handle-based author if no CRM match
+        setAuthor({
+          fullName: normalizeName(queryStringRulesAuthor),
+          slug: toSlug(queryStringRulesAuthor),
+          gitHubUrl: `https://github.com/${queryStringRulesAuthor}`,
+        });
+        return normalizeName(queryStringRulesAuthor) || '';
+      }
+    } catch (err) {
+      console.error('Error loading CRM author:', err);
+      setAuthor({
+        fullName: normalizeName(queryStringRulesAuthor),
+        slug: toSlug(queryStringRulesAuthor),
+        gitHubUrl: `https://github.com/${queryStringRulesAuthor}`,
+      });
+      return normalizeName(queryStringRulesAuthor) || '';
+    }
+  }
+
+  const getLastModifiedRules = async (action?: string) => {
+    try {
+      setLoadingLastModified(true);
       
       let cursor: string | undefined;
       let direction: 'after' | 'before' = 'after';
@@ -70,25 +85,28 @@ export default function UserRulesClientPage() {
         direction = 'after';
       }
 
-      const searchData = await githubService.searchPullRequestsByAuthor(
+      const prSearchData = await githubService.searchPullRequestsByAuthor(
         queryStringRulesAuthor, 
         cursor, 
         direction
       );
 
-      const resultList = searchData.search.nodes;
+      const resultList = prSearchData.search.nodes;
       const allRules = resultList
         .flatMap(pr => pr.files.nodes)
-        .filter(file => file.path.endsWith('rule.md'));
+        .filter(file => file.path.endsWith('rule.mdx'));
+      if(allRules.length === 0){
+        return;
+      }
       const uniqueRules = getUniqueRules(allRules);
       updateFilteredItems(uniqueRules);
 
-      const { endCursor, startCursor, hasNextPage } = searchData.search.pageInfo;
+      const { endCursor, startCursor, hasNextPage } = prSearchData.search.pageInfo;
       
       if (action === ActionTypes.AFTER) {
         setPreviousPageCursor([...previousPageCursor, nextPageCursor]);
       } else if (action === ActionTypes.BEFORE) {
-        previousPageCursor.pop();
+        setPreviousPageCursor(prev => prev.slice(0, -1));
       }
 
       setNextPageCursor(endCursor || '');
@@ -100,7 +118,7 @@ export default function UserRulesClientPage() {
       setError('Failed to fetch rules data. Please try again later.');
       setNotFound(true);
     } finally {
-      setLoading(false);
+      setLoadingLastModified(false);
     }
   };
 
@@ -109,7 +127,7 @@ export default function UserRulesClientPage() {
     
     files.forEach(file => {
       const path = file.path;
-      const ruleName = path.replace(/^rules\//, '').replace(/\/rule\.md$/, '');
+      const ruleName = path.replace(/^rules\//, '').replace(/\/rule\.mdx$/, '');
       
       if (!uniqueRulesMap.has(ruleName) || 
           new Date(file.lastUpdated) > new Date(uniqueRulesMap.get(ruleName).lastUpdated)) {
@@ -120,35 +138,92 @@ export default function UserRulesClientPage() {
     return Array.from(uniqueRulesMap.values());
   }
 
-  // TODO
-  const updateFilteredItems = (filteredRule: any[]): void => {
-    const mergedList = [...filteredItems.list];
-
-    filteredRule.forEach((ruleItem) => {
-      const isDuplicate = mergedList.some(
-        (mergedItem) => mergedItem.path === ruleItem.path
+  const updateFilteredItems = async (uniqueRules: any[]) => {
+    try {
+      const uris = Array.from(
+        new Set(
+          uniqueRules
+            .map((b) => b.path.replace(/^rules\//, '').replace(/\/rule\.mdx$/, ''))
+            .filter((g): g is string => Boolean(g))
+        )
+      );
+          
+      const res = await client.queries.rulesByUriQuery({ uris });
+      const edges = res?.data?.ruleConnection?.edges ?? [];
+      const byUri = new Map<string, any>(
+        edges
+          .map((e: any) => e?.node)
+          .filter(Boolean)
+          .map((n: any) => [n.uri, n])
       );
 
-      if (!isDuplicate) {
-        mergedList.push(ruleItem);
+      const matchedRules: any[] = uris
+        .map((g) => byUri.get(g))
+        .filter(Boolean)
+        .map((fullRule: any) => ({
+          guid: fullRule.guid,
+          title: fullRule.title,
+          uri: fullRule.uri,
+          body: fullRule.body,
+          authors:
+            fullRule.authors
+              ?.map((a: any) => (a && a.title ? { title: a.title } : null))
+              .filter((a: any): a is { title: string } => a !== null) || [],
+        }));
+
+        setLastModifiedRules(matchedRules);
+
+      if (matchedRules.length !== uniqueRules.length) {
+        const foundUris = new Set(matchedRules.map((r) => r.uri));
+        const missingUris = uniqueRules
+          .map((b) => b.path.replace(/^rules\//, '').replace(/\/rule\.mdx$/, ''))
+          .filter((g) => !foundUris.has(g));
+        console.warn(`Some bookmarked rules not found:`, missingUris);
       }
-    });
-
-    // For now, we'll set the filtered items directly since we don't have the old structure
-    // In a real implementation, you'd need to match these files with your CMS data
-    setFilteredItems({ list: mergedList, filter: {} });
-    
-    // Since we don't have author information in the GitHub data yet,
-    // we'll need to implement this differently
-    setNotFound(mergedList.length === 0);
-    setNoAuthorRules(false); // We'll need to implement this logic differently
+    } catch (ruleError) {
+      console.error('Error fetching rule data:', ruleError);
+      setLastModifiedRules([]);
+    }
   };
 
-  const toggleSortOrder = (order: boolean): void => {
-    filteredItems.list?.reverse();
-    authorRules.list?.reverse();
-    setIsAscending(order);
-  };
+  const getAuthoredRules = async (authorName: string) => {
+    try {
+      setLoadingAuthored(true);
+      const res = await client.queries.rulesByAuthor({ authorTitle: authorName || '' });
+      const edges = res?.data?.ruleConnection?.edges ?? [];
+      const nodes = edges.map((e: any) => e?.node).filter(Boolean);
+      const byGuid = new Map<string, any>(
+        nodes.map((n: any) => [n.guid, n])
+      );
+
+      const authored = Array.from(byGuid.values()).map((fullRule: any) => ({
+        guid: fullRule.guid,
+        title: fullRule.title,
+        uri: fullRule.uri,
+        body: fullRule.body,
+        authors:
+          fullRule.authors
+            ?.map((a: any) => (a && a.title ? { title: a.title } : null))
+            .filter((a: any): a is { title: string } => a !== null) || [],
+      }));
+
+      setAuthoredRules(authored);
+    } finally {
+      setLoadingAuthored(false);
+    }
+  }
+
+  useEffect(() => {
+    (async () => {
+      if (queryStringRulesAuthor) {
+        const [_, resolvedAuthorName] = await Promise.all([
+          getLastModifiedRules(ActionTypes.AFTER),
+          loadAuthorFromCrm(),
+        ]);
+        await getAuthoredRules(resolvedAuthorName as string);
+      }
+    })();
+  }, [queryStringRulesAuthor]);
 
   if (!queryStringRulesAuthor) {
     return (
@@ -190,45 +265,33 @@ export default function UserRulesClientPage() {
             <hr className="mt-1 sm:mt-0" />
 
             <h3 className="text-ssw-red">
-              Last Modified ({filteredItems.list.length})
+              Last Modified ({lastModifiedRules.length})
             </h3>
 
-            <div className="rule-index archive no-gutters rounded mb-12">
-              {/* <LatestRulesContent
-                filteredItems={filteredItems}
-                title={filterTitle}
-                notFound={notFound}
-                isAscending={isAscending}
-                setIsAscending={toggleSortOrder}
-              /> */}
+            <div className="rounded mb-12">
+              {loadingLastModified && (
+                <div className="py-4 text-sm text-gray-500">Loading last modified…</div>
+              )}
+              {!loadingLastModified && lastModifiedRules.length > 0 && (
+                lastModifiedRules.map((rule) => (
+                  <RuleListItemHeader key={rule.guid} rule={rule} />
+                ))
+              )}
             </div>
 
             <h3 className="text-ssw-red">
-              Acknowledged ({authorRules.list.length})
+              Acknowledged ({authoredRules.length})
             </h3>
 
-            <div className="rule-index archive no-gutters rounded mb-12">
-              {/* <LatestRulesContent
-                filteredItems={authorRules}
-                title={filterTitle}
-                notFound={noAuthorRules}
-                isAscending={isAscending}
-                setIsAscending={(order: boolean) => toggleSortOrder(order)}
-              /> */}
-            </div>
-
-            <div className="text-center mb-4">
-              <button
-                className={`m-3 mx-6 p-2 w-32 rounded-md ${
-                  hasNext
-                    ? 'bg-ssw-red text-white'
-                    : 'bg-ssw-grey text-gray-400'
-                }`}
-                onClick={() => fetchGithubData(ActionTypes.AFTER)}
-                disabled={!hasNext || loading}
-              >
-                {loading ? 'Loading...' : 'Load More'}
-              </button>
+            <div className="rounded mb-12">
+              {loadingAuthored && (
+                <div className="py-4 text-sm text-gray-500">Loading authored…</div>
+              )}
+              {!loadingAuthored && authoredRules.length > 0 && (
+                authoredRules.map((rule) => (
+                  <RuleListItemHeader key={rule.guid} rule={rule} />
+                ))
+              )}
             </div>
           </div>
           <div className="w-full lg:w-1/4 px-4" id="sidebar">
@@ -239,3 +302,11 @@ export default function UserRulesClientPage() {
     </div>
   );
 }
+
+function toSlug(arg0: any): string | undefined {
+  throw new Error('Function not implemented.');
+}
+function normalizeName(queryStringRulesAuthor: string): string | undefined {
+  throw new Error('Function not implemented.');
+}
+
