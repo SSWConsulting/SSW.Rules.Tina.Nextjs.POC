@@ -47,7 +47,6 @@ export default function ClientRulePage(props: ClientRulePageProps) {
   }).data;
   const rule = ruleData?.rule;
   const iconSize = 32;
-  console.log(ruleQueryProps);
 
   const relativeTime = useMemo(() => {
     return rule?.lastUpdated ? timeAgo(rule?.lastUpdated) : "";
