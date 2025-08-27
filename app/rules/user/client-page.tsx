@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 import { createGitHubService } from "@/lib/services/github";
 import client from '@/tina/__generated__/client';
 import { RuleListItemHeader } from '@/components/rule-list';
+import { normalizeName, toSlug } from '@/lib/utils';
 
 const ActionTypes = {
   BEFORE: 'before',
@@ -302,11 +303,3 @@ export default function UserRulesClientPage() {
     </div>
   );
 }
-
-function toSlug(arg0: any): string | undefined {
-  throw new Error('Function not implemented.');
-}
-function normalizeName(queryStringRulesAuthor: string): string | undefined {
-  throw new Error('Function not implemented.');
-}
-

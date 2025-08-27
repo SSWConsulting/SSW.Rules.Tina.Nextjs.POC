@@ -5,7 +5,7 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-const normalizeName = (name) => {
+export function normalizeName(name: string) {
   return name
     .normalize('NFD')
     .replace(/\s*[({[].*?[})\]]/g, '') // Remove anything inside (), [], {} and the (),[],{} themselves
@@ -14,4 +14,6 @@ const normalizeName = (name) => {
     .trim();
 };
 
-const toSlug = (name: string) => normalizeName(name).toLowerCase().replace(/\s+/g, '-');
+export function toSlug(name: string) {
+  return normalizeName(name).toLowerCase().replace(/\s+/g, '-');
+}
