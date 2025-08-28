@@ -5,6 +5,10 @@ import { GitHubButtonWrapper } from '@/components/GitHubButtonWrapper';
 import { FaFacebook, FaHeart, FaInstagram, FaLinkedin, FaTiktok, FaXTwitter, FaYoutube } from 'react-icons/fa6';
 
 const buildTimestamp = process.env.BUILD_TIMESTAMP ? parseInt(process.env.BUILD_TIMESTAMP) : Date.now() - 1000 * 60 * 30;
+const versionDeployed = process.env.VERSION_DEPLOYED || 'dev';
+const deploymentUrl = process.env.DEPLOYMENT_URL || '#';
+const buildDate = process.env.BUILD_DATE;
+const commitHash = process.env.COMMIT_HASH;
 
 export const Footer = () => {
     return (
@@ -73,11 +77,12 @@ export const Footer = () => {
                                 <a className='footer-link' href={`${pathPrefix}/rules-to-better-websites-deployment`}>
                                     CONSTANT CONTINUOUS DEPLOYMENT
                                 </a>
-                                . Last deployed {getLastDeployTime()} ago (Build #{' '}
-                                <a className='footer-link' href={process.env.DEPLOYMENT_URL || 'https://dev.azure.com/ssw/SSW.Rules/_release?_a=releases&view=mine&definitionId=3'}>
-                                    {process.env.VERSION_DEPLOYED}
+                                . Last deployed {getLastDeployTime()} ago
+                                {buildDate && <span title={buildDate}> on {moment(buildDate).format('MMM D, YYYY [at] HH:mm UTC')}</span>} (Build #{' '}
+                                <a className='footer-link' href={deploymentUrl} target='_blank' rel='noreferrer'>
+                                    {versionDeployed}
                                 </a>
-                                )
+                                {commitHash && <span title={`Commit: ${commitHash}`}>-{commitHash}</span>})
                             </div>
                             <div className='md:text-right py-2'>
                                 Powered by{' '}

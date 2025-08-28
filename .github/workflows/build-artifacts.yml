@@ -58,6 +58,15 @@ jobs:
             image_digest: ${{ steps.build.outputs.digest }}
         steps:
             # ────────────────────────────── BUILD INFO ─────────────────────────────
+            - name: Generate build information
+              id: build_info
+              run: |
+                  BUILD_TIMESTAMP=$(date +%s)000
+                  BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+                  COMMIT_HASH=$(echo "${{ github.sha }}" | cut -c1-7)
+                  VERSION_DEPLOYED="${{ github.run_number }}"
+                  DEPLOYMENT_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
             - name: Log build information
               run: |
                   echo "🚀 Starting build process"
@@ -66,6 +75,8 @@ jobs:
                   echo "Environment tag: ${{ inputs.tag }}"
                   echo "Registry: ${{ vars.registry_name }}"
                   echo "Image: ${{ vars.IMAGE_NAME }}"
+                  echo "Build timestamp: ${{ env.BUILD_TIMESTAMP }}"
+                  echo "Build version: ${{ env.VERSION_DEPLOYED }}"
 
             # ────────────────────────────── CHECKOUTS ──────────────────────────────
             - name: Checkout main repo
@@ -125,6 +136,9 @@ jobs:
                   labels: |
                       org.opencontainers.image.source.branch=${{ inputs.source_branch }}
                       org.opencontainers.image.tina.branch=${{ inputs.tina_branch || secrets.NEXT_PUBLIC_TINA_BRANCH }}
+                      org.opencontainers.image.build.timestamp=${{ env.BUILD_TIMESTAMP }}
+                      org.opencontainers.image.build.version=${{ env.VERSION_DEPLOYED }}
+                      org.opencontainers.image.build.commit=${{ env.COMMIT_HASH }}
 
             - name: Create Dockerfile
               run: |
@@ -146,6 +160,12 @@ jobs:
                   COPY . .
                   RUN git lfs pull || true
 
+                  ARG BUILD_TIMESTAMP
+                  ARG VERSION_DEPLOYED
+                  ARG DEPLOYMENT_URL
+                  ARG BUILD_DATE
+                  ARG COMMIT_HASH
+
                   ARG TINA_TOKEN
                   ARG NEXT_PUBLIC_TINA_CLIENT_ID
                   ARG NEXT_PUBLIC_TINA_BRANCH
@@ -153,7 +173,13 @@ jobs:
                   ARG NEXT_PUBLIC_ALGOLIA_ADMIN_KEY
                   ARG NEXT_PUBLIC_ALGOLIA_INDEX_NAME
                   ARG NEXT_PUBLIC_ALGOLIA_API_KEY
-                  ENV TINA_TOKEN=$TINA_TOKEN \
+
+                  ENV BUILD_TIMESTAMP=$BUILD_TIMESTAMP \
+                      VERSION_DEPLOYED=$VERSION_DEPLOYED \
+                      DEPLOYMENT_URL=$DEPLOYMENT_URL \
+                      BUILD_DATE=$BUILD_DATE \
+                      COMMIT_HASH=$COMMIT_HASH \
+                      TINA_TOKEN=$TINA_TOKEN \
                       NEXT_PUBLIC_TINA_CLIENT_ID=$NEXT_PUBLIC_TINA_CLIENT_ID \
                       NEXT_PUBLIC_TINA_BRANCH=$NEXT_PUBLIC_TINA_BRANCH \
                       NEXT_PUBLIC_ALGOLIA_APP_ID=$NEXT_PUBLIC_ALGOLIA_APP_ID \
@@ -166,10 +192,24 @@ jobs:
 
                   FROM base AS runner
                   WORKDIR /app
+
                   ENV NODE_ENV=production \
                       NEXT_TELEMETRY_DISABLED=1 \
                       PORT=3000 \
                       HOSTNAME="0.0.0.0"
+
+                  ARG BUILD_TIMESTAMP
+                  ARG VERSION_DEPLOYED
+                  ARG DEPLOYMENT_URL
+                  ARG BUILD_DATE
+                  ARG COMMIT_HASH
+
+                  ENV BUILD_TIMESTAMP=$BUILD_TIMESTAMP \
+                      VERSION_DEPLOYED=$VERSION_DEPLOYED \
+                      DEPLOYMENT_URL=$DEPLOYMENT_URL \
+                      BUILD_DATE=$BUILD_DATE \
+                      COMMIT_HASH=$COMMIT_HASH
+
                   RUN addgroup -S nodejs -g 1001 && adduser -S nextjs -u 1001
                   COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
                   COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
@@ -189,6 +229,11 @@ jobs:
                   tags: ${{ steps.meta.outputs.tags }}
                   labels: ${{ steps.meta.outputs.labels }}
                   build-args: |
+                      BUILD_TIMESTAMP=${{ env.BUILD_TIMESTAMP }}
+                      VERSION_DEPLOYED=${{ env.VERSION_DEPLOYED }}
+                      DEPLOYMENT_URL=${{ env.DEPLOYMENT_URL }}
+                      BUILD_DATE=${{ env.BUILD_DATE }}
+                      COMMIT_HASH=${{ env.COMMIT_HASH }}
                       TINA_TOKEN=${{ secrets.TINA_TOKEN }}
                       NEXT_PUBLIC_TINA_CLIENT_ID=${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}
                       NEXT_PUBLIC_ALGOLIA_APP_ID=${{ secrets.NEXT_PUBLIC_ALGOLIA_APP_ID }}
@@ -206,3 +251,8 @@ jobs:
                   echo "Image digest: ${{ steps.build.outputs.digest }}"
                   echo "Source branch: ${{ inputs.source_branch || 'Not specified' }}"
                   echo "Content branch: ${{ inputs.tina_branch || secrets.NEXT_PUBLIC_TINA_BRANCH }}"
+                  echo "Build Info:"
+                  echo "  📅 Build Date: ${{ env.BUILD_DATE }}"
+                  echo "  🏷️ Version: ${{ env.VERSION_DEPLOYED }}"
+                  echo "  🔗 Deployment URL: ${{ env.DEPLOYMENT_URL }}"
+                  echo "  📝 Commit: ${{ env.COMMIT_HASH }}"
