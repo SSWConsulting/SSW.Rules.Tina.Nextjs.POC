@@ -40,7 +40,6 @@ jobs:
             tag: ${{ github.event.inputs.environment || 'staging' }}
             tina_branch: ${{ github.event.inputs.tina_branch }}
             source_branch: ${{ github.event.inputs.branch_name }}
-            build_timestamp: ${{ github.run_number }}-${{ github.run_id }}
         secrets:
             AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
             AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
