@@ -198,7 +198,7 @@ jobs:
                       NEXT_PUBLIC_ALGOLIA_ADMIN_KEY=${{ secrets.NEXT_PUBLIC_ALGOLIA_ADMIN_KEY }}
                       NEXT_PUBLIC_ALGOLIA_INDEX_NAME=${{ secrets.NEXT_PUBLIC_ALGOLIA_INDEX_NAME }}
                       NEXT_PUBLIC_ALGOLIA_API_KEY=${{ secrets.NEXT_PUBLIC_ALGOLIA_API_KEY }}
-                      NEXT_PUBLIC_TINA_BRANCH=${{ inputs.tina_branch || secrets.NEXT_PUBLIC_TINA_BRANCH }
+                      NEXT_PUBLIC_TINA_BRANCH=${{ inputs.tina_branch || secrets.NEXT_PUBLIC_TINA_BRANCH }}
                       NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
                   cache-from: type=gha
                   cache-to: type=gha,mode=max
