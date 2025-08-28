@@ -59,24 +59,28 @@ jobs:
         needs: build
         environment: ${{ github.event.inputs.environment || 'staging' }}
         steps:
-            - name: Generate build timestamp
+            - name: Use build info from build job
               id: build_info
               run: |
-                  BUILD_TIMESTAMP=$(date +%s)000
-                  BUILD_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
-                  COMMIT_HASH=$(echo "${{ github.sha }}" | cut -c1-7)
+                  # Use build info from the build job outputs
+                  BUILD_TIMESTAMP="${{ needs.build.outputs.build_timestamp }}"
+                  BUILD_DATE="${{ needs.build.outputs.build_date }}"
+                  COMMIT_HASH="${{ needs.build.outputs.commit_hash }}"
+                  VERSION_DEPLOYED="${{ needs.build.outputs.version_deployed }}"
+                  DEPLOYMENT_URL="${{ needs.build.outputs.deployment_url }}"
                   
                   echo "BUILD_TIMESTAMP=$BUILD_TIMESTAMP" >> $GITHUB_ENV
                   echo "BUILD_DATE=$BUILD_DATE" >> $GITHUB_ENV
                   echo "COMMIT_HASH=$COMMIT_HASH" >> $GITHUB_ENV
-                  echo "VERSION_DEPLOYED=${{ github.run_number }}" >> $GITHUB_ENV
-                  echo "DEPLOYMENT_URL=${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" >> $GITHUB_ENV
+                  echo "VERSION_DEPLOYED=$VERSION_DEPLOYED" >> $GITHUB_ENV
+                  echo "DEPLOYMENT_URL=$DEPLOYMENT_URL" >> $GITHUB_ENV
                   
-                  echo "🏗️ Build Info Generated:"
+                  echo "🏗️ Using Build Info from Build Job:"
                   echo "  Timestamp: $BUILD_TIMESTAMP"
                   echo "  Date: $BUILD_DATE" 
-                  echo "  Version: ${{ github.run_number }}"
+                  echo "  Version: $VERSION_DEPLOYED"
                   echo "  Commit: $COMMIT_HASH"
+                  echo "  Deployment URL: $DEPLOYMENT_URL"
 
             - name: Log deployment info
               run: |
