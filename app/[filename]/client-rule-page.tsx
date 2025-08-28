@@ -22,6 +22,7 @@ import HelpCard from "@/components/HelpCard";
 import Acknowledgements from "@/components/Acknowledgements";
 import { useUser, getAccessToken } from "@auth0/nextjs-auth0";
 import { BookmarkService } from "@/lib/bookmarkService";
+import { ICON_SIZE } from "@/constants";
 
 export interface ClientRulePageProps {
   ruleQueryProps;
@@ -39,7 +40,6 @@ export default function ClientRulePage(props: ClientRulePageProps) {
     data: ruleQueryProps?.data,
   }).data;
   const rule = ruleData?.rule;
-  const iconSize = 32;
 
   const relativeTime = useMemo(() => {
     return rule?.lastUpdated ? timeAgo(rule?.lastUpdated) : "";
@@ -111,12 +111,12 @@ export default function ClientRulePage(props: ClientRulePageProps) {
               </div>
               <div className="flex align-center gap-4 text-2xl mt-4">
                 <RiThumbUpLine
-                  size={iconSize}
+                  size={ICON_SIZE}
                   className="rule-icon"
                 ></RiThumbUpLine>
                 <span className="-ml-3">12</span>
                 <RiThumbDownLine
-                  size={iconSize}
+                  size={ICON_SIZE}
                   className="rule-icon"
                 ></RiThumbDownLine>
                 <span className="-ml-3">3</span>
@@ -124,7 +124,7 @@ export default function ClientRulePage(props: ClientRulePageProps) {
                 <button>
                   <Link href={`./admin#/~/${rule?.uri}`}>
                     <RiPencilLine
-                      size={iconSize}
+                      size={ICON_SIZE}
                       className="rule-icon"
                     ></RiPencilLine>
                   </Link>
@@ -133,11 +133,11 @@ export default function ClientRulePage(props: ClientRulePageProps) {
                   ruleId={rule?.guid || ''} 
                   isBookmarked={isBookmarked}
                   onBookmarkToggle={(ruleId, newStatus) => setIsBookmarked(newStatus)}
-                  size={iconSize} 
+                  size={ICON_SIZE} 
                 />
                 <button>
                   <Link href={`https://github.com/SSWConsulting/SSW.Rules.Content/blob/main/rules/${rule?.uri}/rule.md`} target="_blank">
-                    <RiGithubLine size={iconSize} className="rule-icon"></RiGithubLine>
+                    <RiGithubLine size={ICON_SIZE} className="rule-icon"></RiGithubLine>
                   </Link>
                 </button>
               </div>

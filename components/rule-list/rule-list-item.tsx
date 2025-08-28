@@ -1,57 +1,59 @@
 'use client';
 
 import React from 'react';
-import { RiArrowRightCircleFill } from 'react-icons/ri';
-import { Rule } from '@/types';
 import RuleListItemHeader from './rule-list-item-header';
-import { IconLink } from '@/components/ui';
 import { TinaMarkdown } from 'tinacms/dist/rich-text';
 import { tinaField } from 'tinacms/dist/react';
 import MarkdownComponentMapping from '../tina-markdown/markdown-component-mapping';
+import { RuleListFilter } from '@/types/ruleListFilter';
 
 export interface RuleListItemProps {
   rule: any;
-  viewStyle: string;
-  type: string;
-  onBookmarkRemoved?: (ruleGuid: string) => void;
+  index: number;
+  filter: RuleListFilter;
 }
 
-const RuleListItem: React.FC<RuleListItemProps> = ({ rule, viewStyle, type, onBookmarkRemoved }) => {
+const RuleListItem: React.FC<RuleListItemProps> = ({ rule, index, filter }) => {
+  function collectIntroEmbeds(nodes: any[] = []): any[] {
+    const out: any[] = [];
+    for (const n of nodes) {
+      if (n?.name === "introEmbed") out.push(n);
+      if (Array.isArray(n?.children)) out.push(...collectIntroEmbeds(n.children));
+    }
+    return out;
+  }
+  
+  function makeBlurbContent(body?: any) {
+    const children = Array.isArray(body?.children) ? body.children : [];
+    const embeds = collectIntroEmbeds(children);
+    return { type: "root", children: embeds };
+  }
+  
+  function getContentForViewStyle(
+    filter: RuleListFilter,
+    body?: any
+  ) {
+    if (!body) return undefined;
+    if (filter === RuleListFilter.All) return body;
+    if (filter === RuleListFilter.Blurb) return makeBlurbContent(body);
+    return undefined;
+  }
 
   return (
-    <div className="mb-3">
-      <li key={rule.guid}>
-        <RuleListItemHeader 
-          rule={rule} 
-          type={type} 
-          onBookmarkRemoved={onBookmarkRemoved}
+    <li key={index} className="p-4 pt-5 border rounded shadow">
+      <RuleListItemHeader 
+        rule={rule} 
+        index={index}
+      />
+
+      <div data-tina-field={tinaField(rule, "body")}
+        className="px-6 py-4">
+        <TinaMarkdown
+          content={getContentForViewStyle(filter, rule.body)}
+          components={MarkdownComponentMapping}
         />
-        
-        <section className={`p-4 ${viewStyle === 'blurb' ? 'visible' : 'hidden'}`}>
-          <div data-tina-field={tinaField(rule, "body")} className="mt-8">
-            <TinaMarkdown
-              content={rule?.body?.children?.slice(0, 2)}
-              components={MarkdownComponentMapping}
-            />
-          </div>
-          <IconLink href={`/${rule.uri}`}
-              title={`Read more about ${rule.title}`}
-              className="my-5">
-              <RiArrowRightCircleFill className="inline mr-1" />
-              Read more
-          </IconLink>
-        </section>
-        
-        <section className={`rule-content px-4 mb-4 ${viewStyle === 'all' ? 'visible' : 'hidden'}`}>
-          <div data-tina-field={tinaField(rule, "body")} className="mt-8">
-            <TinaMarkdown
-              content={rule?.body}
-              components={MarkdownComponentMapping}
-            />
-          </div>
-        </section>
-      </li>
-    </div>
+      </div>
+    </li>
   );
 };
 
