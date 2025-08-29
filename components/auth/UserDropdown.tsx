@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useUser } from '@auth0/nextjs-auth0';
-import { useRef, useState, useEffect } from 'react';
+import { useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { FaGithub, FaUser, FaSignOutAlt } from "react-icons/fa";
 
@@ -48,6 +48,22 @@ export default function UserDropdown() {
         right: `${position.right}px`
       }}
     >
+      <span
+          aria-hidden
+          className="pointer-events-none absolute -top-[10px] right-4 h-0 w-0
+                    border-l-[10px] border-l-transparent
+                    border-r-[10px] border-r-transparent
+                    border-b-[10px] border-b-gray-200
+                    dark:border-b-gray-700"
+        />
+        <span
+          aria-hidden
+          className="pointer-events-none absolute -top-[9px] right-4 h-0 w-0
+                    border-l-[9px] border-l-transparent
+                    border-r-[9px] border-r-transparent
+                    border-b-[9px] border-b-white
+                    dark:border-b-gray-900"
+        />
       <div className="flex items-center gap-3 p-4">
         <img
           src={u.picture}
@@ -68,8 +84,9 @@ export default function UserDropdown() {
       <div className="border-t border-gray-200 dark:border-gray-700" />
 
       <nav className="p-1">
-        <MenuItem href={`https://www.github.com/${u.nickname}`}><FaGithub size="18" /> GitHub Profile</MenuItem>
-        <MenuItem href="/profile"><FaUser size="18" /> SSW.Rules Profile</MenuItem>
+        <MenuItem href={`https://www.github.com/${u.nickname}`} target="_blank"
+              rel="noreferrer"><FaGithub size="18" /> GitHub Profile</MenuItem>
+        <MenuItem href="/rules/profile" prefetch={false}><FaUser size="18" /> SSW.Rules Profile</MenuItem>
         <MenuItem as="a" href="/auth/logout">
           <FaSignOutAlt size="18" />
           Sign Out
