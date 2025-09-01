@@ -293,37 +293,3 @@ ul li::before {
   color: var(--color-ssw-red);
   position: absolute;
 }
-
-a.footer-greybar-link, a.footer-greybar-link:hover {
-  text-decoration: underline;
-}
-
-.bg-grey-translucent {
-  background-color: rgba(102, 102, 102, 0.1);
-}
-
-a.footer-link,a.footer-link:visited  {
-  @apply text-white;
-  line-height: .75rem;
-  transition: all 0.3s ease-in-out;
-  &:hover {
-    @apply text-ssw-red;
-  }
-}
-
-.footer-link {
-  display: inline-block;
-  line-height: initial;
-}
-
-.social-media-icon {
-  color: #fff;
-  display: block;
-  float: right;
-  height: 25px;
-  text-decoration: none;
-  text-align: center;
-  width: 25px;
-  margin-left: 8px;
-  line-height: 25px;
-}
