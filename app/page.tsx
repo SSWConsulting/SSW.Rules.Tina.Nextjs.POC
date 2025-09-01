@@ -23,7 +23,7 @@ async function fetchAllCategories() {
 
     allCategories.push(
       ...edges
-        .filter((edge: any) => edge && edge.node)
+        .filter((edge: any) => edge && edge.node && edge.node.__typename !== "CategoryMain")
         .map((edge: any) => edge.node)
     );
 
