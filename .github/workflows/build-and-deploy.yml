@@ -116,6 +116,8 @@ jobs:
                     CRM_TENANT_ID=${{ vars.CRM_TENANT_ID }} \
                     CRM_APP_ID=${{ vars.CRM_APP_ID }} \
                     CRM_SCOPE=${{ vars.CRM_SCOPE }} \
+                    CRM_VIEW_CURRENT=${{ vars.CRM_VIEW_CURRENT }} \
+                    CRM_VIEW_PAST=${{ vars.CRM_VIEW_PAST }} \
                     CRM_APP_SECRET=${{ secrets.CRM_APP_SECRET }} \
                     NEXT_PUBLIC_GITHUB_ORG=${{ vars.NEXT_PUBLIC_GITHUB_ORG }} \
                     NEXT_PUBLIC_GITHUB_REPO=${{ vars.NEXT_PUBLIC_GITHUB_REPO }} \
