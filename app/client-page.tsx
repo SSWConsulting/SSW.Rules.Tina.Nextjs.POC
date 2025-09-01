@@ -20,10 +20,23 @@ export interface HomeClientPageProps {
   categories: Category[];
   latestRules: LatestRule[];
   ruleCount: number;
+  categoryRuleCounts: Record<string, number>;
 }
 
 export default function HomeClientPage(props: HomeClientPageProps) {
-  const { categories, latestRules, ruleCount } = props;
+  const { categories, latestRules, ruleCount, categoryRuleCounts } = props;
+
+  const getTopCategoryTotal = (topCategoryIndex: number) => {
+    let total = 0;
+    // Sum all subcategories after this top category until the next top category
+    for (let i = topCategoryIndex + 1; i < categories.length; i++) {
+      if (categories[i].__typename === "CategoryTop_category") {
+        break; // Stop when we hit the next top category
+      }
+      total += categoryRuleCounts[categories[i]._sys.filename] || 0;
+    }
+    return total;
+  };
 
   return (
     <>
@@ -32,18 +45,18 @@ export default function HomeClientPage(props: HomeClientPageProps) {
           <SearchBar showSort={false} />
 
           <Card dropShadow>
-            <h1 className="font-bold mb-4">Categories</h1>
+            <h1 className="m-0 mb-2 text-ssw-red font-bold">Categories</h1>
 
             {categories.map((category, index) =>
               category.__typename === "CategoryTop_category" ? (
                 <h3 key={index} className="font-bold">
-                  {category.title}
+                  {category.title} ({getTopCategoryTotal(index)})
                 </h3>
               ) : (
                 <ul key={index}>
                   <li>
                     <Link href={`/${category._sys.filename}`}>
-                      {category.title}
+                      {category.title} ({categoryRuleCounts[category._sys.filename] || 0})
                     </Link>
                   </li>
                 </ul>
