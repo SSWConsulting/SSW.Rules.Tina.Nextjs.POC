@@ -5,6 +5,7 @@ import Layout from "@/components/layout/layout";
 import SearchBar from "@/components/SearchBar";
 import HomeClientPage from "./client-page";
 import ruleToCategories from "../rule-to-categories.json";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 export const revalidate = 300;
 
@@ -73,6 +74,7 @@ export default async function Home() {
   const layout = await Layout({
     children: (
       <Section>
+        <Breadcrumbs isHomePage />
         <HomeClientPage categories={categories} latestRules={latestRules} ruleCount={ruleCount} categoryRuleCounts={categoryRuleCounts} />
       </Section>
     ),
