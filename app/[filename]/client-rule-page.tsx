@@ -37,7 +37,7 @@ export default function ClientRulePage(props: ClientRulePageProps) {
   const { user } = useUser();
   const [isBookmarked, setIsBookmarked] = useState<boolean>(false);
   const [authorUsername, setAuthorUsername] = useState<string | null>(null);
-  const relatedRules = (props.relatedRulesMapping || []).slice();
+  const relatedRules = props.relatedRulesMapping || [];
 
   const router = useRouter();
   const [githubService] = useState(() => createGitHubService());
