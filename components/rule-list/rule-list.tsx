@@ -55,7 +55,7 @@ const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContent
       {type === 'category' && (
         <div className='flex gap-2'>
           <IconLink
-            href={`./admin#/~/${categoryUri}`}
+            href={`admin/index.html#/collections/edit/category/${categoryUri?.slice(0, -4)}`}
             children={<RiPencilLine size={ICON_SIZE} />}
           />
           <IconLink 

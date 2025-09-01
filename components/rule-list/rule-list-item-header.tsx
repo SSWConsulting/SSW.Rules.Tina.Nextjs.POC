@@ -52,7 +52,7 @@ const RuleListItemHeader: React.FC<RuleListItemHeaderProps> = ({ rule, showBookm
     return (
         <section className='mb-2'>
             <div className='flex items-center flex-col justify-between sm:flex-row'>
-                <div className='flex items-center gap-2'>
+                <div className='flex items-center gap-4 md:gap-2'>
                     <span className='text-sm text-gray-500'>#{index + 1}</span>
                     <h2 className='m-0 text-2xl'>
                         <Link href={`../${rule.uri}`} ref={linkRef} className='no-underline'>
@@ -62,7 +62,7 @@ const RuleListItemHeader: React.FC<RuleListItemHeaderProps> = ({ rule, showBookm
                 </div>
 
                 {showBookmark && (
-                    <div className='profile-rule-buttons flex gap-3 justify-center'>
+                    <div className='profile-rule-buttons flex gap-3 justify-center mt-4 md:mt-0'>
                         <Bookmark ruleGuid={rule.guid} isBookmarked={isBookmarked} onBookmarkToggle={handleBookmarkToggle} />
                         <IconLink href={`./admin#/~/${rule?.uri}`} children={<RiPencilLine size={ICON_SIZE} />} />
                         <IconLink
