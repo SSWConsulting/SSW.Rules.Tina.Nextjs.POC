@@ -4,6 +4,7 @@ import client from "@/tina/__generated__/client";
 import Layout from "@/components/layout/layout";
 import SearchBar from "@/components/SearchBar";
 import HomeClientPage from "./client-page";
+import ruleToCategories from "../rule-to-categories.json";
 
 export const revalidate = 300;
 
@@ -29,7 +30,6 @@ async function fetchAllCategories() {
     hasNextPage = res?.data?.categoryConnection?.pageInfo?.hasNextPage;
     after = res?.data?.categoryConnection?.pageInfo?.endCursor;
   }
-
   return allCategories;
 }
 
@@ -47,11 +47,7 @@ async function fetchLatestRules() {
 }
 
 async function fetchRuleCount() {
-  const res = await client.queries.ruleConnection({
-    first: 0,
-  });
-
-  return res?.data?.ruleConnection?.totalCount || 0;
+  return Object.keys(ruleToCategories).length;
 }
 
 export default async function Home() {
