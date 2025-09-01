@@ -12,7 +12,6 @@ export interface RuleListProps {
   categoryUri?: string;
   rules: any[];
   type?: string;
-  filter?: boolean;
   noContentMessage?: string;
   onBookmarkRemoved?: (ruleGuid: string) => void;
 }
