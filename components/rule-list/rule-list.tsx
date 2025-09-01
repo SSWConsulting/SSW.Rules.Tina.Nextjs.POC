@@ -1,12 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Rule } from '@/types';
 import RuleListItem from './rule-list-item';
 import RadioButton from '@/components/radio-button';
-import { RiFileTextFill, RiBookOpenFill, RiDoubleQuotesL } from 'react-icons/ri';
+import { RiPencilLine, RiGithubLine } from 'react-icons/ri';
+import { RuleListFilter } from '@/types/ruleListFilter';
+import { IconLink } from '../ui';
+import { ICON_SIZE } from '@/constants';
 
 export interface RuleListProps {
+  categoryUri?: string;
   rules: any[];
   type?: string;
   filter?: boolean;
@@ -14,67 +17,63 @@ export interface RuleListProps {
   onBookmarkRemoved?: (ruleGuid: string) => void;
 }
 
-const RuleList: React.FC<RuleListProps> = ({ 
-  rules, 
-  type, 
-  filter = false, 
-  noContentMessage, 
-  onBookmarkRemoved }) => {
-  const [viewStyle, setViewStyle] = useState<'titleOnly' | 'blurb' | 'all'>('titleOnly');
-  const iconSize = 24;
+const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContentMessage, onBookmarkRemoved }) => {
+  const [filter, setFilter] = useState<RuleListFilter>(RuleListFilter.Blurb);
 
   const handleOptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setViewStyle(e.target.value as 'titleOnly' | 'blurb' | 'all');
+    setFilter(e.target.value as RuleListFilter);
   };
 
   if(rules.length === 0){
     return <div className="flex items-center justify-center min-h-[400px]">
       <p className="text-xl text-gray-600">
-        {noContentMessage || (type === 'bookmark' ? 'No bookmarks? Use them to save rules for later!' : 'No rules found.')}
+        {noContentMessage || 'No rules found.'}
       </p>
     </div>;
   }
 
   return (
     <>
-      {filter && (
-        <div className="flex justify-center gap-8 border-b border-solid border-b-gray-100 p-4 text-center lg:grid-cols-5">
-          <RadioButton
-            id="customRadioInline1"
-            name="customRadioInline1"
-            value="titleOnly"
-            selectedOption={viewStyle}
-            handleOptionChange={handleOptionChange}
-            labelText="View titles only"
-            icon={<RiDoubleQuotesL size={iconSize} />}
+    <div className='flex justify-between items-center'>
+      <div className="flex gap-2 items-center py-4 text-center lg:grid-cols-5">
+        <RadioButton
+          id="customRadioInline2"
+          name="customRadioInline1"
+          value="all"
+          selectedOption={filter}
+          handleOptionChange={handleOptionChange}
+          labelText="Show all" />
+        <RadioButton
+          id="customRadioInline3"
+          name="customRadioInline1"
+          value="blurb"
+          selectedOption={filter}
+          handleOptionChange={handleOptionChange}
+          labelText="Show blurb" />
+        <p className='mx-3 hidden sm:block'>{rules.length} Rules</p>
+      </div>
+      {type === 'category' && (
+        <div className='flex gap-2'>
+          <IconLink
+            href={`./admin#/~/${categoryUri}`}
+            children={<RiPencilLine size={ICON_SIZE} />}
           />
-          <RadioButton
-            id="customRadioInline3"
-            name="customRadioInline1"
-            value="blurb"
-            selectedOption={viewStyle}
-            handleOptionChange={handleOptionChange}
-            labelText="Show blurb"
-            icon={<RiFileTextFill size={iconSize} />}
-          />
-          <RadioButton
-            id="customRadioInline2"
-            name="customRadioInline1"
-            value="all"
-            selectedOption={viewStyle}
-            handleOptionChange={handleOptionChange}
-            labelText="Gimme everything!"
-            icon={<RiBookOpenFill size={iconSize} />}
+          <IconLink 
+            href={`https://github.com/SSWConsulting/SSW.Rules.Content/blob/${process.env.NEXT_PUBLIC_TINA_BRANCH}/categories/${categoryUri}`} target="_blank"
+            children={<RiGithubLine size={ICON_SIZE} className="rule-icon" />}
           />
         </div>
       )}
-      <ol className="rule-number">
-        {rules.map((rule) => (
+    </div>
+      
+      <ol className="flex flex-col justify-between gap-3 p-0 list-none">
+        {rules.map((rule, i) => (
           <RuleListItem
             key={rule.guid}
             rule={rule}
-            viewStyle={viewStyle}
+            index={i}
             onBookmarkRemoved={onBookmarkRemoved}
+            filter={filter}
           />
         ))}
       </ol>
