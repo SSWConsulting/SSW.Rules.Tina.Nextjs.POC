@@ -144,7 +144,7 @@ export default async function Page({
   // Build related rules mapping (uri -> title)
   let relatedRulesMapping: { uri: string; title: string }[] = [];
   try {
-    const relatedUris = (rule?.data?.rule?.related || []).filter((u: string | null | undefined) => !!u) as string[];
+    const relatedUris = (rule?.data?.rule?.related || []).filter((u): u is string => typeof u === 'string' && u.length > 0);
     if (relatedUris.length) {
       const uris = Array.from(new Set(relatedUris));
       const res = await client.queries.rulesByUriQuery({ uris });
