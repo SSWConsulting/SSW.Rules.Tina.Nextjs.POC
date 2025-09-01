@@ -48,7 +48,7 @@ const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContent
           selectedOption={filter}
           handleOptionChange={handleOptionChange}
           labelText="Show blurb" />
-        <p className='mx-3'>{rules.length} Rules</p>
+        <p className='mx-3 hidden sm:block'>{rules.length} Rules</p>
       </div>
       {type === 'category' && (
         <div className='flex gap-2'>

@@ -130,10 +130,9 @@ export default function ClientRulePage(props: ClientRulePageProps) {
                   </Link>
                 </button>
                 <Bookmark 
-                  ruleId={rule?.guid || ''} 
+                  ruleGuid={rule?.guid || ''} 
                   isBookmarked={isBookmarked}
-                  onBookmarkToggle={(ruleId, newStatus) => setIsBookmarked(newStatus)}
-                  size={ICON_SIZE} 
+                  onBookmarkToggle={(newStatus) => setIsBookmarked(newStatus)}
                 />
                 <button>
                   <Link href={`https://github.com/SSWConsulting/SSW.Rules.Content/blob/main/rules/${rule?.uri}/rule.md`} target="_blank">

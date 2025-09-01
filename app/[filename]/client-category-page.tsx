@@ -80,8 +80,8 @@ export default function ClientCategoryPage(props: ClientCategoryPageProps) {
   return (
     <div>
       {/* TODO: Breadcrumb */}
-      <div className="container flex">
-        <div className="w-full xl:w-3/4 lg:w-1/1 bg-white pt-4 p-6 rounded shadow">
+      <div className="flex">
+        <div className="w-full lg:w-2/3 bg-white pt-4 p-6 rounded shadow">
           <h1 className="m-0 mb-2 text-ssw-red font-bold">{category?.title}</h1>
           <div data-tina-field={tinaField(category, "body")}
             className="text-md">
@@ -95,7 +95,7 @@ export default function ClientCategoryPage(props: ClientCategoryPageProps) {
             categoryUri={path}
             type="category" />
         </div>
-        <div className="hidden xl:w-1/4 xl:block lg:hidden p-6 pr-0">
+        <div className="hidden lg:w-1/3 lg:block md:hidden p-6 pr-0">
           <ol className="border-l-3 border-gray-300 pl-6">
             {annotatedRules.map((rule) => (
               <li key={rule.guid} className="py-1 ml-4">

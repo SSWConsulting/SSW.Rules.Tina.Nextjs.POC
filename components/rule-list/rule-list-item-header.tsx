@@ -26,7 +26,7 @@ const RuleListItemHeader: React.FC<RuleListItemHeaderProps> = ({ rule, index }) 
 
   return (
     <section className='mb-2'>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center flex-col justify-between sm:flex-row">
         <div className='flex items-center gap-2'>
           <span className='text-sm text-gray-500'>#{index + 1}</span>
           <h2 className="m-0 text-2xl">
