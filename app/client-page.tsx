@@ -60,7 +60,6 @@ export default function HomeClientPage(props: HomeClientPageProps) {
         <div className="layout-main-section">
           <SearchBar showSort={false} />
 
-          {/* <Card dropShadow> */}
             <h2 className="m-0 mb-4 text-ssw-red font-bold">Categories</h2>
             {groupedCategories().map((group, groupIndex) => (
               <Card key={groupIndex} className="mb-4">
@@ -85,7 +84,6 @@ export default function HomeClientPage(props: HomeClientPageProps) {
                 </ol>
               </Card>
             ))}
-          {/* </Card> */}
         </div>
 
         <div className="layout-sidebar">
