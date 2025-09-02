@@ -69,3 +69,9 @@ export default async function Home() {
 
   return layout;
 }
+
+export async function generateMetadata() {
+  return {
+    title: "SSW.Rules | Secret Ingredients for Quality Software (Open Source on GitHub)",
+  }
+}
