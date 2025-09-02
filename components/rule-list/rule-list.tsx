@@ -68,7 +68,7 @@ const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContent
       <ol className="flex flex-col justify-between gap-4 p-0 list-none">
         {rules.map((rule, i) => (
           <RuleListItem
-            key={rule.guid}
+           key={`${rule.guid}-${rule.uri}`}
             rule={rule}
             index={i}
             onBookmarkRemoved={onBookmarkRemoved}
