@@ -38,10 +38,10 @@ const RuleListItem: React.FC<RuleListItemProps> = ({ rule, index, filter, onBook
   }
 
   return (
-    <li key={index} className='p-4 pt-5 border rounded shadow'>
+    <li key={index} className="p-4 pt-5 border rounded shadow">
       <RuleListItemHeader rule={rule} index={index} showBookmark={true} onBookmarkRemoved={onBookmarkRemoved} />
 
-      <div data-tina-field={tinaField(rule, 'body')} className='px-2 py-2 md:px-6 md:pt-4 md:pl-4 md:pr-4 md:pb-0'>
+      <div data-tina-field={tinaField(rule, 'body')} className="px-2 py-2 md:px-6 md:pt-4 md:pl-4 md:pr-4 md:pb-0">
         <TinaMarkdown content={getContentForViewStyle(filter, rule.body)} components={MarkdownComponentMapping} />
       </div>
     </li>

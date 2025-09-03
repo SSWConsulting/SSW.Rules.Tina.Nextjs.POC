@@ -10,39 +10,33 @@ interface RadioButtonProps {
   labelText: string;
 }
 
-const RadioButton: React.FC<RadioButtonProps> = ({
-  id,
-  value,
-  selectedOption,
-  handleOptionChange,
-  labelText
-}) => {
+const RadioButton: React.FC<RadioButtonProps> = ({ id, value, selectedOption, handleOptionChange, labelText }) => {
   const isSelected = selectedOption === value;
-  
+
   const handleButtonClick = () => {
     // Create a synthetic change event to match the expected interface
     const syntheticEvent = {
       target: {
         value: value,
         type: 'radio',
-        checked: true
-      }
+        checked: true,
+      },
     } as React.ChangeEvent<HTMLInputElement>;
-    
+
     handleOptionChange(syntheticEvent);
   };
-  
+
   return (
-    <button type="button" id={id}
+    <button
+      type="button"
+      id={id}
       className={`group px-4 py-1 text-sm border rounded cursor-pointer hover:text-white transition-colors ${
         isSelected ? 'bg-ssw-red' : 'bg-white hover:bg-ssw-red'
       }`}
       onClick={handleButtonClick}
       aria-pressed={isSelected}
     >
-      <span className={`transition-colors ${isSelected ? 'text-white' : 'text-gray-700 group-hover:text-white'}`}>
-        {labelText}
-      </span>
+      <span className={`transition-colors ${isSelected ? 'text-white' : 'text-gray-700 group-hover:text-white'}`}>{labelText}</span>
     </button>
   );
 };

@@ -81,19 +81,19 @@ export default function ClientCategoryPage(props: ClientCategoryPageProps) {
   return (
     <div>
       <Breadcrumbs isCategory breadcrumbText={category?.title} />
-      <div className='flex'>
-        <div className='w-full lg:w-2/3 bg-white pt-4 p-6 rounded shadow'>
-          <h1 className='m-0 mb-2 text-ssw-red font-bold'>{category?.title}</h1>
-          <div data-tina-field={tinaField(category, 'body')} className='text-md'>
+      <div className="flex">
+        <div className="w-full lg:w-2/3 bg-white pt-4 p-6 rounded shadow">
+          <h1 className="m-0 mb-2 text-ssw-red font-bold">{category?.title}</h1>
+          <div data-tina-field={tinaField(category, 'body')} className="text-md">
             <TinaMarkdown content={category?.body} components={MarkdownComponentMapping} />
           </div>
-          <RuleList rules={annotatedRules} categoryUri={path} type='category' />
+          <RuleList rules={annotatedRules} categoryUri={path} type="category" />
         </div>
-        <div className='hidden lg:w-1/3 lg:block md:hidden p-6 pr-0'>
-          <ol className='border-l-3 border-gray-300 pl-6'>
+        <div className="hidden lg:w-1/3 lg:block md:hidden p-6 pr-0">
+          <ol className="border-l-3 border-gray-300 pl-6">
             {annotatedRules.map((rule) => (
-              <li key={`${rule.guid}-${rule.uri}`} className='py-1 ml-4'>
-                <Link href={rule.uri} className='text-gray-700 hover:text-ssw-red'>
+              <li key={`${rule.guid}-${rule.uri}`} className="py-1 ml-4">
+                <Link href={rule.uri} className="text-gray-700 hover:text-ssw-red">
                   {rule.title}
                 </Link>
               </li>
