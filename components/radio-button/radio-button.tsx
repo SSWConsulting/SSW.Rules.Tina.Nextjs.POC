@@ -4,7 +4,6 @@ import React from 'react';
 
 interface RadioButtonProps {
   id: string;
-  name: string;
   value: string;
   selectedOption: string;
   handleOptionChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -13,7 +12,6 @@ interface RadioButtonProps {
 
 const RadioButton: React.FC<RadioButtonProps> = ({
   id,
-  name,
   value,
   selectedOption,
   handleOptionChange,
@@ -26,7 +24,6 @@ const RadioButton: React.FC<RadioButtonProps> = ({
     const syntheticEvent = {
       target: {
         value: value,
-        name: name,
         type: 'radio',
         checked: true
       }
