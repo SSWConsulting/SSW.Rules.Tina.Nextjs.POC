@@ -2,11 +2,10 @@ import React from "react";
 import { Section } from "@/components/layout/section";
 import client from "@/tina/__generated__/client";
 import Layout from "@/components/layout/layout";
-import SearchBar from "@/components/SearchBar";
 import HomeClientPage from "./client-page";
 import ruleToCategories from "../rule-to-categories.json";
 import Breadcrumbs from "@/components/Breadcrumbs";
-import { fetchLatestRules } from "@/lib/services/rules";
+import { fetchLatestRules, fetchRuleCount } from "@/lib/services/rules";
 
 export const revalidate = 300;
 
@@ -36,9 +35,6 @@ async function fetchTopCategoriesWithSubcategories() {
 }
 
 
-async function fetchRuleCount() {
-  return Object.keys(ruleToCategories).length;
-}
 
 function buildCategoryRuleCounts(): Record<string, number> {
   const counts: Record<string, number> = {};

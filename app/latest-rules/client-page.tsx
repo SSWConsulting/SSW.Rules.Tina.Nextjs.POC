@@ -1,8 +1,20 @@
 'use client';
 
 import SearchBar from '@/components/SearchBar';
+import RuleCount from '@/components/RuleCount';
+import WhyRulesCard from '@/components/WhyRulesCard';
+import HelpImproveCard from '@/components/HelpImproveCard';
+import AboutSSWCard from '@/components/AboutSSWCard';
+import JoinConversationCard from '@/components/JoinConversationCard';
+import HelpCard from '@/components/HelpCard';
+import { LatestRule } from '@/models/LatestRule';
 
-export default function LatestRuleClientPage() {
+interface LatestRuleClientPageProps {
+  ruleCount: number;
+  latestRules: LatestRule[];
+}
+
+export default function LatestRuleClientPage({ ruleCount, latestRules }: LatestRuleClientPageProps) {
 
   return (
        <>
@@ -16,10 +28,13 @@ export default function LatestRuleClientPage() {
     
             <div className="layout-sidebar">
               <div className="h-[5rem]">
-                
+                {ruleCount && <RuleCount count={ruleCount} />}
               </div>
-    
-              
+              <WhyRulesCard />
+              <HelpImproveCard />
+              <HelpCard />
+              <AboutSSWCard />
+              <JoinConversationCard />
             </div>
           </div>
         </>
