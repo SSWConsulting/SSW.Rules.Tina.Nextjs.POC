@@ -3,9 +3,16 @@ on:
   pull_request:
     types: [opened, synchronize, reopened]
 env:
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
   TINA_TOKEN: ${{ secrets.TINA_TOKEN }}
   NEXT_PUBLIC_TINA_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}
   TOKEN: ${{ secrets.POC_PAT_GILLES }} # TODO: replace that with a GitHub Token for production environement
+  NEXT_PUBLIC_ALGOLIA_APP_ID: ${{ secrets.NEXT_PUBLIC_ALGOLIA_APP_ID }}
+  NEXT_PUBLIC_ALGOLIA_ADMIN_KEY: ${{ secrets.NEXT_PUBLIC_ALGOLIA_ADMIN_KEY }}
+  NEXT_PUBLIC_ALGOLIA_INDEX_NAME: ${{ secrets.NEXT_PUBLIC_ALGOLIA_INDEX_NAME }}
+  NEXT_PUBLIC_ALGOLIA_API_KEY: ${{ secrets.NEXT_PUBLIC_ALGOLIA_API_KEY }}
   NEXT_PUBLIC_API_BASE_URL: ${{ vars.NEXT_PUBLIC_API_BASE_URL }}
   NEXT_PUBLIC_TINA_BRANCH: ${{ github.head_ref }}
 jobs:
