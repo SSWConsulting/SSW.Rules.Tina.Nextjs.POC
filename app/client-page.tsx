@@ -72,7 +72,7 @@ export default function HomeClientPage(props: HomeClientPageProps) {
         </div>
 
         <div className="layout-sidebar">
-          <div className="h-[5rem]">
+          <div className="h-[5.5rem]">
             {ruleCount && <RuleCount count={ruleCount} />}
           </div>
           <LatestRulesCard rules={latestRules} />
