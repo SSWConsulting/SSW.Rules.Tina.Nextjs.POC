@@ -8,15 +8,6 @@ const Rule: Collection = {
   label: "Rules",
   path: "public/uploads/rules",
   format: "mdx",
-  match: { // Including .gitkeep files as these are automatically created by Tina when creating empty folders
-        include: '*/{rule,.gitkeep}' 
-  },
-  defaultItem() {
-    return {
-      guid: generateGuid(),
-      filename: "rule",
-    };
-  },
   ui: {
     filename: {
       slugify: () => "rule",
