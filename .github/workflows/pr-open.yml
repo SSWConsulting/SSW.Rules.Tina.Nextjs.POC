@@ -23,7 +23,7 @@ jobs:
         with:
           repository: SSWConsulting/SSW.Rules.Content
           ref: ${{ env.NEXT_PUBLIC_TINA_BRANCH }}
-          token: ${{ secrets.TOKEN }}
+          token: ${{ env.TOKEN }}
           path: content-temp
           fetch-depth: 0
           lfs: true
