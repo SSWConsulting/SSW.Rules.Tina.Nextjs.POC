@@ -127,19 +127,23 @@ query rulesByUriQuery($uris: [String!]!) {
   }
 }
 
-query rulesByAuthor($authorTitle: String!) {
+query rulesByAuthor($authorTitle: String!, $first: Float, $after: String) {
   ruleConnection(
     filter: { authors: { title: { eq: $authorTitle } } }
+    first: $first
+    after: $after
   ) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
     edges {
       node {
         guid
         title
         uri
         body
-        authors {
-          title
-        }
+        authors { title }
       }
     }
   }

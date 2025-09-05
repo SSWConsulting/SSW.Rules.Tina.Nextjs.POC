@@ -2,36 +2,70 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import Image from 'next/image';
+
 import client from '@/tina/__generated__/client';
 import { RuleListItemHeader } from '@/components/rule-list';
 import { normalizeName, toSlug } from '@/lib/utils';
 import Breadcrumbs from '@/components/Breadcrumbs';
 
+import { Card } from '@/components/ui/card';
+import HelpCard from '@/components/HelpCard';
+import { timeAgo } from '@/lib/dateUtils';
+import { LatestRule } from '@/models/LatestRule';
+
+import { PiGavelFill } from 'react-icons/pi';
+import {
+  RiDoubleQuotesL,
+  RiDoubleQuotesR,
+  RiTimeFill,
+  RiTwitterXLine,
+} from 'react-icons/ri';
+import RadioButton from '@/components/radio-button';
+
 const ActionTypes = {
   BEFORE: 'before',
   AFTER: 'after',
-};
+} as const;
 
-export default function UserRulesClientPage() {
+const Tabs = {
+  LAST_MODIFIED: 'last-modified',
+  ACKNOWLEDGMENT: 'acknowledgment',
+} as const;
+
+type TabKey = typeof Tabs[keyof typeof Tabs];
+
+export default function UserRulesClientPage(props) {
+  const latestRules: LatestRule[] = props?.latestRules
   const searchParams = useSearchParams();
+
   const [notFound, setNotFound] = useState(false);
   const [lastModifiedRules, setLastModifiedRules] = useState<any[]>([]);
   const [authoredRules, setAuthoredRules] = useState<any[]>([]);
-  const [author, setAuthor] = useState<{
-    fullName?: string;
-    slug?: string;
-    gitHubUrl?: string;
-  }>({});
-  
+  const [author, setAuthor] = useState<{ fullName?: string; slug?: string; gitHubUrl?: string }>({});
+
   const [previousPageCursor, setPreviousPageCursor] = useState<string[]>([]);
   const [nextPageCursor, setNextPageCursor] = useState('');
   const [tempCursor, setTempCursor] = useState('');
   const [hasNext, setHasNext] = useState(false);
+
   const [loadingLastModified, setLoadingLastModified] = useState(false);
+  const [loadingMoreLastModified, setLoadingMoreLastModified] = useState(false);
   const [loadingAuthored, setLoadingAuthored] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [activeTab, setActiveTab] = useState<TabKey>(Tabs.LAST_MODIFIED);
+
+  const [ruleCount, setRuleCount] = useState<number>(0);
+
   const queryStringRulesAuthor = searchParams.get('author') || '';
+
+  const AUTHORED_PAGE_SIZE = 10;
+  const [authoredNextCursor, setAuthoredNextCursor] = useState<string | null>(null);
+  const [authoredHasNext, setAuthoredHasNext] = useState(false);
+  const [loadingMoreAuthored, setLoadingMoreAuthored] = useState(false);
+
 
   const loadAuthorFromCrm = async (): Promise<string> => {
     try {
@@ -51,32 +85,34 @@ export default function UserRulesClientPage() {
         });
         return match.fullName as string;
       } else {
-        // Fallback to GitHub handle-based author if no CRM match
+        const fullName = normalizeName(queryStringRulesAuthor) || '';
         setAuthor({
-          fullName: normalizeName(queryStringRulesAuthor),
+          fullName,
           slug: toSlug(queryStringRulesAuthor),
           gitHubUrl: `https://github.com/${queryStringRulesAuthor}`,
         });
-        return normalizeName(queryStringRulesAuthor) || '';
+        return fullName;
       }
     } catch (err) {
       console.error('Error loading CRM author:', err);
+      const fullName = normalizeName(queryStringRulesAuthor) || '';
       setAuthor({
-        fullName: normalizeName(queryStringRulesAuthor),
+        fullName,
         slug: toSlug(queryStringRulesAuthor),
         gitHubUrl: `https://github.com/${queryStringRulesAuthor}`,
       });
-      return normalizeName(queryStringRulesAuthor) || '';
+      return fullName;
     }
-  }
+  };
 
-  const getLastModifiedRules = async (action?: string) => {
+  const getLastModifiedRules = async (action?: string, opts?: { append?: boolean }) => {
+    const append = !!opts?.append;
     try {
-      setLoadingLastModified(true);
-      
+      append ? setLoadingMoreLastModified(true) : setLoadingLastModified(true);
+  
       let cursor: string | undefined;
       let direction: 'after' | 'before' = 'after';
-
+  
       if (action === ActionTypes.BEFORE) {
         cursor = previousPageCursor[previousPageCursor.length - 1];
         direction = 'before';
@@ -84,85 +120,95 @@ export default function UserRulesClientPage() {
         cursor = nextPageCursor;
         direction = 'after';
       }
-
+  
       const params = new URLSearchParams();
       params.set('author', queryStringRulesAuthor);
       if (cursor) params.set('cursor', cursor);
       params.set('direction', direction);
-
+  
       const res = await fetch(`/api/github/rules/prs?${params.toString()}`);
       if (!res.ok) throw new Error('Failed to fetch GitHub PR search');
       const prSearchData = await res.json();
-
+  
       const resultList = prSearchData.search.nodes;
       const allRules = resultList
-        .flatMap(pr => pr.files.nodes)
-        .filter(file => file.path.endsWith('rule.mdx') || file.path.endsWith('rule.md'))
-        .map(file => ({
+        .flatMap((pr: any) => pr.files.nodes)
+        .filter((file: any) => file.path.endsWith('rule.mdx') || file.path.endsWith('rule.md'))
+        .map((file: any) => ({
           ...file,
           path: file.path.endsWith('rule.md') ? file.path.slice(0, -3) + '.mdx' : file.path,
         }));
-        
-      if(allRules.length === 0){
-        return;
+  
+      if (allRules.length === 0 && !append) {
+        setLastModifiedRules([]);
+      } else if (allRules.length > 0) {
+        const uniqueRules = getUniqueRules(allRules);
+        await updateFilteredItems(uniqueRules, append);
       }
-      const uniqueRules = getUniqueRules(allRules);
-      updateFilteredItems(uniqueRules);
-
+  
       const { endCursor, startCursor, hasNextPage } = prSearchData.search.pageInfo;
-      
+  
       if (action === ActionTypes.AFTER) {
-        setPreviousPageCursor([...previousPageCursor, nextPageCursor]);
+        if (nextPageCursor) setPreviousPageCursor([...previousPageCursor, nextPageCursor]);
       } else if (action === ActionTypes.BEFORE) {
-        setPreviousPageCursor(prev => prev.slice(0, -1));
+        setPreviousPageCursor((prev) => prev.slice(0, -1));
       }
-
+  
       setNextPageCursor(endCursor || '');
       setTempCursor(startCursor || '');
-      setHasNext(hasNextPage || false);
-
-    } catch (error) {
-      console.error('Failed to fetch GitHub data:', error);
+      setHasNext(!!hasNextPage);
+    } catch (err) {
+      console.error('Failed to fetch GitHub data:', err);
       setError('Failed to fetch rules data. Please try again later.');
       setNotFound(true);
     } finally {
-      setLoadingLastModified(false);
+      append ? setLoadingMoreLastModified(false) : setLoadingLastModified(false);
     }
   };
 
   const getUniqueRules = (files: any[]) => {
     const uniqueRulesMap = new Map();
-    
-    files.forEach(file => {
+    files.forEach((file) => {
       const path = file.path;
       const ruleName = path.replace(/^rules\//, '').replace(/\/rule\.mdx$/, '');
-      
-      if (!uniqueRulesMap.has(ruleName) || 
-          new Date(file.lastUpdated) > new Date(uniqueRulesMap.get(ruleName).lastUpdated)) {
+      if (!uniqueRulesMap.has(ruleName) || new Date(file.lastUpdated) > new Date(uniqueRulesMap.get(ruleName).lastUpdated)) {
         uniqueRulesMap.set(ruleName, file);
       }
     });
-
     return Array.from(uniqueRulesMap.values());
-  }
+  };
 
-  const updateFilteredItems = async (uniqueRules: any[]) => {
+  const appendUniqueRules = (prev: any[], next: any[]) => {
+    const keyOf = (r: any) => r?.guid || r?.uri;
+    const seen = new Set(prev.map(keyOf));
+    const merged = [...prev];
+    for (const r of next) {
+      const k = keyOf(r);
+      if (!seen.has(k)) {
+        seen.add(k);
+        merged.push(r);
+      }
+    }
+    return merged;
+  };
+
+  const updateFilteredItems = async (uniqueRules: any[], append = false) => {
     try {
       const uris = Array.from(
         new Set(
           uniqueRules
             .map((b) => b.path.replace(/^rules\//, '').replace(/\/rule\.mdx$/, ''))
-            .filter((g): g is string => Boolean(g))
-        )
+            .filter((g): g is string => Boolean(g)),
+        ),
       );
-          
+
       const res = await client.queries.rulesByUriQuery({ uris });
       const edges = res?.data?.ruleConnection?.edges ?? [];
       const byUri = new Map<string, any>(
         edges
           .map((e: any) => e?.node)
           .filter(Boolean)
-          .map((n: any) => [n.uri, n])
+          .map((n: any) => [n.uri, n]),
       );
 
       const matchedRules: any[] = uris
@@ -179,7 +225,7 @@ export default function UserRulesClientPage() {
               .filter((a: any): a is { title: string } => a !== null) || [],
         }));
 
-        setLastModifiedRules(matchedRules);
+      setLastModifiedRules((prev) => (append ? appendUniqueRules(prev, matchedRules) : matchedRules));
 
       if (matchedRules.length !== uniqueRules.length) {
         const foundUris = new Set(matchedRules.map((r) => r.uri));
@@ -190,21 +236,29 @@ export default function UserRulesClientPage() {
       }
     } catch (ruleError) {
       console.error('Error fetching rule data:', ruleError);
-      setLastModifiedRules([]);
+      if (!append) setLastModifiedRules([])
     }
   };
 
-  const getAuthoredRules = async (authorName: string) => {
+  const getAuthoredRules = async (authorName: string, opts?: { append?: boolean }) => {
+    const append = !!opts?.append;
     try {
-      setLoadingAuthored(true);
-      const res = await client.queries.rulesByAuthor({ authorTitle: authorName || '' });
+      append ? setLoadingMoreAuthored(true) : setLoadingAuthored(true);
+  
+      const res = await client.queries.rulesByAuthor({
+        authorTitle: authorName || '',
+        first: AUTHORED_PAGE_SIZE,
+        after: append ? authoredNextCursor : undefined,
+      });
+  
       const edges = res?.data?.ruleConnection?.edges ?? [];
       const nodes = edges.map((e: any) => e?.node).filter(Boolean);
-      const byGuid = new Map<string, any>(
-        nodes.map((n: any) => [n.guid, n])
-      );
-
-      const authored = Array.from(byGuid.values()).map((fullRule: any) => ({
+  
+      const pageInfo = res?.data?.ruleConnection?.pageInfo;
+      setAuthoredNextCursor(pageInfo?.endCursor ?? null);
+      setAuthoredHasNext(!!pageInfo?.hasNextPage);
+  
+      const batch = nodes.map((fullRule: any) => ({
         guid: fullRule.guid,
         title: fullRule.title,
         uri: fullRule.uri,
@@ -214,95 +268,286 @@ export default function UserRulesClientPage() {
             ?.map((a: any) => (a && a.title ? { title: a.title } : null))
             .filter((a: any): a is { title: string } => a !== null) || [],
       }));
-
-      setAuthoredRules(authored);
+  
+      setAuthoredRules((prev) => (append ? appendUniqueRules(prev, batch) : batch));
     } finally {
-      setLoadingAuthored(false);
+      append ? setLoadingMoreAuthored(false) : setLoadingAuthored(false);
     }
-  }
+  };
 
   useEffect(() => {
     (async () => {
       if (queryStringRulesAuthor) {
-        const [_, resolvedAuthorName] = await Promise.all([
-          getLastModifiedRules(ActionTypes.AFTER),
-          loadAuthorFromCrm(),
-        ]);
+        const [_, resolvedAuthorName] = await Promise.all([getLastModifiedRules(ActionTypes.AFTER), loadAuthorFromCrm()]);
         await getAuthoredRules(resolvedAuthorName as string);
       }
     })();
   }, [queryStringRulesAuthor]);
 
-  if (!queryStringRulesAuthor) {
-    return (
-      <div className="w-full">
-        {/* <Breadcrumb breadcrumbText="User Rules" /> */}
-        <div className="container" id="rules">
-          <div className="text-center py-8">
-            <h2 className="text-ssw-red text-2xl mb-4">No Author Specified</h2>
-            <p>Please provide an author parameter in the URL.</p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleLoadMoreLastModified = () => {
+    if (loadingMoreLastModified || !hasNext) return;
+    getLastModifiedRules(ActionTypes.AFTER, { append: true });
+  };
+
+  const handleLoadMoreAcknowledgment = () => {
+    if (loadingMoreAuthored || !authoredHasNext) return;
+    getAuthoredRules(author.fullName || '', { append: true });
+  };
+
+  const TabHeader = () => (
+    <div role="tablist" aria-label="User Rules Tabs" className="flex items-center gap-2 mt-2 mb-4">
+      {[
+        { key: Tabs.LAST_MODIFIED, label: `Last Modified (${lastModifiedRules.length})` },
+        { key: Tabs.ACKNOWLEDGMENT, label: `Acknowledgment (${authoredRules.length})` },
+      ].map((t) => {
+        const isActive = activeTab === t.key;
+        return (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            aria-selected={isActive}
+            onClick={() => setActiveTab(t.key)}
+            className={[
+              'group px-4 py-1 text-sm border rounded cursor-pointer hover:text-white transition-colors',
+              'hover:bg-ssw-red/100 hover:text-white hover:cursor-pointer',
+              isActive
+                ? 'bg-ssw-red text-white shadow-sm'
+                : 'bg-white hover:text-ssw-red',
+            ].join(' ')}
+          >
+            {t.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+
+  const LoadMoreButton = ({
+    onClick,
+    disabled,
+    loading,
+    children,
+  }: {
+    onClick: () => void;
+    disabled?: boolean;
+    loading?: boolean;
+    children?: React.ReactNode;
+  }) => (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      className={[
+        'inline-flex items-center gap-2 px-4 py-2 rounded-lg border transition shadow-sm',
+        disabled
+          ? 'border-gray-200 text-gray-400 bg-gray-50 cursor-not-allowed'
+          : 'border-ssw-red bg-ssw-red text-white hover:bg-ssw-red/90 hover:cursor-pointer',
+      ].join(' ')}
+    >
+      {loading && (
+        <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" opacity="0.25" />
+          <path d="M22 12a10 10 0 0 1-10 10" stroke="currentColor" strokeWidth="4" fill="none" />
+        </svg>
+      )}
+      {children ?? 'Load More'}
+    </button>
+  );
 
   return (
-    <div className="w-full">
+    <>
       <Breadcrumbs breadcrumbText={author?.fullName ? `${author.fullName}'s Rules` : 'User Rules'} />
-      <div className="container" id="rules">
-        <div className="flex flex-wrap">
-          <div className="w-full lg:w-3/4 px-4">
-            {author.fullName && (
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-                <h2 className="text-ssw-red">{author.fullName}&#39;s Rules</h2>
 
-                <a
-                  href={`https://ssw.com.au/people/${author.slug}/`}
-                  className="underline unstyled hover:text-ssw-red"
-                >
-                  View people profile
-                </a>
+      <div className="layout-two-columns">
+        <div className="layout-main-section">
+          {author.fullName && (
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
+              <h2 className="text-ssw-red">{author.fullName}&#39;s Rules</h2>
+              <a href={`https://ssw.com.au/people/${author.slug}/`} className="underline unstyled hover:text-ssw-red">
+                View people profile
+              </a>
+            </div>
+          )}
+
+          <TabHeader />
+
+          <div className="rounded-lg border border-gray-100 bg-white p-4">
+            {activeTab === Tabs.LAST_MODIFIED && (
+              <div>
+                {lastModifiedRules.length === 0 && loadingLastModified && (
+                  <div className="py-4 text-sm text-gray-500">Loading last modified…</div>
+                )}
+
+                {lastModifiedRules.length > 0 && (
+                  <>
+                    <ol className="flex flex-col justify-between gap-4 p-0 list-none">
+                      {lastModifiedRules.map((rule, i) => (
+                        <li key={rule.guid} className="p-4 pt-5 border rounded shadow">
+                          <RuleListItemHeader rule={rule} index={i} />
+                        </li>
+                      ))}
+                    </ol>
+
+                    {hasNext && (
+                      <div className="mt-4 flex justify-center">
+                        <LoadMoreButton
+                          onClick={handleLoadMoreLastModified}
+                          disabled={loadingMoreLastModified}
+                          loading={loadingMoreLastModified}
+                        >
+                          {loadingMoreLastModified ? 'Loading…' : 'Load More'}
+                        </LoadMoreButton>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {!loadingLastModified && lastModifiedRules.length === 0 && (
+                  <div className="py-4 text-sm text-gray-500">No results found.</div>
+                )}
               </div>
             )}
 
-            <hr className="mt-1 sm:mt-0" />
+            {activeTab === Tabs.ACKNOWLEDGMENT && (
+              <div>
+                {loadingAuthored && <div className="py-4 text-sm text-gray-500">Loading authored…</div>}
 
-            <h3 className="text-ssw-red">
-              Last Modified ({lastModifiedRules.length})
-            </h3>
+                {!loadingAuthored && authoredRules.length > 0 && (
+                  <>
+                    <ol className="flex flex-col justify-between gap-4 p-0 list-none">
+                      {authoredRules.map((rule, i) => (
+                        <li key={rule.guid} className="p-4 pt-5 border rounded shadow">
+                          <RuleListItemHeader rule={rule} index={i} />
+                        </li>
+                      ))}
+                    </ol>
 
-            <div className="rounded mb-12">
-              {loadingLastModified && (
-                <div className="py-4 text-sm text-gray-500">Loading last modified…</div>
-              )}
-              {!loadingLastModified && lastModifiedRules.length > 0 && (
-                lastModifiedRules.map((rule) => (
-                  <RuleListItemHeader key={rule.guid} rule={rule} index={0} />
-                ))
-              )}
-            </div>
+                    {authoredHasNext && (
+                      <div className="mt-4 flex justify-center">
+                        <LoadMoreButton
+                          onClick={handleLoadMoreAcknowledgment}
+                          disabled={loadingMoreAuthored}
+                          loading={loadingMoreAuthored}
+                        >
+                          {loadingMoreAuthored ? 'Loading…' : 'Load More'}
+                        </LoadMoreButton>
+                      </div>
+                    )}
+                  </>
+                )}
 
-            <h3 className="text-ssw-red">
-              Acknowledged ({authoredRules.length})
-            </h3>
-
-            <div className="rounded mb-12">
-              {loadingAuthored && (
-                <div className="py-4 text-sm text-gray-500">Loading authored…</div>
-              )}
-              {!loadingAuthored && authoredRules.length > 0 && (
-                authoredRules.map((rule) => (
-                  <RuleListItemHeader key={rule.guid} rule={rule} index={0} />
-                ))
-              )}
-            </div>
-          </div>
-          <div className="w-full lg:w-1/4 px-4" id="sidebar">
-            {/* <SideBar ruleTotalNumber={0} /> */}
+                {!loadingAuthored && authoredRules.length === 0 && (
+                  <div className="py-4 text-sm text-gray-500">No results found.</div>
+                )}
+              </div>
+            )}
           </div>
         </div>
+
+        <div className="layout-sidebar">
+          <div className="h-[5rem]">
+            <div className="flex justify-center">
+              {ruleCount ? (
+                <div className="flex">
+                  <PiGavelFill size={48} className="transform rotate-270 text-[var(--ssw-red)]" />
+                  <div className="flex flex-col justify-center items-center ml-2 ">
+                    <span className="text-3xl font-semibold text-[var(--ssw-red)]">
+                      {ruleCount.toLocaleString('en-US')}
+                    </span>
+                    <span className="font-light">SSW Rules</span>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
+
+          <Card title="Latest Rules">
+            {latestRules.map((rule, index) => (
+              <ul key={index}>
+                <li>
+                  <Link href={`/${rule?.uri}`}>{rule?.title}</Link>
+                  {rule?.lastUpdated && (
+                    <p className="text-gray-500 mt-1">
+                      <RiTimeFill className="inline mr-2" />
+                      {timeAgo(rule?.lastUpdated)}
+                    </p>
+                  )}
+                </li>
+              </ul>
+            ))}
+
+            <Link href="/rules/latest-rules/?size=50">
+              <button className="px-4 py-2 text-red-600 rounded-md cursor-pointer hover:underline">See More</button>
+            </Link>
+          </Card>
+
+          <Card title="Why All These Rules?">
+            <p className="text-justify">
+              Read about the{' '}
+              <a
+                className="underline"
+                href="https://www.codemag.com/article/0605091"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                History of SSW Rules
+              </a>
+              , published in CoDe Magazine.
+            </p>
+          </Card>
+
+          <Card title="Help Improve Our Rules">
+            <blockquote>
+              <RiDoubleQuotesL className="inline" />
+              The SSW Rules website works just like Wikipedia. If you think something should be changed, hit the pencil icon
+              and make an edit! Or if you are cool{' '}
+              <a className="underline" href="https://twitter.com/adamcogan" target="_blank" rel="noopener noreferrer">
+                tweet me
+              </a>
+              <RiDoubleQuotesR className="inline ml-1" />
+            </blockquote>
+            <div className="flex flex-col gap-4 items-center mt-4">
+              <Image
+                src="https://adamcogan.com/wp-content/uploads/2018/07/adam-bw.jpg"
+                alt=""
+                className="rounded-full"
+                width={96}
+                height={96}
+              />
+              <a
+                className="underline text-xl"
+                href="https://www.ssw.com.au/people/adam-cogan"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Adam Cogan
+              </a>
+              <p className="font-light">Chief Software Architect as SSW</p>
+            </div>
+          </Card>
+
+          <HelpCard />
+
+          <Card title="About SSW">
+            <p className="text-justify">
+              SSW Consulting has over 30 years of experience developing awesome Microsoft solutions that today build on top
+              of Angular, React, Azure, Azure DevOps, SharePoint, Office 365, .NET Core, WebAPI, Dynamics 365, and SQL
+              Server. With 40+ consultants in 5 countries, we have delivered the best in the business to more than 1,000
+              clients in 15 countries.
+            </p>
+          </Card>
+
+          <Card title="Join The Conversation">
+            <div className="flex justify-center">
+              <a className="flex items-center text-white bg-gray-800 hover:bg-gray-700 rounded-full px-4 py-2">
+                <RiTwitterXLine className="inline mr-2" size={24} />
+                Post #SSWRules
+              </a>
+            </div>
+          </Card>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
