@@ -39,7 +39,7 @@ export default function LatestRulesList({
   return (
     <div>
       <div className="mb-4 flex justify-between items-center">
-        {title && <h3 className="m-0 text-ssw-red font-bold">{title}</h3>}
+        {title && <h2 className="m-0 text-ssw-red font-bold">{title}</h2>}
         <div className="flex items-center space-x-2">
           <CgSortAz className="inline" size={24} />
           <Dropdown
