@@ -24,22 +24,20 @@ type TabKey = typeof Tabs[keyof typeof Tabs];
 
 export default function UserRulesClientPage({ ruleCount }) {
   const searchParams = useSearchParams();
+  const [activeTab, setActiveTab] = useState<TabKey>(Tabs.LAST_MODIFIED);
+  const queryStringRulesAuthor = searchParams.get('author') || '';
 
+  // Last Modified
   const [lastModifiedRules, setLastModifiedRules] = useState<any[]>([]);
-  const [authoredRules, setAuthoredRules] = useState<any[]>([]);
-  const [author, setAuthor] = useState<{ fullName?: string; slug?: string; gitHubUrl?: string }>({});
-
+  const [loadingLastModified, setLoadingLastModified] = useState(false);
+  const [loadingMoreLastModified, setLoadingMoreLastModified] = useState(false);
   const [nextPageCursor, setNextPageCursor] = useState('');
   const [hasNext, setHasNext] = useState(false);
 
-  const [loadingLastModified, setLoadingLastModified] = useState(false);
-  const [loadingMoreLastModified, setLoadingMoreLastModified] = useState(false);
+  // Acknowledgment
+  const [authoredRules, setAuthoredRules] = useState<any[]>([]);
+  const [author, setAuthor] = useState<{ fullName?: string; slug?: string; gitHubUrl?: string }>({});
   const [loadingAuthored, setLoadingAuthored] = useState(false);
-
-  const [activeTab, setActiveTab] = useState<TabKey>(Tabs.LAST_MODIFIED);
-
-  const queryStringRulesAuthor = searchParams.get('author') || '';
-
   const AUTHORED_PAGE_SIZE = 10;
   const [authoredNextCursor, setAuthoredNextCursor] = useState<string | null>(null);
   const [authoredHasNext, setAuthoredHasNext] = useState(false);
