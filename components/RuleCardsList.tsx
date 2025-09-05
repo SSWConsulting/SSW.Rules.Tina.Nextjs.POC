@@ -3,14 +3,7 @@ import { Card } from '@/components/ui/card';
 import { RiTimeFill } from 'react-icons/ri';
 import { timeAgo } from '@/lib/dateUtils';
 import LoadMoreButton from './LoadMoreButton';
-
-export interface RuleVM {
-  guid?: string;
-  uri: string;
-  title: string;
-  lastUpdated?: string;
-  lastUpdatedBy?: string;
-}
+import { Rule } from '@/types';
 
 export default function RuleCardsList({
   items,
@@ -20,7 +13,7 @@ export default function RuleCardsList({
   onLoadMore,
   emptyText = 'No results found.',
 }: {
-  items: RuleVM[];
+  items: Rule[];
   loadingInitial: boolean;
   loadingMore: boolean;
   hasNext: boolean;

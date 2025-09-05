@@ -10,9 +10,9 @@ import WhyRulesCard from '@/components/WhyRulesCard';
 import HelpImproveCard from '@/components/HelpImproveCard';
 import AboutSSWCard from '@/components/AboutSSWCard';
 import JoinConversationCard from '@/components/JoinConversationCard';
-import { getUniqueRules } from '@/lib/services/github';
 import RuleCardsList from '@/components/RuleCardsList';
-import { appendUniqueRules } from '@/utils/appendUniqueRules';
+import { appendNewRules } from '@/utils/appendNewRules';
+import { selectLatestRuleFilesByPath } from '@/utils/selectLatestRuleFilesByPath';
 
 const ActionTypes = {
   BEFORE: 'before',
@@ -83,7 +83,7 @@ export default function UserRulesClientPage({ ruleCount }) {
       if (allRules.length === 0 && !append) {
         setLastModifiedRules([]);
       } else if (allRules.length > 0) {
-        const uniqueRules = getUniqueRules(allRules);
+        const uniqueRules = selectLatestRuleFilesByPath(allRules);
         await updateFilteredItems(uniqueRules, append);
       }
   
@@ -132,7 +132,7 @@ export default function UserRulesClientPage({ ruleCount }) {
               .filter((a: any): a is { title: string } => a !== null) || [],
         }));
 
-      setLastModifiedRules((prev) => (append ? appendUniqueRules(prev, matchedRules) : matchedRules));
+      setLastModifiedRules((prev) => (append ? appendNewRules(prev, matchedRules) : matchedRules));
 
       if (matchedRules.length !== uniqueRules.length) {
         const foundUris = new Set(matchedRules.map((r) => r.uri));
@@ -178,7 +178,7 @@ export default function UserRulesClientPage({ ruleCount }) {
         lastUpdatedBy: fullRule.lastUpdatedBy
       }));
   
-      setAuthoredRules((prev) => (append ? appendUniqueRules(prev, batch) : batch));
+      setAuthoredRules((prev) => (append ? appendNewRules(prev, batch) : batch));
     } finally {
       append ? setLoadingMoreAuthored(false) : setLoadingAuthored(false);
     }
