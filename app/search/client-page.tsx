@@ -11,12 +11,9 @@ import RuleCount from "@/components/RuleCount";
 import WhyRulesCard from "@/components/WhyRulesCard";
 import { LatestRule } from "@/models/LatestRule";
 import LatestRulesCard from "@/components/LatestRulesCard";
-import { Card } from "@/components/ui/card";
 import Dropdown from "@/components/ui/dropdown";
 import { CgSortAz } from "react-icons/cg";
-import { RiTimeFill } from "react-icons/ri";
-import { timeAgo } from "@/lib/dateUtils";
-import Link from "next/link";
+import RuleCard from "@/components/RuleCard";
 
 interface SearchResult {
   objectID: string;
@@ -78,27 +75,14 @@ export default function RulesSearchClientPage({ ruleCount, latestRulesByUpdated 
               </div>
 
               {searchResults.map((result, index) => (
-                <Card className="mb-4" key={result.objectID}>
-                  <div className="flex">
-                    <span className="text-gray-500 mr-2">#{index + 1}</span>
-                    <div className="flex flex-col">
-                      <Link href={`/${result.slug}`} className="no-underline">
-                        <h2 className="m-0 mb-2 text-2xl max-sm:text-lg hover:text-ssw-red">
-                          {result.title}
-                        </h2>
-                      </Link>
-                      <h4 className="flex m-0 text-lg max-sm:text-md">
-                        <span className="font-medium">{result.lastUpdatedBy || 'Unknown'}</span>
-                        {result.lastUpdated && (
-                          <div className="flex items-center ml-4 text-gray-500 font-light">
-                            <RiTimeFill className="inline mr-1" />
-                            <span>{timeAgo(result.lastUpdated)}</span>
-                          </div>
-                        )}
-                      </h4>
-                    </div>
-                  </div>
-                </Card>
+                <RuleCard
+                  key={result.objectID}
+                  title={result.title}
+                  slug={result.slug}
+                  lastUpdatedBy={result.lastUpdatedBy}
+                  lastUpdated={result.lastUpdated}
+                  index={index}
+                />
               ))}
             </div>
           )}
