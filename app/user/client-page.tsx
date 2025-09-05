@@ -10,14 +10,10 @@ import WhyRulesCard from '@/components/WhyRulesCard';
 import HelpImproveCard from '@/components/HelpImproveCard';
 import AboutSSWCard from '@/components/AboutSSWCard';
 import JoinConversationCard from '@/components/JoinConversationCard';
-import RuleCardsList from '@/components/RuleCardsList';
 import { appendNewRules } from '@/utils/appendNewRules';
 import { selectLatestRuleFilesByPath } from '@/utils/selectLatestRuleFilesByPath';
-
-const ActionTypes = {
-  BEFORE: 'before',
-  AFTER: 'after',
-} as const;
+import LoadMoreButton from '@/components/LoadMoreButton';
+import RuleCard from '@/components/RuleCard';
 
 const Tabs = {
   LAST_MODIFIED: 'last-modified',
@@ -231,6 +227,51 @@ export default function UserRulesClientPage({ ruleCount }) {
       })}
     </div>
   );
+
+  const renderList = (
+    items: any[],
+    {
+      loadingInitial,
+      loadingMore,
+      hasNextPage,
+      onLoadMore,
+      emptyText = 'No results found.',
+    }: {
+      loadingInitial: boolean;
+      loadingMore: boolean;
+      hasNextPage: boolean;
+      onLoadMore: () => void;
+      emptyText?: string;
+    },
+  ) => {
+    if (items.length === 0 && loadingInitial) {
+      return <div className="py-4 text-sm text-gray-500">Loading…</div>;
+    }
+    if (items.length === 0) {
+      return <div className="py-4 text-sm text-gray-500">{emptyText}</div>;
+    }
+    return (
+      <>
+        {items.map((rule, i) => (
+          <RuleCard
+            key={rule.guid ?? rule.uri}
+            index={i}
+            title={rule.title}
+            slug={rule.uri}
+            lastUpdatedBy={rule.lastUpdatedBy ?? null}
+            lastUpdated={rule.lastUpdated ?? null}
+          />
+        ))}
+        {hasNextPage && (
+          <div className="mt-4 flex justify-center">
+            <LoadMoreButton onClick={onLoadMore} disabled={loadingMore} loading={loadingMore}>
+              {loadingMore ? 'Loading…' : 'Load More'}
+            </LoadMoreButton>
+          </div>
+        )}
+      </>
+    );
+  };
   
   return (
     <>
@@ -250,25 +291,21 @@ export default function UserRulesClientPage({ ruleCount }) {
           <TabHeader />
 
           <div className="rounded-lg border border-gray-100 bg-white p-4">
-            {activeTab === Tabs.LAST_MODIFIED && (
-              <RuleCardsList
-                items={lastModifiedRules}
-                loadingInitial={loadingLastModified}
-                loadingMore={loadingMoreLastModified}
-                hasNext={hasNext}
-                onLoadMore={handleLoadMoreLastModified}
-              />
-            )}
+              {activeTab === Tabs.LAST_MODIFIED &&
+                  renderList(lastModifiedRules, {
+                  loadingInitial: loadingLastModified,
+                  loadingMore: loadingMoreLastModified,
+                  hasNextPage: hasNext,
+                  onLoadMore: handleLoadMoreLastModified,
+                })}
 
-            {activeTab === Tabs.ACKNOWLEDGMENT && (
-              <RuleCardsList
-                items={authoredRules}
-                loadingInitial={loadingAuthored}
-                loadingMore={loadingMoreAuthored}
-                hasNext={authoredHasNext}
-                onLoadMore={handleLoadMoreAcknowledgment}
-              />
-            )}
+              {activeTab === Tabs.ACKNOWLEDGMENT &&
+                renderList(authoredRules, {
+                  loadingInitial: loadingAuthored,
+                  loadingMore: loadingMoreAuthored,
+                  hasNextPage: authoredHasNext,
+                  onLoadMore: handleLoadMoreAcknowledgment,
+              })}
           </div>
         </div>
 
