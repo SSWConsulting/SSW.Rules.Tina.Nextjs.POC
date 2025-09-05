@@ -122,6 +122,8 @@ query rulesByUriQuery($uris: [String!]!) {
         authors {
           title
         }
+        lastUpdated
+        lastUpdatedBy
       }
     }
   }
@@ -144,6 +146,8 @@ query rulesByAuthor($authorTitle: String!, $first: Float, $after: String) {
         uri
         body
         authors { title }
+        lastUpdated
+        lastUpdatedBy
       }
     }
   }

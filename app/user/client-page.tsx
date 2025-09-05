@@ -3,19 +3,20 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import Image from 'next/image';
-
 import client from '@/tina/__generated__/client';
 import { RuleListItemHeader } from '@/components/rule-list';
 import { normalizeName, toSlug } from '@/lib/utils';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import HelpCard from '@/components/HelpCard';
-import { LatestRule } from '@/models/LatestRule';
 import RuleCount from '@/components/RuleCount';
 import WhyRulesCard from '@/components/WhyRulesCard';
 import HelpImproveCard from '@/components/HelpImproveCard';
 import AboutSSWCard from '@/components/AboutSSWCard';
 import JoinConversationCard from '@/components/JoinConversationCard';
+import { Card } from '@/components/ui/card';
+import { RiTimeFill } from 'react-icons/ri';
+import { timeAgo } from '@/lib/dateUtils';
+import { getUniqueRules } from '@/lib/services/github';
 
 const ActionTypes = {
   BEFORE: 'before',
@@ -32,20 +33,17 @@ type TabKey = typeof Tabs[keyof typeof Tabs];
 export default function UserRulesClientPage({ ruleCount }) {
   const searchParams = useSearchParams();
 
-  const [notFound, setNotFound] = useState(false);
   const [lastModifiedRules, setLastModifiedRules] = useState<any[]>([]);
   const [authoredRules, setAuthoredRules] = useState<any[]>([]);
   const [author, setAuthor] = useState<{ fullName?: string; slug?: string; gitHubUrl?: string }>({});
 
   const [previousPageCursor, setPreviousPageCursor] = useState<string[]>([]);
   const [nextPageCursor, setNextPageCursor] = useState('');
-  const [tempCursor, setTempCursor] = useState('');
   const [hasNext, setHasNext] = useState(false);
 
   const [loadingLastModified, setLoadingLastModified] = useState(false);
   const [loadingMoreLastModified, setLoadingMoreLastModified] = useState(false);
   const [loadingAuthored, setLoadingAuthored] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const [activeTab, setActiveTab] = useState<TabKey>(Tabs.LAST_MODIFIED);
 
@@ -145,27 +143,12 @@ export default function UserRulesClientPage({ ruleCount }) {
       }
   
       setNextPageCursor(endCursor || '');
-      setTempCursor(startCursor || '');
       setHasNext(!!hasNextPage);
     } catch (err) {
       console.error('Failed to fetch GitHub data:', err);
-      setError('Failed to fetch rules data. Please try again later.');
-      setNotFound(true);
     } finally {
       append ? setLoadingMoreLastModified(false) : setLoadingLastModified(false);
     }
-  };
-
-  const getUniqueRules = (files: any[]) => {
-    const uniqueRulesMap = new Map();
-    files.forEach((file) => {
-      const path = file.path;
-      const ruleName = path.replace(/^rules\//, '').replace(/\/rule\.mdx$/, '');
-      if (!uniqueRulesMap.has(ruleName) || new Date(file.lastUpdated) > new Date(uniqueRulesMap.get(ruleName).lastUpdated)) {
-        uniqueRulesMap.set(ruleName, file);
-      }
-    });
-    return Array.from(uniqueRulesMap.values());
   };
 
   const appendUniqueRules = (prev: any[], next: any[]) => {
@@ -209,6 +192,8 @@ export default function UserRulesClientPage({ ruleCount }) {
           title: fullRule.title,
           uri: fullRule.uri,
           body: fullRule.body,
+          lastUpdated: fullRule.lastUpdated,
+          lastUpdatedBy: fullRule.lastUpdatedBy,
           authors:
             fullRule.authors
               ?.map((a: any) => (a && a.title ? { title: a.title } : null))
@@ -257,6 +242,8 @@ export default function UserRulesClientPage({ ruleCount }) {
           fullRule.authors
             ?.map((a: any) => (a && a.title ? { title: a.title } : null))
             .filter((a: any): a is { title: string } => a !== null) || [],
+        lastUpdated: fullRule.lastUpdated,
+        lastUpdatedBy: fullRule.lastUpdatedBy
       }));
   
       setAuthoredRules((prev) => (append ? appendUniqueRules(prev, batch) : batch));
@@ -371,13 +358,29 @@ export default function UserRulesClientPage({ ruleCount }) {
 
                 {lastModifiedRules.length > 0 && (
                   <>
-                    <ol className="flex flex-col justify-between gap-4 p-0 list-none">
-                      {lastModifiedRules.map((rule, i) => (
-                        <li key={rule.guid} className="p-4 pt-5 border rounded shadow">
-                          <RuleListItemHeader rule={rule} index={i} />
-                        </li>
-                      ))}
-                    </ol>
+                    {lastModifiedRules.map((rule, i) => (
+                      <Card className="mb-4" key={rule.id}>
+                        <div className=" flex">
+                          <span className="text-gray-500 mr-2">#{i + 1}</span>
+                          <div className="flex flex-col">
+                            <Link href={`/${rule.uri}`} className="no-underline">
+                            <h2 className="m-0 mb-2 text-2xl max-sm:text-lg hover:text-ssw-red">{rule.title}</h2>
+                            </Link>
+                            <h4 className="flex m-0 text-lg max-sm:text-md">
+                              <span className="font-medium"> {rule.lastUpdatedBy}</span>
+                              {rule.lastUpdated ? (
+                                <div className="flex items-center ml-4 text-gray-500 font-light">
+                                  <RiTimeFill className="inline mr-1" />
+                                  <span>{timeAgo(rule.lastUpdated)}</span>
+                                </div>
+                              ) : (
+                                ""
+                              )}
+                            </h4>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
 
                     {hasNext && (
                       <div className="mt-4 flex justify-center">
@@ -405,13 +408,29 @@ export default function UserRulesClientPage({ ruleCount }) {
 
                 {!loadingAuthored && authoredRules.length > 0 && (
                   <>
-                    <ol className="flex flex-col justify-between gap-4 p-0 list-none">
-                      {authoredRules.map((rule, i) => (
-                        <li key={rule.guid} className="p-4 pt-5 border rounded shadow">
-                          <RuleListItemHeader rule={rule} index={i} />
-                        </li>
-                      ))}
-                    </ol>
+                    {authoredRules.map((rule, i) => (
+                      <Card className="mb-4" key={rule.id}>
+                        <div className=" flex">
+                          <span className="text-gray-500 mr-2">#{i + 1}</span>
+                          <div className="flex flex-col">
+                            <Link href={`/${rule.uri}`} className="no-underline">
+                            <h2 className="m-0 mb-2 text-2xl max-sm:text-lg hover:text-ssw-red">{rule.title}</h2>
+                            </Link>
+                            <h4 className="flex m-0 text-lg max-sm:text-md">
+                              <span className="font-medium"> {rule.lastUpdatedBy}</span>
+                              {rule.lastUpdated ? (
+                                <div className="flex items-center ml-4 text-gray-500 font-light">
+                                  <RiTimeFill className="inline mr-1" />
+                                  <span>{timeAgo(rule.lastUpdated)}</span>
+                                </div>
+                              ) : (
+                                ""
+                              )}
+                            </h4>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
 
                     {authoredHasNext && (
                       <div className="mt-4 flex justify-center">
