@@ -1,6 +1,6 @@
 name: Scheduled CodeAuditor test
 
-# Schedule scan for SSW Rules at 1pm every Friday
+# Schedule scan for SSW Rules at 1pm every Friday (AU)
 on: 
   push:
     branches: [ '1864-add-codeauditor' ]
