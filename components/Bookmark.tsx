@@ -25,8 +25,9 @@ export default function Bookmark({ ruleGuid, isBookmarked, onBookmarkToggle, cla
   }, [isBookmarked]);
 
   const handleBookmarkToggle = async () => {
-    if (!user) {
-      const currentPath = window.location.pathname;
+    const currentPath = window.location.pathname;
+    const userId = user?.sub;
+    if (!userId) {
       router.push(`/auth/login?returnTo=${encodeURIComponent(currentPath)}`);
       return;
     }
@@ -39,7 +40,7 @@ export default function Bookmark({ ruleGuid, isBookmarked, onBookmarkToggle, cla
         return;
       }
 
-      const data = { ruleGuid: ruleGuid, UserId: user.sub };
+      const data = { ruleGuid: ruleGuid, UserId: userId };
 
       if (bookmarked) {
         const result = await BookmarkService.removeBookmark(data, accessToken);
