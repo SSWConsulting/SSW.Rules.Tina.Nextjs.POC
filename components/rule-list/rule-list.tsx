@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import RuleListItem from './rule-list-item';
 import RadioButton from '@/components/radio-button';
 import { RiPencilLine, RiGithubLine } from 'react-icons/ri';
@@ -21,6 +21,7 @@ const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContent
   const [filter, setFilter] = useState<RuleListFilter>(RuleListFilter.Blurb);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
+  const filterSectionRef = useRef<HTMLDivElement>(null);
 
   const paginatedRules = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -32,8 +33,14 @@ const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContent
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll to top of rule list when page changes
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Scroll to just above the filter options when page changes
+    setTimeout(() => {
+      if (filterSectionRef.current) {
+        const rect = filterSectionRef.current.getBoundingClientRect();
+        const offsetTop = window.pageYOffset + rect.top - 5; // 5px above the filter section
+        window.scrollTo({ top: offsetTop, behavior: 'smooth' });
+      }
+    }, 50); // Small delay to ensure DOM is updated
   };
 
   const handleItemsPerPageChange = (newItemsPerPage: number) => {
@@ -55,7 +62,7 @@ const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContent
 
   return (
     <>
-      <div className="flex flex-col-reverse justify-between items-center mt-2 sm:flex-row sm:mt-0">
+      <div ref={filterSectionRef} className="flex flex-col-reverse justify-between items-center mt-2 sm:flex-row sm:mt-0">
         <div className="flex gap-2 items-center py-4 text-center lg:grid-cols-5">
           <RadioButton
             id="customRadioInline1"

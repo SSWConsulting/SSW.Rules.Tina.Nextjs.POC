@@ -62,7 +62,7 @@ export default function Dropdown({ options, value, onChange, className = '' }: D
           style={{ 
             zIndex: 10000,
             position: 'fixed',
-            right: dropdownRef.current ? window.innerWidth - dropdownRef.current.getBoundingClientRect().right : 0,
+            left: dropdownRef.current ? dropdownRef.current.getBoundingClientRect().left : 0,
             top: dropdownRef.current ? dropdownRef.current.getBoundingClientRect().bottom + 4 : 0
           }}
         >
