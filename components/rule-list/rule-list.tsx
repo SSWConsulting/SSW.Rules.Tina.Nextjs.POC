@@ -62,10 +62,10 @@ const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContent
             value="titleOnly"
             selectedOption={filter}
             handleOptionChange={handleOptionChange}
-            labelText="Title"
+            labelText="View Titles Only"
           />
-          <RadioButton id="customRadioInline3" value="blurb" selectedOption={filter} handleOptionChange={handleOptionChange} labelText="Blurbs" />
-          <RadioButton id="customRadioInline2" value="all" selectedOption={filter} handleOptionChange={handleOptionChange} labelText="Everything" />
+          <RadioButton id="customRadioInline2" value="all" selectedOption={filter} handleOptionChange={handleOptionChange} labelText="Gimme Everything" />
+          <RadioButton id="customRadioInline3" value="blurb" selectedOption={filter} handleOptionChange={handleOptionChange} labelText="Show Blurb" />
           <p className="mx-3 hidden sm:block">{rules.length} Rules</p>
         </div>
         {type === 'category' && (
