@@ -70,9 +70,6 @@ export default function Pagination({
 
   const visiblePages = getVisiblePages();
 
-  if (totalPages <= 1) {
-    return null;
-  }
 
   return (
     <div className={cn("flex items-center justify-between mt-4", className)}>
@@ -99,7 +96,7 @@ export default function Pagination({
               size="sm"
               onClick={() => onPageChange(pageNum)}
               className={cn(
-                "w-8 h-8 p-0 text-sm",
+                "w-8 h-8 p-0 text-sm cursor-pointer",
                 isActive && "bg-ssw-red text-white hover:bg-ssw-red/90"
               )}
             >
