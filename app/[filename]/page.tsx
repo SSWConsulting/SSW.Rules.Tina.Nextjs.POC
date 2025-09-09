@@ -91,11 +91,17 @@ export async function generateStaticParams() {
 
     const [categoryConnection, ruleConnection] = await Promise.all([
       client.queries.categoryConnection().catch((err) => {
-        console.warn("Error fetching categories:", err?.message || err);
+        const isRecordNotFound = err?.message?.includes('Unable to find record');
+        if (!isRecordNotFound) {
+          console.warn("Error fetching categories:", err?.message || err);
+        }
         return { data: { categoryConnection: { edges: [] } } };
       }),
       client.queries.ruleConnection().catch((err) => {
-        console.warn("Error fetching rules:", err?.message || err);
+        const isRecordNotFound = err?.message?.includes('Unable to find record');
+        if (!isRecordNotFound) {
+          console.warn("Error fetching rules:", err?.message || err);
+        }
         return { data: { ruleConnection: { edges: [] } } };
       }),
     ]);
