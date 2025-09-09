@@ -8,25 +8,17 @@ const Rule: Collection = {
   label: "Rules",
   path: "public/uploads/rules",
   format: "mdx",
-  match: {
-        include: '**/rule'
-  },
-  defaultItem() {
-    return {
-      guid: generateGuid(),
-      filename: "rule",
-    };
-  },
   ui: {
     filename: {
-      slugify: (values) => {
-        const folder = values?.uri?.trim() || "";
-        return folder ? `${folder}/rule` : "rule";
-      },
+      slugify: () => "rule",
       readonly: true,
     },
     router: ({ document }) => {
-      return document._sys.relativePath.split("/")[0];
+      const filepath = document._sys.breadcrumbs.join('/');
+      if (filepath === 'home') {
+        return '/';
+      }
+      return `/${filepath}`;
     },
     beforeSubmit: historyBeforeSubmit,
   },
