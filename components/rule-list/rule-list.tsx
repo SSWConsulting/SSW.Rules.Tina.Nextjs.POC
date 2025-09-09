@@ -1,12 +1,13 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import RuleListItem from './rule-list-item';
 import RadioButton from '@/components/radio-button';
 import { RiPencilLine, RiGithubLine } from 'react-icons/ri';
 import { RuleListFilter } from '@/types/ruleListFilter';
 import { IconLink } from '../ui';
 import { ICON_SIZE } from '@/constants';
+import Pagination from '@/components/ui/pagination';
 
 export interface RuleListProps {
   categoryUri?: string;
@@ -18,6 +19,27 @@ export interface RuleListProps {
 
 const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContentMessage, onBookmarkRemoved }) => {
   const [filter, setFilter] = useState<RuleListFilter>(RuleListFilter.Blurb);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+
+  const paginatedRules = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return rules.slice(startIndex, endIndex);
+  }, [rules, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil(rules.length / itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    // Scroll to top of rule list when page changes
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleItemsPerPageChange = (newItemsPerPage: number) => {
+    setItemsPerPage(newItemsPerPage);
+    setCurrentPage(1); // Reset to first page when changing items per page
+  };
 
   const handleOptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilter(e.target.value as RuleListFilter);
@@ -62,10 +84,27 @@ const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContent
       </div>
 
       <ol className="flex flex-col justify-between gap-4 p-0 list-none">
-        {rules.map((rule, i) => (
-          <RuleListItem key={`${rule.guid}-${rule.uri}`} rule={rule} index={i} onBookmarkRemoved={onBookmarkRemoved} filter={filter} />
+        {paginatedRules.map((rule, i) => (
+          <RuleListItem 
+            key={`${rule.guid}-${rule.uri}`} 
+            rule={rule} 
+            index={(currentPage - 1) * itemsPerPage + i} 
+            onBookmarkRemoved={onBookmarkRemoved} 
+            filter={filter} 
+          />
         ))}
       </ol>
+      
+      {rules.length > itemsPerPage && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={rules.length}
+          itemsPerPage={itemsPerPage}
+          onPageChange={handlePageChange}
+          onItemsPerPageChange={handleItemsPerPageChange}
+        />
+      )}
     </>
   );
 };
