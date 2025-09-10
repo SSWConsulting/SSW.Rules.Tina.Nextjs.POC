@@ -48,7 +48,10 @@ const nextConfig: NextConfig = {
       },
       {
         key: 'Content-Security-Policy',
-        value: "frame-ancestors 'self'; connect-src 'self' https://content.tinajs.io https://assets.tina.io https://identity.tinajs.io;",
+        value: [
+          "frame-ancestors 'self'",
+          "connect-src 'self' https://content.tinajs.io https://assets.tina.io https://identity.tinajs.io https://cognito-idp.us-east-1.amazonaws.com"
+        ].join('; '),
       },
     ];
     return [
