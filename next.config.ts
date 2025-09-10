@@ -41,41 +41,20 @@ const nextConfig: NextConfig = {
   },
   
   async headers() {
-    const securityHeaders = [
+    const headers = [
       {
         key: 'X-Frame-Options',
         value: 'SAMEORIGIN',
       },
       {
         key: 'Content-Security-Policy',
-        value: "frame-ancestors 'self'; connect-src 'self' https://content.tinajs.io https://assets.tina.io;",
+        value: "frame-ancestors 'self'; connect-src 'self' https://content.tinajs.io https://assets.tina.io https://identity.tinajs.io;",                                                                                                      Ajout de identity.tinajs.io
       },
     ];
-
-    // Headers CORS sécurisés uniquement pour l'admin Tina
-    const adminCorsHeaders = [
-      {
-        key: 'Access-Control-Allow-Origin',
-        value: 'https://app.tina.io', // Seulement Tina Cloud
-      },
-      {
-        key: 'Access-Control-Allow-Methods',
-        value: 'GET, POST, PUT, DELETE, OPTIONS',
-      },
-      {
-        key: 'Access-Control-Allow-Headers',
-        value: 'Content-Type, Authorization',
-      },
-    ];
-
     return [
       {
         source: '/(.*)',
-        headers: securityHeaders,
-      },
-      {
-        source: '/admin/(.*)',
-        headers: adminCorsHeaders,
+        headers,
       },
     ];
   },
