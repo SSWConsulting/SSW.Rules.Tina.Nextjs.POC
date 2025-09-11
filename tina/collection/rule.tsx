@@ -9,7 +9,7 @@ const Rule: Collection = {
   path: "public/uploads/rules",
   format: "mdx",
   match: {
-        include: '**/rule'
+        include: '**/{rule,.gitkeep}'
   },
   defaultItem() {
     return {
