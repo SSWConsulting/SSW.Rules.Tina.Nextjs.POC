@@ -26,12 +26,15 @@ const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContent
   const filterSectionRef = useRef<HTMLDivElement>(null);
 
   const paginatedRules = useMemo(() => {
+    if (itemsPerPage >= rules.length) {
+      return rules; // Show all rules
+    }
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     return rules.slice(startIndex, endIndex);
   }, [rules, currentPage, itemsPerPage]);
 
-  const totalPages = Math.ceil(rules.length / itemsPerPage);
+  const totalPages = itemsPerPage >= rules.length ? 1 : Math.ceil(rules.length / itemsPerPage);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
@@ -113,7 +116,7 @@ const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContent
       <ol className="flex flex-col justify-between gap-4 p-0 list-none">
         {paginatedRules.map((rule, i) => (
           <RuleListItem 
-            key={`${rule.guid}-${rule.uri}`} 
+            key={`${rule.guid}-${rule.uri}-${(currentPage - 1) * itemsPerPage + i}`} 
             rule={rule} 
             index={(currentPage - 1) * itemsPerPage + i} 
             onBookmarkRemoved={onBookmarkRemoved} 
