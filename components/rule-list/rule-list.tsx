@@ -91,7 +91,7 @@ const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContent
                 type="checkbox"
                 checked={includeArchived}
                 onChange={(e) => handleIncludeArchivedChange(e.target.checked)}
-                className="w-4 h-4 text-ssw-red border-gray-300 rounded focus:ring-ssw-red focus:ring-2"
+                className="w-4 h-4 border-gray-300 rounded focus:ring-ssw-red focus:ring-2 accent-ssw-red"
               />
               <span className="text-gray-700">Include Archived</span>
             </label>
