@@ -117,8 +117,8 @@ export default function ClientCategoryPage(props: ClientCategoryPageProps) {
         </div>
         <div className="hidden lg:w-1/3 lg:block md:hidden p-6 pr-0">
           <ol className="border-l-3 border-gray-300 pl-6">
-            {rightSidebarRules.map((rule) => (
-              <li key={`sidebar-${rule.guid}-${rule.uri}`} className="py-1 ml-4">
+            {rightSidebarRules.map((rule, index) => (
+              <li key={`sidebar-${rule.guid}-${index}`} className="py-1 ml-4">
                 <Link href={rule.uri} className="text-gray-700 hover:text-ssw-red">
                   {rule.title}
                 </Link>
