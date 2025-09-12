@@ -15,9 +15,11 @@ export interface RuleListProps {
   type?: string;
   noContentMessage?: string;
   onBookmarkRemoved?: (ruleGuid: string) => void;
+  includeArchived?: boolean;
+  onIncludeArchivedChange?: (include: boolean) => void;
 }
 
-const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContentMessage, onBookmarkRemoved }) => {
+const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContentMessage, onBookmarkRemoved, includeArchived = false, onIncludeArchivedChange }) => {
   const [filter, setFilter] = useState<RuleListFilter>(RuleListFilter.Blurb);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
@@ -52,6 +54,13 @@ const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContent
     setFilter(e.target.value as RuleListFilter);
   };
 
+  const handleIncludeArchivedChange = (include: boolean) => {
+    setCurrentPage(1); // Reset to first page when toggling archived
+    if (onIncludeArchivedChange) {
+      onIncludeArchivedChange(include);
+    }
+  };
+
   if (rules.length === 0) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -73,6 +82,17 @@ const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContent
           />
           <RadioButton id="customRadioInline3" value="blurb" selectedOption={filter} handleOptionChange={handleOptionChange} labelText="Show Blurb" />
           <RadioButton id="customRadioInline2" value="all" selectedOption={filter} handleOptionChange={handleOptionChange} labelText="Gimme Everything" />
+          {onIncludeArchivedChange && (
+            <label className="flex items-center gap-2 px-4 py-1 text-sm cursor-pointer hover:bg-gray-50 transition-colors bg-white">
+              <input
+                type="checkbox"
+                checked={includeArchived}
+                onChange={(e) => handleIncludeArchivedChange(e.target.checked)}
+                className="w-4 h-4 text-ssw-red border-gray-300 rounded focus:ring-ssw-red focus:ring-2"
+              />
+              <span className="text-gray-700">Include Archived</span>
+            </label>
+          )}
           <p className="mx-3 hidden sm:block">{rules.length} Rules</p>
         </div>
         {type === 'category' && (
