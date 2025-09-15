@@ -39,7 +39,7 @@ async function fetchQuickLinks(): Promise<QuickLink[]> {
   const res = await client.queries.global({
     relativePath: "index.json",
   });
-  return res.data.global.quickLinks?.links as QuickLink[];
+  return Array.isArray(res.data.global.quickLinks?.links) ? res.data.global.quickLinks.links as QuickLink[] : [];
 }
 
 function buildCategoryRuleCounts(): Record<string, number> {
