@@ -13,7 +13,7 @@ importers:
         version: 4.9.0(next@15.3.0(@babel/core@7.28.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@fontsource-variable/inter':
         specifier: ^5.2.6
-        version: 5.2.6
+        version: 5.2.7
       '@fortawesome/fontawesome-svg-core':
         specifier: ^7.0.0
         version: 7.0.1
@@ -31,7 +31,7 @@ importers:
         version: 3.1.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@headlessui/react':
         specifier: ^2.2.1
-        version: 2.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        version: 2.2.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@microsoft/applicationinsights-web':
         specifier: ^3.3.9
         version: 3.3.9(tslib@2.8.1)
@@ -150,14 +150,14 @@ importers:
         specifier: ^4.0.17
         version: 4.1.13
       tinacms:
-        specifier: ^2.8.2
-        version: 2.8.2(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.1)(@types/react@18.3.24)(abstract-level@1.0.4)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(sucrase@3.35.0)(typescript@5.9.2)(use-sync-external-store@1.5.0(react@18.3.1))
+        specifier: ^2.8.3
+        version: 2.8.3(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.3)(@types/react@18.3.24)(abstract-level@1.0.4)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(sucrase@3.35.0)(typescript@5.9.2)(use-sync-external-store@1.5.0(react@18.3.1))
       tw-animate-css:
         specifier: ^1.2.4
         version: 1.3.8
       unplugin-info:
         specifier: ^1.2.4
-        version: 1.2.4(esbuild@0.24.2)(rollup@3.29.5)(vite@4.5.14(@types/node@22.18.1)(lightningcss@1.30.1))
+        version: 1.2.4(esbuild@0.24.2)(rollup@3.29.5)(vite@4.5.14(@types/node@22.18.3)(lightningcss@1.30.1))
       usehooks-ts:
         specifier: ^3.1.1
         version: 3.1.1(react@18.3.1)
@@ -170,13 +170,13 @@ importers:
         version: 8.1.0(typescript@5.9.2)
       '@tinacms/cli':
         specifier: ^1.10.2
-        version: 1.10.2(@codemirror/language@6.0.0)(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.1)(@types/react@18.3.24)(abstract-level@1.0.4)(immer@10.1.3)(lightningcss@1.30.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@3.29.5)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(sucrase@3.35.0)(use-sync-external-store@1.5.0(react@18.3.1))
+        version: 1.10.3(@codemirror/language@6.0.0)(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.3)(@types/react@18.3.24)(abstract-level@1.0.4)(immer@10.1.3)(lightningcss@1.30.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@3.29.5)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(sucrase@3.35.0)(use-sync-external-store@1.5.0(react@18.3.1))
       '@types/js-cookie':
         specifier: ^3.0.6
         version: 3.0.6
       '@types/node':
         specifier: ^22.13.10
-        version: 22.18.1
+        version: 22.18.3
       '@types/react':
         specifier: ^18.3.18
         version: 18.3.24
@@ -1307,8 +1307,8 @@ packages:
   '@floating-ui/utils@0.2.10':
     resolution: {integrity: sha512-aGTxbpbg8/b5JfU1HXSrbH3wXZuLPJcNEcZQFMxLs3oSzgtVu6nFPkbbGGUvBcUjKV2YyB9Wxxabo+HEH9tcRQ==}
 
-  '@fontsource-variable/inter@5.2.6':
-    resolution: {integrity: sha512-jks/bficUPQ9nn7GvXvHtlQIPudW7Wx8CrlZoY8bhxgeobNxlQan8DclUJuYF2loYRrGpfrhCIZZspXYysiVGg==}
+  '@fontsource-variable/inter@5.2.7':
+    resolution: {integrity: sha512-1Ej2Y2l+l1VHAu0cNBmOqPdnO7MKhMvaZ4ilL/qcF5lOQw8ieLhp1APcksXIsqO3eAB0+7/nIc/3cSxfEIdj4Q==}
 
   '@fortawesome/fontawesome-common-types@7.0.1':
     resolution: {integrity: sha512-0VpNtO5cNe1/HQWMkl4OdncYK/mv9hnBte0Ew0n6DMzmo3Q3WzDFABHm6LeNTipt5zAyhQ6Ugjiu8aLaEjh1gg==}
@@ -1487,8 +1487,8 @@ packages:
       react: ^18
       react-dom: ^18
 
-  '@headlessui/react@2.2.7':
-    resolution: {integrity: sha512-WKdTymY8Y49H8/gUc/lIyYK1M+/6dq0Iywh4zTZVAaiTDprRfioxSgD0wnXTQTBpjpGJuTL1NO/mqEvc//5SSg==}
+  '@headlessui/react@2.2.8':
+    resolution: {integrity: sha512-vkiZulDC0lFeTrZTbA4tHvhZHvkUb2PFh5xJ1BvWAZdRK0fayMKO1QEO4inWkXxK1i0I1rcwwu1d6mo0K7Pcbw==}
     engines: {node: '>=10'}
     peerDependencies:
       react: ^18 || ^19 || ^19.0.0-rc
@@ -2605,14 +2605,14 @@ packages:
   '@tanstack/virtual-core@3.13.12':
     resolution: {integrity: sha512-1YBOJfRHV4sXUmWsFSf5rQor4Ss82G8dQWLRbnk3GA4jeP8hQt1hxXh0tmflpC0dz3VgEv/1+qwPyLeWkQuPFA==}
 
-  '@tinacms/app@2.3.2':
-    resolution: {integrity: sha512-951XM05BYT0J8V4ajeqvDBqI0QqR/TmJbJwFNGPgy9We6x7mlIP54smThdbfebUUwzlqeZXqLnn5sSquGC1r+A==}
+  '@tinacms/app@2.3.3':
+    resolution: {integrity: sha512-zG8iJYN4jtWTGui6HGgOoLzJzdV1ReCKIMLb/n5YeTZfBgjiPm/aJg75u2RB8Mg7//NzEvUGFyUWpDfPEUb+uA==}
     peerDependencies:
       react: '>=18.3.1 <20.0.0'
       react-dom: '>=18.3.1 <20.0.0'
 
-  '@tinacms/cli@1.10.2':
-    resolution: {integrity: sha512-PklQphEYrTLjwBW6cJgYKAatTlGQuGvvEK8a9N8cQsrrN+t8fZypwhZ/+xlwDh8qEJ+FcTa8HfFDTSfW7I5aLw==}
+  '@tinacms/cli@1.10.3':
+    resolution: {integrity: sha512-t5Xt6qQO15X0N3tGGBcxnUMqvU5URfjuYNcWaG/m6HbYIIJsd3iG1d8OkIaeNWlr0tySAN3cHO8JUymUaZ8gWQ==}
     hasBin: true
     peerDependencies:
       react: '>=18.3.1 <20.0.0'
@@ -2800,8 +2800,8 @@ packages:
   '@types/node@10.17.60':
     resolution: {integrity: sha512-F0KIgDJfy2nA3zMLmWGKxcH2ZVEtCZXHHdOQs2gSaQ27+lNeEfGxzkIw90aXswATX7AZ33tahPbzy6KAfUreVw==}
 
-  '@types/node@22.18.1':
-    resolution: {integrity: sha512-rzSDyhn4cYznVG+PCzGe1lwuMYJrcBS1fc3JqSa2PvtABwWo+dZ1ij5OVok3tqfpEBCBoaR4d7upFJk73HRJDw==}
+  '@types/node@22.18.3':
+    resolution: {integrity: sha512-gTVM8js2twdtqM+AE2PdGEe9zGQY4UvmFjan9rZcVb6FGdStfjWoWejdmy4CfWVO9rh5MiYQGZloKAGkJt8lMw==}
 
   '@types/parse-path@7.1.0':
     resolution: {integrity: sha512-EULJ8LApcVEPbrfND0cRQqutIOdiIgJ1Mgrhpy755r14xMohPTEpkV/k28SJvuOs9bHRFW8x+KeDAEPiGQPB9Q==}
@@ -3779,6 +3779,15 @@ packages:
       supports-color:
         optional: true
 
+  debug@4.4.3:
+    resolution: {integrity: sha512-RGwwWnwQvkVfavKVt22FGLw+xYSdzARwm0ru6DhTVA3umU5hZc28V3kO4stgYryrTlLpuvgI9GiijltAjNbcqA==}
+    engines: {node: '>=6.0'}
+    peerDependencies:
+      supports-color: '*'
+    peerDependenciesMeta:
+      supports-color:
+        optional: true
+
   decode-named-character-reference@1.2.0:
     resolution: {integrity: sha512-c6fcElNV6ShtZXmsgNgFFV5tVX2PaV4g+MOAkb8eXHvn6sryJBrZa9r0zV6+dtTyoCKxtDy5tyQ5ZwQuidtd+Q==}
 
@@ -3827,6 +3836,10 @@ packages:
 
   detect-libc@2.0.4:
     resolution: {integrity: sha512-3UDv+G9CsCKO1WKMGw9fwq/SWJYbI0c5Y7LU1AXYoDdbhE2AHQ6N6Nb34sG8Fj7T5APy8qXDCKuuIHd1BR0tVA==}
+    engines: {node: '>=8'}
+
+  detect-libc@2.1.0:
+    resolution: {integrity: sha512-vEtk+OcP7VBRtQZ1EJ3bdgzSfBjgnEalLTp5zjJrS+2Z1w2KZly4SBdac/WDU3hhsNAZ9E8SC96ME4Ey8MZ7cg==}
     engines: {node: '>=8'}
 
   detect-node-es@1.1.0:
@@ -4400,8 +4413,8 @@ packages:
   is-arrayish@0.2.1:
     resolution: {integrity: sha512-zz06S8t0ozoDXMG+ube26zeCTNXcKIPJZJi8hBrF4idCLms4CG9QtK7qBl1boi5ODzFpjswb5JPmHCbMpjaYzg==}
 
-  is-arrayish@0.3.2:
-    resolution: {integrity: sha512-eVRqCvVlZbuw3GrM63ovNSNAeA1K16kaR/LRY/92w0zxQ5/1YzwblUX652i4Xs9RwAGjW9d9y6X88t8OaAJfWQ==}
+  is-arrayish@0.3.4:
+    resolution: {integrity: sha512-m6UrgzFVUYawGBh1dUsWR5M2Clqic9RVXC/9f8ceNlv2IcO9j9J/z8UoCLPqtsPBFNzEpfR3xftohbfqDx8EQA==}
 
   is-binary-path@2.1.0:
     resolution: {integrity: sha512-ZMERYes6pDydyuGidse7OsHxtbI7WVeUEozgR/g7rd0xUimYNlvZRE/K2MgZTjWy725IfelLeVcEM97mmtRGXw==}
@@ -6201,8 +6214,8 @@ packages:
   simple-git@3.28.0:
     resolution: {integrity: sha512-Rs/vQRwsn1ILH1oBUy8NucJlXmnnLeLCfcvbSehkPzbv3wwoFWIdtfd6Ndo6ZPhlPsCZ60CPI4rxurnwAa+a2w==}
 
-  simple-swizzle@0.2.2:
-    resolution: {integrity: sha512-JA//kQgZtbuY83m+xT+tXJkmJncGMTFT+C+g2h2R9uxkYIrE2yy9sgmcLhCnw57/WSD+Eh3J97FPEDFnbXnDUg==}
+  simple-swizzle@0.2.4:
+    resolution: {integrity: sha512-nAu1WFPQSMNr2Zn9PGSZK9AGn4t/y97lEm+MXTtUDwfP0ksAIX4nO+6ruD9Jwut4C49SB1Ws+fbXsm/yScWOHw==}
 
   sisteransi@1.0.5:
     resolution: {integrity: sha512-bLGGlR1QxBcynn2d5YmDX4MGjlZvy2MRBDRNHLJ8VI6l6+9FUiyTFNJ0IveOSP0bcXgVDPRcfGqA0pjaqUpfVg==}
@@ -6459,8 +6472,8 @@ packages:
     resolution: {integrity: sha512-dTEWWNu6JmeVXY0ZYoPuH5cRIwc0MeGbJwah9KUNYSJwommQpCzTySTpEe8Gs1J23aeWEuAobe4Ag7EHVt/LOg==}
     engines: {node: '>=10'}
 
-  tinacms@2.8.2:
-    resolution: {integrity: sha512-Htn/smbHFuwCUjAAbHR4SJ8J25Elb5YxFoiRgMVZHox11naoxEf+G8PZnLiHe6IoHj39arY3aRPbFO2UJUaLcA==}
+  tinacms@2.8.3:
+    resolution: {integrity: sha512-n1riVKAsUGkjiS1pzaEc4EDAfA0X5irYFMxdxUv97uqGm53TB1djQxRbzjCpjVcPA29ZPXKpmYi5S8tyb8doSQ==}
     peerDependencies:
       react: '>=16.14.0'
       react-dom: '>=16.14.0'
@@ -8159,7 +8172,7 @@ snapshots:
 
   '@floating-ui/utils@0.2.10': {}
 
-  '@fontsource-variable/inter@5.2.6': {}
+  '@fontsource-variable/inter@5.2.7': {}
 
   '@fortawesome/fontawesome-common-types@7.0.1': {}
 
@@ -8186,9 +8199,9 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@graphiql/react@0.18.0(@codemirror/language@6.0.0)(@types/node@22.18.1)(@types/react@18.3.24)(graphql@15.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@graphiql/react@0.18.0(@codemirror/language@6.0.0)(@types/node@22.18.3)(@types/react@18.3.24)(graphql@15.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
-      '@graphiql/toolkit': 0.8.4(@types/node@22.18.1)(graphql@15.8.0)
+      '@graphiql/toolkit': 0.8.4(@types/node@22.18.3)(graphql@15.8.0)
       '@headlessui/react': 1.7.19(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-dialog': 1.1.15(@types/react@18.3.24)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@radix-ui/react-dropdown-menu': 2.1.16(@types/react@18.3.24)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -8213,11 +8226,11 @@ snapshots:
       - '@types/react-dom'
       - graphql-ws
 
-  '@graphiql/toolkit@0.8.4(@types/node@22.18.1)(graphql@15.8.0)':
+  '@graphiql/toolkit@0.8.4(@types/node@22.18.3)(graphql@15.8.0)':
     dependencies:
       '@n1ru4l/push-pull-async-iterable-iterator': 3.2.0
       graphql: 15.8.0
-      meros: 1.3.2(@types/node@22.18.1)
+      meros: 1.3.2(@types/node@22.18.3)
     transitivePeerDependencies:
       - '@types/node'
 
@@ -8421,7 +8434,7 @@ snapshots:
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
 
-  '@headlessui/react@2.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@headlessui/react@2.2.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@floating-ui/react': 0.26.28(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@react-aria/focus': 3.21.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -9566,21 +9579,21 @@ snapshots:
 
   '@tanstack/virtual-core@3.13.12': {}
 
-  '@tinacms/app@2.3.2(@codemirror/language@6.0.0)(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.1)(@types/react@18.3.24)(abstract-level@1.0.4)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(sucrase@3.35.0)(use-sync-external-store@1.5.0(react@18.3.1))(yup@1.7.0)':
+  '@tinacms/app@2.3.3(@codemirror/language@6.0.0)(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.3)(@types/react@18.3.24)(abstract-level@1.0.4)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(sucrase@3.35.0)(use-sync-external-store@1.5.0(react@18.3.1))(yup@1.7.0)':
     dependencies:
-      '@graphiql/toolkit': 0.8.4(@types/node@22.18.1)(graphql@15.8.0)
+      '@graphiql/toolkit': 0.8.4(@types/node@22.18.3)(graphql@15.8.0)
       '@headlessui/react': 2.1.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@heroicons/react': 1.0.6(react@18.3.1)
       '@monaco-editor/react': 4.4.5(monaco-editor@0.31.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@tinacms/mdx': 1.8.1(react@18.3.1)(typescript@5.9.2)(yup@1.7.0)
       final-form: 4.20.10
-      graphiql: 3.0.0-alpha.1(@codemirror/language@6.0.0)(@types/node@22.18.1)(@types/react@18.3.24)(graphql@15.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      graphiql: 3.0.0-alpha.1(@codemirror/language@6.0.0)(@types/node@22.18.3)(@types/react@18.3.24)(graphql@15.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       graphql: 15.8.0
       monaco-editor: 0.31.0
       react: 18.3.1
       react-dom: 18.3.1(react@18.3.1)
       react-router-dom: 6.3.0(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      tinacms: 2.8.2(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.1)(@types/react@18.3.24)(abstract-level@1.0.4)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(sucrase@3.35.0)(typescript@5.9.2)(use-sync-external-store@1.5.0(react@18.3.1))
+      tinacms: 2.8.3(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.3)(@types/react@18.3.24)(abstract-level@1.0.4)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(sucrase@3.35.0)(typescript@5.9.2)(use-sync-external-store@1.5.0(react@18.3.1))
       typescript: 5.9.2
       zod: 3.25.76
     transitivePeerDependencies:
@@ -9602,7 +9615,7 @@ snapshots:
       - use-sync-external-store
       - yup
 
-  '@tinacms/cli@1.10.2(@codemirror/language@6.0.0)(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.1)(@types/react@18.3.24)(abstract-level@1.0.4)(immer@10.1.3)(lightningcss@1.30.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@3.29.5)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(sucrase@3.35.0)(use-sync-external-store@1.5.0(react@18.3.1))':
+  '@tinacms/cli@1.10.3(@codemirror/language@6.0.0)(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.3)(@types/react@18.3.24)(abstract-level@1.0.4)(immer@10.1.3)(lightningcss@1.30.1)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(rollup@3.29.5)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(sucrase@3.35.0)(use-sync-external-store@1.5.0(react@18.3.1))':
     dependencies:
       '@graphql-codegen/core': 2.6.8(graphql@15.8.0)
       '@graphql-codegen/plugin-helpers': 6.0.0(graphql@15.8.0)
@@ -9617,12 +9630,12 @@ snapshots:
       '@tailwindcss/aspect-ratio': 0.4.2(tailwindcss@3.4.17)
       '@tailwindcss/container-queries': 0.1.1(tailwindcss@3.4.17)
       '@tailwindcss/typography': 0.5.16(tailwindcss@3.4.17)
-      '@tinacms/app': 2.3.2(@codemirror/language@6.0.0)(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.1)(@types/react@18.3.24)(abstract-level@1.0.4)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(sucrase@3.35.0)(use-sync-external-store@1.5.0(react@18.3.1))(yup@1.7.0)
+      '@tinacms/app': 2.3.3(@codemirror/language@6.0.0)(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.3)(@types/react@18.3.24)(abstract-level@1.0.4)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(sucrase@3.35.0)(use-sync-external-store@1.5.0(react@18.3.1))(yup@1.7.0)
       '@tinacms/graphql': 1.6.1(react@18.3.1)(typescript@5.9.2)
       '@tinacms/metrics': 1.1.0(fs-extra@11.3.1)
       '@tinacms/schema-tools': 1.9.1(react@18.3.1)(yup@1.7.0)
       '@tinacms/search': 1.1.1(abstract-level@1.0.4)(react@18.3.1)(sucrase@3.35.0)(typescript@5.9.2)(yup@1.7.0)
-      '@vitejs/plugin-react': 3.1.0(vite@4.5.14(@types/node@22.18.1)(lightningcss@1.30.1))
+      '@vitejs/plugin-react': 3.1.0(vite@4.5.14(@types/node@22.18.3)(lightningcss@1.30.1))
       altair-express-middleware: 7.3.6
       async-lock: 1.4.1
       auto-bind: 4.0.0
@@ -9651,10 +9664,10 @@ snapshots:
       react-dom: 18.3.1(react@18.3.1)
       readable-stream: 4.7.0
       tailwindcss: 3.4.17
-      tinacms: 2.8.2(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.1)(@types/react@18.3.24)(abstract-level@1.0.4)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(sucrase@3.35.0)(typescript@5.9.2)(use-sync-external-store@1.5.0(react@18.3.1))
+      tinacms: 2.8.3(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.3)(@types/react@18.3.24)(abstract-level@1.0.4)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(sucrase@3.35.0)(typescript@5.9.2)(use-sync-external-store@1.5.0(react@18.3.1))
       typanion: 3.13.0
       typescript: 5.9.2
-      vite: 4.5.14(@types/node@22.18.1)(lightningcss@1.30.1)
+      vite: 4.5.14(@types/node@22.18.3)(lightningcss@1.30.1)
       yup: 1.7.0
       zod: 3.25.76
     transitivePeerDependencies:
@@ -10014,7 +10027,7 @@ snapshots:
 
   '@types/node@10.17.60': {}
 
-  '@types/node@22.18.1':
+  '@types/node@22.18.3':
     dependencies:
       undici-types: 6.21.0
 
@@ -10146,13 +10159,13 @@ snapshots:
       - slate-dom
       - use-sync-external-store
 
-  '@udecode/plate-dnd@48.0.0(@udecode/plate@48.0.5(@types/react@18.3.24)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(use-sync-external-store@1.5.0(react@18.3.1)))(react-dnd-html5-backend@16.0.1)(react-dnd@16.0.1(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.1)(@types/react@18.3.24)(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@udecode/plate-dnd@48.0.0(@udecode/plate@48.0.5(@types/react@18.3.24)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(use-sync-external-store@1.5.0(react@18.3.1)))(react-dnd-html5-backend@16.0.1)(react-dnd@16.0.1(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.3)(@types/react@18.3.24)(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@udecode/plate': 48.0.5(@types/react@18.3.24)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(use-sync-external-store@1.5.0(react@18.3.1))
       lodash: 4.17.21
       raf: 3.4.1
       react: 18.3.1
-      react-dnd: 16.0.1(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.1)(@types/react@18.3.24)(react@18.3.1)
+      react-dnd: 16.0.1(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.3)(@types/react@18.3.24)(react@18.3.1)
       react-dnd-html5-backend: 16.0.1
       react-dom: 18.3.1(react@18.3.1)
 
@@ -10327,14 +10340,14 @@ snapshots:
 
   '@ungap/structured-clone@1.3.0': {}
 
-  '@vitejs/plugin-react@3.1.0(vite@4.5.14(@types/node@22.18.1)(lightningcss@1.30.1))':
+  '@vitejs/plugin-react@3.1.0(vite@4.5.14(@types/node@22.18.3)(lightningcss@1.30.1))':
     dependencies:
       '@babel/core': 7.28.4
       '@babel/plugin-transform-react-jsx-self': 7.27.1(@babel/core@7.28.4)
       '@babel/plugin-transform-react-jsx-source': 7.27.1(@babel/core@7.28.4)
       magic-string: 0.27.0
       react-refresh: 0.14.2
-      vite: 4.5.14(@types/node@22.18.1)(lightningcss@1.30.1)
+      vite: 4.5.14(@types/node@22.18.3)(lightningcss@1.30.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -10770,7 +10783,7 @@ snapshots:
   color-string@1.9.1:
     dependencies:
       color-name: 1.1.4
-      simple-swizzle: 0.2.2
+      simple-swizzle: 0.2.4
 
   color@4.2.3:
     dependencies:
@@ -11127,6 +11140,10 @@ snapshots:
     dependencies:
       ms: 2.1.3
 
+  debug@4.4.3:
+    dependencies:
+      ms: 2.1.3
+
   decode-named-character-reference@1.2.0:
     dependencies:
       character-entities: 2.0.2
@@ -11162,6 +11179,8 @@ snapshots:
   destroy@1.2.0: {}
 
   detect-libc@2.0.4: {}
+
+  detect-libc@2.1.0: {}
 
   detect-node-es@1.1.0: {}
 
@@ -11638,10 +11657,10 @@ snapshots:
 
   graceful-fs@4.2.11: {}
 
-  graphiql@3.0.0-alpha.1(@codemirror/language@6.0.0)(@types/node@22.18.1)(@types/react@18.3.24)(graphql@15.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
+  graphiql@3.0.0-alpha.1(@codemirror/language@6.0.0)(@types/node@22.18.3)(@types/react@18.3.24)(graphql@15.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
-      '@graphiql/react': 0.18.0(@codemirror/language@6.0.0)(@types/node@22.18.1)(@types/react@18.3.24)(graphql@15.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@graphiql/toolkit': 0.8.4(@types/node@22.18.1)(graphql@15.8.0)
+      '@graphiql/react': 0.18.0(@codemirror/language@6.0.0)(@types/node@22.18.3)(@types/react@18.3.24)(graphql@15.8.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@graphiql/toolkit': 0.8.4(@types/node@22.18.3)(graphql@15.8.0)
       graphql: 15.8.0
       graphql-language-service: 5.5.0(graphql@15.8.0)
       markdown-it: 12.3.2
@@ -11841,7 +11860,7 @@ snapshots:
 
   is-arrayish@0.2.1: {}
 
-  is-arrayish@0.3.2: {}
+  is-arrayish@0.3.4: {}
 
   is-binary-path@2.1.0:
     dependencies:
@@ -12495,9 +12514,9 @@ snapshots:
       stylis: 4.3.6
       uuid: 9.0.1
 
-  meros@1.3.2(@types/node@22.18.1):
+  meros@1.3.2(@types/node@22.18.3):
     optionalDependencies:
-      '@types/node': 22.18.1
+      '@types/node': 22.18.3
 
   methods@1.1.2: {}
 
@@ -12773,7 +12792,7 @@ snapshots:
   micromark@3.2.0:
     dependencies:
       '@types/debug': 4.1.12
-      debug: 4.4.1
+      debug: 4.4.3
       decode-named-character-reference: 1.2.0
       micromark-core-commonmark: 1.1.0
       micromark-factory-space: 1.0.0
@@ -13267,7 +13286,7 @@ snapshots:
 
   prebuild-install@7.1.3:
     dependencies:
-      detect-libc: 2.0.4
+      detect-libc: 2.1.0
       expand-template: 2.0.3
       github-from-package: 0.0.0
       minimist: 1.2.8
@@ -13416,7 +13435,7 @@ snapshots:
     dependencies:
       dnd-core: 16.0.1
 
-  react-dnd@16.0.1(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.1)(@types/react@18.3.24)(react@18.3.1):
+  react-dnd@16.0.1(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.3)(@types/react@18.3.24)(react@18.3.1):
     dependencies:
       '@react-dnd/invariant': 4.0.2
       '@react-dnd/shallowequal': 4.0.2
@@ -13426,7 +13445,7 @@ snapshots:
       react: 18.3.1
     optionalDependencies:
       '@types/hoist-non-react-statics': 3.3.7(@types/react@18.3.24)
-      '@types/node': 22.18.1
+      '@types/node': 22.18.3
       '@types/react': 18.3.24
 
   react-dom@18.3.1(react@18.3.1):
@@ -14020,9 +14039,9 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  simple-swizzle@0.2.2:
+  simple-swizzle@0.2.4:
     dependencies:
-      is-arrayish: 0.3.2
+      is-arrayish: 0.3.4
 
   sisteransi@1.0.5: {}
 
@@ -14102,7 +14121,7 @@ snapshots:
 
   ssw.megamenu@4.13.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1):
     dependencies:
-      '@headlessui/react': 2.2.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@headlessui/react': 2.2.8(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@heroicons/react': 2.2.0(react@18.3.1)
       clsx: 2.1.1
       react: 18.3.1
@@ -14341,7 +14360,7 @@ snapshots:
 
   throttle-debounce@3.0.1: {}
 
-  tinacms@2.8.2(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.1)(@types/react@18.3.24)(abstract-level@1.0.4)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(sucrase@3.35.0)(typescript@5.9.2)(use-sync-external-store@1.5.0(react@18.3.1)):
+  tinacms@2.8.3(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.3)(@types/react@18.3.24)(abstract-level@1.0.4)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(sucrase@3.35.0)(typescript@5.9.2)(use-sync-external-store@1.5.0(react@18.3.1)):
     dependencies:
       '@ariakit/react': 0.4.18(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@floating-ui/dom': 1.7.4
@@ -14371,7 +14390,7 @@ snapshots:
       '@udecode/plate-break': 48.0.0(@udecode/plate@48.0.5(@types/react@18.3.24)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(use-sync-external-store@1.5.0(react@18.3.1)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@udecode/plate-code-block': 48.0.0(@udecode/plate@48.0.5(@types/react@18.3.24)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(use-sync-external-store@1.5.0(react@18.3.1)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@udecode/plate-combobox': 48.0.0(@udecode/plate@48.0.5(@types/react@18.3.24)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(use-sync-external-store@1.5.0(react@18.3.1)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      '@udecode/plate-dnd': 48.0.0(@udecode/plate@48.0.5(@types/react@18.3.24)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(use-sync-external-store@1.5.0(react@18.3.1)))(react-dnd-html5-backend@16.0.1)(react-dnd@16.0.1(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.1)(@types/react@18.3.24)(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@udecode/plate-dnd': 48.0.0(@udecode/plate@48.0.5(@types/react@18.3.24)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(use-sync-external-store@1.5.0(react@18.3.1)))(react-dnd-html5-backend@16.0.1)(react-dnd@16.0.1(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.3)(@types/react@18.3.24)(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@udecode/plate-floating': 48.0.0(@udecode/plate@48.0.5(@types/react@18.3.24)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(use-sync-external-store@1.5.0(react@18.3.1)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@udecode/plate-heading': 48.0.0(@udecode/plate@48.0.5(@types/react@18.3.24)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(use-sync-external-store@1.5.0(react@18.3.1)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@udecode/plate-horizontal-rule': 48.0.0(@udecode/plate@48.0.5(@types/react@18.3.24)(immer@10.1.3)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)(scheduler@0.23.2)(slate-dom@0.114.0(slate@0.114.0))(slate@0.114.0)(use-sync-external-store@1.5.0(react@18.3.1)))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -14411,7 +14430,7 @@ snapshots:
       react-beautiful-dnd: 13.1.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       react-color: 2.19.3(react@18.3.1)
       react-datetime: 3.3.1(moment@2.29.4)(react@18.3.1)
-      react-dnd: 16.0.1(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.1)(@types/react@18.3.24)(react@18.3.1)
+      react-dnd: 16.0.1(@types/hoist-non-react-statics@3.3.7(@types/react@18.3.24))(@types/node@22.18.3)(@types/react@18.3.24)(react@18.3.1)
       react-dnd-html5-backend: 16.0.1
       react-dom: 18.3.1(react@18.3.1)
       react-dropzone: 14.2.3(react@18.3.1)
@@ -14638,7 +14657,7 @@ snapshots:
 
   unpipe@1.0.0: {}
 
-  unplugin-info@1.2.4(esbuild@0.24.2)(rollup@3.29.5)(vite@4.5.14(@types/node@22.18.1)(lightningcss@1.30.1)):
+  unplugin-info@1.2.4(esbuild@0.24.2)(rollup@3.29.5)(vite@4.5.14(@types/node@22.18.3)(lightningcss@1.30.1)):
     dependencies:
       ci-info: 4.3.0
       git-url-parse: 16.1.0
@@ -14647,7 +14666,7 @@ snapshots:
     optionalDependencies:
       esbuild: 0.24.2
       rollup: 3.29.5
-      vite: 4.5.14(@types/node@22.18.1)(lightningcss@1.30.1)
+      vite: 4.5.14(@types/node@22.18.3)(lightningcss@1.30.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -14770,13 +14789,13 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.3
 
-  vite@4.5.14(@types/node@22.18.1)(lightningcss@1.30.1):
+  vite@4.5.14(@types/node@22.18.3)(lightningcss@1.30.1):
     dependencies:
       esbuild: 0.18.20
       postcss: 8.5.6
       rollup: 3.29.5
     optionalDependencies:
-      '@types/node': 22.18.1
+      '@types/node': 22.18.3
       fsevents: 2.3.3
       lightningcss: 1.30.1
 
