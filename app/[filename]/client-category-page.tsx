@@ -32,7 +32,7 @@ export default function ClientCategoryPage(props: ClientCategoryPageProps) {
   const category = data?.category;
   const baseRules = useMemo(() => {
     if (!category?.index) return [];
-    return category.index.flatMap((i) => i?.rule ?? []);
+    return category.index.flatMap((i) => Array.isArray(i?.rule) ? i.rule : []);
   }, [category]);
   const [annotatedRules, setAnnotatedRules] = useState<any[]>([]);
   const [rightSidebarRules, setRightSidebarRules] = useState<any[]>([]);
