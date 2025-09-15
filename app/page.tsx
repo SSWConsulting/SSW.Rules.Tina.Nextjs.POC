@@ -6,7 +6,7 @@ import HomeClientPage from "./client-page";
 import ruleToCategories from "../rule-to-categories.json";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { fetchLatestRules, fetchRuleCount } from "@/lib/services/rules";
-import { QuickLink } from "@/components/QuickLinksCard";
+import { QuickLink } from "@/types/quickLink";
 
 export const revalidate = 300;
 

@@ -1,10 +1,6 @@
 import Link from "next/link";
 import { Card } from "./ui/card";
-
-export interface QuickLink {
-    uri: string
-    linkText: string
-}
+import { QuickLink } from "@/types/quickLink";
 
 interface QuickLinksProps {
     links: QuickLink[];
@@ -15,9 +11,9 @@ const QuickLinksCard = ({ links } : QuickLinksProps) => {
         {links && links.length > 0 ? (
             <ul className="space-y-2 m-0">
                 {links.map((link) => (
-                <li key={link.uri}>
-                    <Link href={link.uri} target="_blank">{link.linkText}</Link>
-                </li>
+                    <li key={link.uri}>
+                        <Link href={link.uri} target="_blank">{link.linkText}</Link>
+                    </li>
                 ))}
             </ul>
         ) : (
