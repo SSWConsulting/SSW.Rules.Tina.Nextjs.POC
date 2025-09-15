@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { Button, wrapFieldsWithMeta } from "tinacms";
 import { BiChevronRight, BiChevronLeft, BiChevronDown, BiSearch } from "react-icons/bi";
-import { GoCircleSlash } from "react-icons/go";
 import {
   Popover,
   PopoverButton,
@@ -10,7 +9,7 @@ import {
   PopoverPanel,
 } from "@headlessui/react";
 import { client } from "../__generated__/client";
-import type { RuleConnectionQuery, RuleConnectionQueryVariables } from "../__generated__/types";
+import type { RuleConnectionQueryVariables } from "../__generated__/types";
 
 interface Rule {
   id: string;
@@ -22,11 +21,12 @@ interface Rule {
 }
 
 const RULES_PER_PAGE = 25;
+const SEARCH_FETCH_SIZE = 100;
 
 export const PaginatedRuleSelectorInput = wrapFieldsWithMeta(({ input }) => {
   const [filter, setFilter] = useState("");
   const [debouncedFilter, setDebouncedFilter] = useState("");
-  const [rules, setRules] = useState<Rule[]>([]);
+  const [allRules, setAllRules] = useState<Rule[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [hasPreviousPage, setHasPreviousPage] = useState(false);
@@ -34,6 +34,7 @@ export const PaginatedRuleSelectorInput = wrapFieldsWithMeta(({ input }) => {
   const [startCursor, setStartCursor] = useState<string | null>(null);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isSearchMode, setIsSearchMode] = useState(false);
 
   // For reference field, input.value is a single rule path string
   const selectedRule = useMemo(() => {
@@ -43,21 +44,15 @@ export const PaginatedRuleSelectorInput = wrapFieldsWithMeta(({ input }) => {
   const fetchRules = async (searchFilter: string = "", after?: string, before?: string, reset: boolean = false) => {
     setLoading(true);
     try {
-      const ruleFilter = searchFilter.trim() ? {
-        title: {
-          startsWith: searchFilter
-        }
-      } : undefined;
-
+      const isSearch = searchFilter.trim().length > 0;
+      
       const variables: RuleConnectionQueryVariables = {
-        first: after || !before ? RULES_PER_PAGE : undefined,
-        last: before && !after ? RULES_PER_PAGE : undefined,
+        first: after || !before ? (isSearch ? SEARCH_FETCH_SIZE : RULES_PER_PAGE) : undefined,
+        last: before && !after ? (isSearch ? SEARCH_FETCH_SIZE : RULES_PER_PAGE) : undefined,
         after: after || undefined,
         before: before || undefined,
-        filter: ruleFilter
+        filter: undefined // Remove server-side filtering for more permissive search
       };
-
-      console.log("Fetching rules with variables:", variables);
       
       const query = `
         query ruleConnection($before: String, $after: String, $first: Float, $last: Float, $sort: String, $filter: RuleFilter) {
@@ -95,7 +90,6 @@ export const PaginatedRuleSelectorInput = wrapFieldsWithMeta(({ input }) => {
         query,
         variables
       });
-      console.log("Rules response:", response);
       
       if (response?.data?.ruleConnection) {
         const connection = response.data.ruleConnection;
@@ -108,13 +102,11 @@ export const PaginatedRuleSelectorInput = wrapFieldsWithMeta(({ input }) => {
           }
         })).filter(rule => rule.id) || [];
 
-        console.log("Processed rules:", newRules, "Total:", newRules.length);
-
         if (reset) {
-          setRules(newRules);
+          setAllRules(newRules);
           setCurrentPage(1);
         } else {
-          setRules(newRules);
+          setAllRules(prev => [...prev, ...newRules]);
         }
 
         setHasNextPage(connection.pageInfo.hasNextPage);
@@ -148,14 +140,60 @@ export const PaginatedRuleSelectorInput = wrapFieldsWithMeta(({ input }) => {
   useEffect(() => {
     if (debouncedFilter !== filter) return; // Only when debounce is complete
     
+    const isSearch = debouncedFilter.trim().length > 0;
+    setIsSearchMode(isSearch);
     setCurrentPage(1);
     setEndCursor(null);
     setStartCursor(null);
-    fetchRules(debouncedFilter, undefined, undefined, true);
+    
+    if (isSearch) {
+      // For search, fetch more rules to filter client-side
+      fetchRules("", undefined, undefined, true);
+    } else {
+      // For normal pagination, fetch normally
+      fetchRules("", undefined, undefined, true);
+    }
   }, [debouncedFilter]);
 
-  // Since we're now filtering server-side, we don't need client-side filtering
-  const filteredRules = rules;
+  // Comprehensive client-side search function
+  const searchInText = (text: string, searchTerm: string): boolean => {
+    const normalizedText = text.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim();
+    const normalizedSearch = searchTerm.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim();
+    
+    // Split search term into words
+    const searchWords = normalizedSearch.split(/\s+/).filter(word => word.length > 0);
+    
+    // Check if all search words are found in the text (permissive matching)
+    return searchWords.every(word => 
+      normalizedText.includes(word) || 
+      // Allow partial matches for words longer than 2 characters
+      (word.length > 2 && normalizedText.split(/\s+/).some(textWord => 
+        textWord.includes(word) || word.includes(textWord)
+      ))
+    );
+  };
+
+  // Client-side filtering with comprehensive search
+  const filteredRules = useMemo(() => {
+    if (!debouncedFilter.trim()) return allRules;
+    
+    const searchTerm = debouncedFilter.trim();
+    return allRules.filter(rule => 
+      searchInText(rule.title, searchTerm) ||
+      searchInText(rule.uri, searchTerm) ||
+      searchInText(rule._sys.relativePath, searchTerm)
+    );
+  }, [allRules, debouncedFilter]);
+
+  // Paginate filtered results for display
+  const paginatedRules = useMemo(() => {
+    if (!isSearchMode) return filteredRules;
+    
+    const startIndex = (currentPage - 1) * RULES_PER_PAGE;
+    return filteredRules.slice(startIndex, startIndex + RULES_PER_PAGE);
+  }, [filteredRules, currentPage, isSearchMode]);
+
+  const displayRules = isSearchMode ? paginatedRules : filteredRules;
 
   const handleRuleSelect = (rule: Rule) => {
     const rulePath = `rules/${rule._sys.relativePath}`;
@@ -167,16 +205,32 @@ export const PaginatedRuleSelectorInput = wrapFieldsWithMeta(({ input }) => {
   };
 
   const handleNextPage = () => {
-    if (hasNextPage && endCursor) {
-      setCurrentPage(prev => prev + 1);
-      fetchRules(debouncedFilter, endCursor);
+    if (isSearchMode) {
+      // Client-side pagination for search results
+      if (currentPage * RULES_PER_PAGE < filteredRules.length) {
+        setCurrentPage(prev => prev + 1);
+      }
+    } else {
+      // Server-side pagination for normal browsing
+      if (hasNextPage && endCursor) {
+        setCurrentPage(prev => prev + 1);
+        fetchRules("", endCursor);
+      }
     }
   };
 
   const handlePreviousPage = () => {
-    if (hasPreviousPage && startCursor) {
-      setCurrentPage(prev => Math.max(1, prev - 1));
-      fetchRules(debouncedFilter, undefined, startCursor);
+    if (isSearchMode) {
+      // Client-side pagination for search results
+      if (currentPage > 1) {
+        setCurrentPage(prev => prev - 1);
+      }
+    } else {
+      // Server-side pagination for normal browsing
+      if (hasPreviousPage && startCursor) {
+        setCurrentPage(prev => Math.max(1, prev - 1));
+        fetchRules("", undefined, startCursor);
+      }
     }
   };
 
@@ -184,8 +238,8 @@ export const PaginatedRuleSelectorInput = wrapFieldsWithMeta(({ input }) => {
   const selectedRuleDetails = useMemo(() => {
     if (!selectedRule) return null;
     const rulePath = selectedRule.replace('rules/', '');
-    return filteredRules.find(rule => rule._sys.relativePath === rulePath);
-  }, [selectedRule, filteredRules]);
+    return allRules.find(rule => rule._sys.relativePath === rulePath);
+  }, [selectedRule, allRules]);
 
   const labelText = selectedRuleDetails 
     ? selectedRuleDetails.title
@@ -265,16 +319,16 @@ export const PaginatedRuleSelectorInput = wrapFieldsWithMeta(({ input }) => {
                       )}
 
                       {/* Empty state */}
-                      {!loading && filteredRules.length === 0 && (
+                      {!loading && displayRules.length === 0 && (
                         <div className="p-4 text-center text-gray-400">
                           {filter ? "No rules found matching your search" : "No rules available"}
                         </div>
                       )}
 
                       {/* Rules list */}
-                      {!loading && filteredRules.length > 0 && (
+                      {!loading && displayRules.length > 0 && (
                         <div className="flex-1 overflow-y-auto">
-                          {filteredRules.map((rule) => {
+                          {displayRules.map((rule) => {
                             const rulePath = `rules/${rule._sys.relativePath}`;
                             const isSelected = selectedRule === rulePath;
                             
@@ -290,15 +344,6 @@ export const PaginatedRuleSelectorInput = wrapFieldsWithMeta(({ input }) => {
                                 }}
                               >
                                 <div className="flex items-start space-x-3 w-full">
-                                  <div className={`w-4 h-4 border-2 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                                    isSelected 
-                                      ? 'bg-blue-500 border-blue-500' 
-                                      : 'border-gray-300 hover:border-gray-400'
-                                  }`}>
-                                    {isSelected && (
-                                      <div className="w-2 h-2 bg-white rounded-full"></div>
-                                    )}
-                                  </div>
                                   <div className="flex-1 min-w-0 overflow-hidden">
                                     <div className="font-medium text-gray-900 text-sm leading-5 mb-1 break-words">
                                       {rule.title}
@@ -315,17 +360,21 @@ export const PaginatedRuleSelectorInput = wrapFieldsWithMeta(({ input }) => {
                       )}
 
                       {/* Pagination footer */}
-                      {!loading && rules.length > 0 && (
+                      {!loading && displayRules.length > 0 && (
                         <div className="bg-gray-50 p-3 border-t border-gray-100 flex items-center justify-between">
                           <div className="text-xs text-gray-600">
-                            Page {currentPage} • {totalCount} total rules
+                            {isSearchMode ? (
+                              <>Page {currentPage} • {filteredRules.length} results found</>
+                            ) : (
+                              <>Page {currentPage} • {totalCount} total rules</>
+                            )}
                           </div>
                           <div className="flex items-center space-x-2">
                             <button
                               onClick={handlePreviousPage}
-                              disabled={!hasPreviousPage}
+                              disabled={isSearchMode ? currentPage === 1 : !hasPreviousPage}
                               className={`p-1 rounded ${
-                                hasPreviousPage 
+                                (isSearchMode ? currentPage > 1 : hasPreviousPage)
                                   ? 'text-gray-600 hover:text-gray-800 hover:bg-gray-200' 
                                   : 'text-gray-300 cursor-not-allowed'
                               }`}
@@ -334,9 +383,9 @@ export const PaginatedRuleSelectorInput = wrapFieldsWithMeta(({ input }) => {
                             </button>
                             <button
                               onClick={handleNextPage}
-                              disabled={!hasNextPage}
+                              disabled={isSearchMode ? (currentPage * RULES_PER_PAGE >= filteredRules.length) : !hasNextPage}
                               className={`p-1 rounded ${
-                                hasNextPage 
+                                (isSearchMode ? (currentPage * RULES_PER_PAGE < filteredRules.length) : hasNextPage)
                                   ? 'text-gray-600 hover:text-gray-800 hover:bg-gray-200' 
                                   : 'text-gray-300 cursor-not-allowed'
                               }`}
