@@ -1,6 +1,5 @@
 "use client";
 
-import { client } from "@/tina/__generated__/client";
 import { Card } from "@/components/ui/card";
 import { LatestRule } from "@/models/LatestRule";
 import Link from "next/link";
@@ -19,22 +18,17 @@ export interface HomeClientPageProps {
   latestRules: LatestRule[];
   ruleCount: number;
   categoryRuleCounts: Record<string, number>;
+  quickLinks: QuickLink[];
 }
 
 export default function HomeClientPage(props: HomeClientPageProps) {
-  const { topCategories, latestRules, ruleCount, categoryRuleCounts } = props;
+  const { topCategories, latestRules, ruleCount, categoryRuleCounts, quickLinks } = props;
 
   const getTopCategoryTotal = (subCategories: any[]) => {
     return subCategories.reduce((total, category) => {
       return total + (categoryRuleCounts[category._sys.filename] || 0);
     }, 0);
   };
-
-  // const quickLinks: QuickLink[] = async () => {
-  //   const res = await client.queries.({ relativePath: "quickLinks.json" });
-  //   var links = res.data.settings.links as QuickLink[];
-  //   return links;
-  // }
 
   return (
     <>
@@ -84,7 +78,7 @@ export default function HomeClientPage(props: HomeClientPageProps) {
             {ruleCount && <RuleCount count={ruleCount} />}
           </div>
           <LatestRulesCard rules={latestRules} />
-          {/* <QuickLinksCard links={quickLinks} /> */}
+          <QuickLinksCard links={quickLinks} />
           <WhyRulesCard />
           <HelpImproveCard />
           <HelpCard />
