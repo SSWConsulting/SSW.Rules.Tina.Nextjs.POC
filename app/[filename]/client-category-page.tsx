@@ -31,7 +31,8 @@ export default function ClientCategoryPage(props: ClientCategoryPageProps) {
   const { user, isLoading: authLoading } = useAuth();
   const category = data?.category;
   const baseRules = useMemo(() => {
-    return category?.index.flatMap((i) => i.rule) || [];
+    if (!category?.index) return [];
+    return category.index.flatMap((i) => i?.rule ?? []);
   }, [category]);
   const [annotatedRules, setAnnotatedRules] = useState<any[]>([]);
   const [rightSidebarRules, setRightSidebarRules] = useState<any[]>([]);
