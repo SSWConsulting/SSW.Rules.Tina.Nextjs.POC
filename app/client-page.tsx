@@ -11,6 +11,7 @@ import HelpImproveCard from "@/components/HelpImproveCard";
 import AboutSSWCard from "@/components/AboutSSWCard";
 import JoinConversationCard from "@/components/JoinConversationCard";
 import HelpCard from "@/components/HelpCard";
+import Carousel from "@/components/Carousel";
 
 export interface HomeClientPageProps {
   topCategories: any[];
@@ -31,11 +32,9 @@ export default function HomeClientPage(props: HomeClientPageProps) {
   return (
     <>
       <div className="layout-two-columns">
-        <div className="layout-main-section">
-          <div className="h-[7rem]">
-            <SearchBar/>
-            <h2 className="m-0 mb-4 text-ssw-red font-bold">Categories</h2>
-          </div>
+        <div className="layout-main-section space-y-6">
+          <Carousel />
+          <SearchBar/>
 
           {topCategories.map((topCategory, index) => (
             <Card key={index} className="mb-4">
