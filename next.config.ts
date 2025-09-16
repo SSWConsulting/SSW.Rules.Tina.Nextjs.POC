@@ -1,7 +1,23 @@
 import type { NextConfig } from 'next'
+
+const isProd = process.env.NODE_ENV === 'production';
+const basePath = isProd ? '/rules-beta' : ''
  
 const nextConfig: NextConfig = {
   output: 'standalone', // Required for the Docker setup
+  basePath: basePath,
+  async redirects() {
+    return isProd
+      ? [
+          {
+            source: '/',
+            destination: '/rules-beta',
+            permanent: true,
+            basePath: false,
+          },
+        ]
+      : [];
+  },
   env: {
     BUILD_TIMESTAMP: process.env.BUILD_TIMESTAMP,
     VERSION_DEPLOYED: process.env.VERSION_DEPLOYED,
@@ -11,6 +27,7 @@ const nextConfig: NextConfig = {
   },
   
   images: {
+    path: `${basePath}/_next/image`,
     remotePatterns: [
       {
         protocol: 'https',

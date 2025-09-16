@@ -39,7 +39,7 @@ const RuleListItemHeader: React.FC<RuleListItemHeaderProps> = ({ rule, showBookm
           <div className="flex gap-4 md:gap-2 md:mr-2">
             <span className="text-sm text-gray-500">#{index + 1}</span>
             <h2 className="m-0 text-2xl">
-              <Link href={`../${rule.uri}`} ref={linkRef} className="no-underline">
+              <Link href={`/${rule.uri}`} ref={linkRef} className="no-underline">
                 {rule.title}
               </Link>
             </h2>
@@ -56,7 +56,7 @@ const RuleListItemHeader: React.FC<RuleListItemHeaderProps> = ({ rule, showBookm
         {showBookmark && (
           <div className="profile-rule-buttons flex gap-3 justify-center mt-4 md:mt-0">
             <Bookmark ruleGuid={rule.guid} isBookmarked={isBookmarked} onBookmarkToggle={handleBookmarkToggle} />
-            <IconLink href={`./admin#/~/${rule?.uri}`} children={<RiPencilLine size={ICON_SIZE} />} />
+            <IconLink href={`/admin#/~/${rule?.uri}`} children={<RiPencilLine size={ICON_SIZE} />} />
             <IconLink
               href={`https://github.com/SSWConsulting/SSW.Rules.Content/blob/main/rules/${rule?.uri}/rule.md`}
               target="_blank"
