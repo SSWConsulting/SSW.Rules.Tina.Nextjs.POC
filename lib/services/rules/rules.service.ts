@@ -26,25 +26,8 @@ export async function fetchRuleCount() {
 export async function fetchOrphanedRules(variables: { first?: number; after?: string } = {}): Promise<QueryResult<Rule>> {
   const result = await client.queries.orphanedRulesQuery(variables);
   
-  const categorizedRuleGuids = new Set<string>();
-  
-  if (result.data.categoryConnection?.edges) {
-    result.data.categoryConnection.edges.forEach((categoryEdge: any) => {
-      if (categoryEdge.node.__typename === 'CategoryCategory' && categoryEdge.node.index) {
-        categoryEdge.node.index.forEach((indexItem: any) => {
-          if (indexItem.rule?.guid) {
-            categorizedRuleGuids.add(indexItem.rule.guid);
-          }
-        });
-      }
-    });
-  }
-  
   const orphanedRules = result.data.ruleConnection?.edges
-    ? result.data.ruleConnection.edges
-        .map((edge: any) => edge.node)
-        .filter((rule: any) => !categorizedRuleGuids.has(rule.guid))
-        .filter((rule: any) => !rule.isArchived)
+    ? result.data.ruleConnection.edges.map((edge: any) => edge.node)
     : [];
   
   return {

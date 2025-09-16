@@ -156,7 +156,11 @@ query rulesByAuthor($authorTitle: String!, $first: Float, $after: String) {
 }
 
 query orphanedRulesQuery($first: Float, $after: String) {
-  ruleConnection(first: $first, after: $after) {
+  ruleConnection(
+    filter: { isOrphaned: { eq: true } }
+    first: $first
+    after: $after
+  ) {
     pageInfo {
       hasNextPage
       endCursor
@@ -168,27 +172,12 @@ query orphanedRulesQuery($first: Float, $after: String) {
         uri
         body
         isArchived
+        isOrphaned
         authors {
           title
         }
         lastUpdated
         lastUpdatedBy
-      }
-    }
-  }
-  categoryConnection {
-    edges {
-      node {
-        __typename
-        ... on CategoryCategory {
-          index {
-            rule {
-              ... on Rule {
-                guid
-              }
-            }
-          }
-        }
       }
     }
   }

@@ -61,7 +61,7 @@ export const historyFields:TinaField[] = [
             component: "hidden",
         },
     },
-        {
+    {
       type: "boolean",
       name: "isArchived",
       label: "Archived",
@@ -83,6 +83,12 @@ export const historyFields:TinaField[] = [
           }
         },
       },
+    },
+    {
+      type: "boolean",
+      name: "isOrphaned",
+      label: "Orphaned",
+      description: "Mark this rule as orphaned (not linked to any category).",
     },
 ];
 
