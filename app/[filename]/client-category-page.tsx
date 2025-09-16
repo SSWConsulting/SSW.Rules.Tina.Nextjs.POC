@@ -11,6 +11,7 @@ import { BookmarkService } from "@/lib/bookmarkService";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { useAuth } from "@/components/auth/UserClientProvider";
 import CategoryActionButtons from "@/components/CategoryActionButtons";
+import { useSearchParams } from "next/navigation";
 
 export interface ClientCategoryPageProps {
   categoryQueryProps: {
@@ -22,6 +23,8 @@ export interface ClientCategoryPageProps {
 
 export default function ClientCategoryPage(props: ClientCategoryPageProps) {
   const { categoryQueryProps } = props;
+  const searchParams = useSearchParams();
+  const showArchivedFromUrl = searchParams.get('archived') === 'true';
 
   const { data } = useTina({
     query: categoryQueryProps.query,
@@ -33,13 +36,18 @@ export default function ClientCategoryPage(props: ClientCategoryPageProps) {
   const category = data?.category;
   const baseRules = useMemo(() => {
     if (!category?.index) return [];
-    return category.index.flatMap((i) => Array.isArray(i?.rule) ? i.rule : []);
+    return category.index.flatMap((i) => i?.rule ? [i.rule] : []);
   }, [category]);
   const [annotatedRules, setAnnotatedRules] = useState<any[]>([]);
   const [rightSidebarRules, setRightSidebarRules] = useState<any[]>([]);
   const [bookmarkedGuids, setBookmarkedGuids] = useState<string[]>([]);
-  const [includeArchived, setIncludeArchived] = useState(false);
+  const [includeArchived, setIncludeArchived] = useState(showArchivedFromUrl);
   const path = categoryQueryProps?.variables?.relativePath;
+
+  // Update includeArchived when URL parameter changes
+  useEffect(() => {
+    setIncludeArchived(showArchivedFromUrl);
+  }, [showArchivedFromUrl]);
 
   // Fetch user bookmarks as soon as auth is ready
   useEffect(() => {
@@ -102,10 +110,12 @@ export default function ClientCategoryPage(props: ClientCategoryPageProps) {
 
   return (
     <div>
-      <Breadcrumbs isCategory breadcrumbText={category?.title} />
+      <Breadcrumbs isCategory breadcrumbText={showArchivedFromUrl ? `Archived Rules - ${category?.title}` : category?.title} />
       <div className="flex">
         <div className="w-full lg:w-2/3 bg-white pt-4 p-6 rounded shadow">
-          <h1 className="m-0 mb-2 text-ssw-red font-bold">{category?.title}</h1>
+          <h1 className="m-0 mb-2 text-ssw-red font-bold">
+            {showArchivedFromUrl ? `Archived Rules - ${category?.title}` : category?.title}
+          </h1>
           <div data-tina-field={tinaField(category, 'body')} className="text-md">
             <TinaMarkdown content={category?.body} components={MarkdownComponentMapping} />
           </div>

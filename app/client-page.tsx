@@ -30,7 +30,7 @@ export default function HomeClientPage(props: HomeClientPageProps) {
   const { topCategories, latestRules, ruleCount, categoryRuleCounts, quickLinks, orphanedRules, archivedRules } = props;
   console.log(orphanedRules)
 
-  console.log("Orphaned Rules:", orphanedRules);
+  console.log("Orphaned Rules:", topCategories);
 
   const getTopCategoryTotal = (subCategories: any[]) => {
     return subCategories.reduce((total, category) => {
