@@ -13,6 +13,7 @@ import JoinConversationCard from "@/components/JoinConversationCard";
 import HelpCard from "@/components/HelpCard";
 import QuickLinksCard from "@/components/QuickLinksCard";
 import { QuickLink } from "@/types/quickLink";
+import CategoryActionButtons from "@/components/CategoryActionButtons";
 
 export interface HomeClientPageProps {
   topCategories: any[];
@@ -87,6 +88,8 @@ export default function HomeClientPage(props: HomeClientPageProps) {
           <JoinConversationCard />
         </div>
       </div>
+      
+        <CategoryActionButtons />
     </>
   );
 }
