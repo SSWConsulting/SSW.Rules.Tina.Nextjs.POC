@@ -24,48 +24,51 @@ export interface ArchivedClientPageProps {
 export default function ArchivedClientPage(props: ArchivedClientPageProps) {
   const { archivedRules, topCategories, latestRules = [], quickLinks = [] } = props;
 
-  // Group archived rules by category and organize by top categories
+  // Group archived rules by subcategory
   const groupedArchivedData = useMemo(() => {
-    const categoryCount: Record<string, number> = {};
+    const categoryRules: Record<string, Rule[]> = {};
     
-    // Count archived rules per category
+    // Group archived rules by category
     archivedRules.forEach((rule) => {
       const ruleFilename = rule.uri.replace('/', '').replace('.html', '');
       const categories = ruleToCategories[ruleFilename as keyof typeof ruleToCategories] || [];
       
       if (categories.length === 0) {
-        categoryCount['uncategorized'] = (categoryCount['uncategorized'] || 0) + 1;
+        if (!categoryRules['uncategorized']) categoryRules['uncategorized'] = [];
+        categoryRules['uncategorized'].push(rule);
       } else {
         categories.forEach(category => {
-          categoryCount[category] = (categoryCount[category] || 0) + 1;
+          if (!categoryRules[category]) categoryRules[category] = [];
+          categoryRules[category].push(rule);
         });
       }
     });
     
-    // Organize by top categories
-    const organizedData = topCategories.map(topCategory => {
-      const subcategories = topCategory.index
-        ?.map((item: any) => {
-          if (!item.category) return null;
-          const filename = item.category._sys.filename;
-          const count = categoryCount[filename] || 0;
-          return {
-            ...item.category,
-            archivedCount: count
-          };
-        })
-        .filter(Boolean) || [];
-      
-      const totalCount = subcategories.reduce((sum, sub) => sum + sub.archivedCount, 0);
-      
-      return {
-        ...topCategory,
-        subcategories,
-        totalArchivedCount: totalCount
-      };
-    }).filter(topCat => topCat.totalArchivedCount > 0);
+    // Create organized subcategories with their rules
+    const subcategoriesWithRules: Array<{
+      category: any;
+      rules: Rule[];
+      count: number;
+    }> = [];
     
-    return { organizedData, totalCount: archivedRules.length };
+    topCategories.forEach(topCategory => {
+      topCategory.index?.forEach((item: any) => {
+        if (!item.category) return;
+        
+        const filename = item.category._sys.filename;
+        const rules = categoryRules[filename] || [];
+        
+        if (rules.length > 0) {
+          subcategoriesWithRules.push({
+            category: item.category,
+            rules,
+            count: rules.length
+          });
+        }
+      });
+    });
+    
+    return { subcategoriesWithRules, totalCount: archivedRules.length };
   }, [archivedRules, topCategories]);
 
   if (archivedRules.length === 0) {
@@ -83,30 +86,22 @@ export default function ArchivedClientPage(props: ArchivedClientPageProps) {
           <h2 className="m-0 mb-4 text-ssw-red font-bold">Archived Rules</h2>
         </div>
 
-        {groupedArchivedData.organizedData.map((topCategory, index) => (
+        {groupedArchivedData.subcategoriesWithRules.map((subcategoryData, index) => (
           <Card key={index} className="mb-4">
-            <h2 className="flex justify-between m-0 mb-4 text-2xl max-sm:text-lg">
-              <span>{topCategory.title}</span>
-              <span className="text-gray-500 text-lg">
-                {topCategory.totalArchivedCount} Archived Rules
-              </span>
+            <h2 className="m-0 mb-4 text-2xl max-sm:text-lg">
+              <span>{subcategoryData.category.title}</span>
             </h2>
 
             <ol>
-              {topCategory.subcategories
-                .filter((subCategory: any) => subCategory.archivedCount > 0)
-                .map((subCategory: any, subIndex: number) => (
-                <li key={subIndex} className="mb-4">
+              {subcategoryData.rules.map((rule, ruleIndex) => (
+                <li key={ruleIndex} className="mb-4">
                   <div className="flex justify-between">
                     <Link 
-                      href={`/${subCategory._sys.filename}?archived=true`} 
+                      href={rule.uri} 
                       className="hover:text-ssw-red"
                     >
-                      {subCategory.title}
+                      {rule.title}
                     </Link>
-                    <span className="text-gray-300">
-                      {subCategory.archivedCount}
-                    </span>
                   </div>
                 </li>
               ))}
