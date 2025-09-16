@@ -154,3 +154,70 @@ query rulesByAuthor($authorTitle: String!, $first: Float, $after: String) {
     }
   }
 }
+
+query orphanedRulesQuery($first: Float, $after: String) {
+  ruleConnection(first: $first, after: $after) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    edges {
+      node {
+        guid
+        title
+        uri
+        body
+        isArchived
+        authors {
+          title
+        }
+        lastUpdated
+        lastUpdatedBy
+      }
+    }
+  }
+  categoryConnection {
+    edges {
+      node {
+        __typename
+        ... on CategoryCategory {
+          index {
+            rule {
+              ... on Rule {
+                guid
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+query archivedRulesQuery($first: Float, $after: String) {
+  ruleConnection(
+    filter: { isArchived: { eq: true } }
+    first: $first
+    after: $after
+  ) {
+    pageInfo {
+      hasNextPage
+      endCursor
+    }
+    edges {
+      node {
+        guid
+        title
+        uri
+        body
+        isArchived
+        archivedreason
+        authors {
+          title
+        }
+        lastUpdated
+        lastUpdatedBy
+      }
+    }
+  }
+}
