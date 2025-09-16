@@ -25,9 +25,10 @@ export default function HomeClientPage(props: HomeClientPageProps) {
   const topCategoriesWithoutChildren = topCategories.filter(c => !c.index);
 
   const getTopCategoryTotal = (subCategories: any[]) => {
-    return subCategories.reduce((total, category) => {
-      return total + (categoryRuleCounts[category._sys.filename] || 0);
-    }, 0);
+    return subCategories.map((item: any) => {
+      const filename = item.category?._sys.filename;
+      return filename ? categoryRuleCounts[filename] || 0 : 0;
+    }).reduce((sum, count) => sum + count, 0)
   };
 
   return (
@@ -40,15 +41,7 @@ export default function HomeClientPage(props: HomeClientPageProps) {
           </div>
 
           {topCategoriesWithChildren.map((topCategory, index) => {
-            // Calculate total rules across all categories inside this top category
-            const totalRules = (topCategory.index || [])
-              .map((item: any) => {
-                const filename = item.category?._sys.filename;
-                return filename ? categoryRuleCounts[filename] || 0 : 0;
-              })
-              .reduce((sum, count) => sum + count, 0);
-
-            // Skip rendering this top category if it has no rules
+            const totalRules = getTopCategoryTotal(topCategory.index || []);
             if (totalRules === 0) {
               return null;
             }
