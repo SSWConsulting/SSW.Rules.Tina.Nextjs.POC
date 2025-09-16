@@ -25,7 +25,6 @@ export default function HomeClientPage(props: HomeClientPageProps) {
   const topCategoriesWithoutChildren = topCategories.filter(c => !c.index);
 
   const getTopCategoryTotal = (subCategories: any[]) => {
-    console.log(categoryRuleCounts);
     return subCategories.reduce((total, category) => {
       return total + (categoryRuleCounts[category._sys.filename] || 0);
     }, 0);

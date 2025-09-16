@@ -30,7 +30,6 @@ export default function ClientCategoryPage(props: ClientCategoryPageProps) {
 
   const { user, isLoading: authLoading } = useAuth();
   const category = data?.category;
-  console.log(category);
   const baseRules = useMemo(() => {
     if (!category?.index) return [];
     return category.index.flatMap((i) => Array.isArray(i?.rule) ? i.rule : []);
