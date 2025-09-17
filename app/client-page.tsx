@@ -28,7 +28,7 @@ export default function HomeClientPage(props: HomeClientPageProps) {
     return subCategories.map((item: any) => {
       const filename = item.category?._sys.filename;
       return filename ? categoryRuleCounts[filename] || 0 : 0;
-    }).reduce((sum, count) => sum + count, 0)
+    }).reduce((sum, count) => sum + count, 0);
   };
 
   return (
