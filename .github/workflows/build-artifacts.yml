@@ -15,6 +15,11 @@ on:
                 required: false
                 default: ''
                 description: 'Source branch name that triggered this build'
+            purge_cache:
+                type: boolean
+                required: false
+                default: false
+                description: 'Set to true to purge ALL GitHub Actions caches before build'
         secrets:
             AZURE_CLIENT_ID:
                 required: true
@@ -112,6 +117,148 @@ jobs:
                   echo "Build timestamp: ${{ env.BUILD_TIMESTAMP }}"
                   echo "Build version: ${{ env.VERSION_DEPLOYED }}"
                   echo "🚫 Docker cache: DISABLED"
+                  echo "🧹 Cache purge: ${{ inputs.purge_cache && 'ENABLED' || 'DISABLED' }}"
+
+            # ────────────────────────────── CACHE ANALYSIS & PURGE ────────────────
+            - name: Analyze current cache status
+              run: |
+                  echo "🔍 GitHub Actions Cache Analysis:"
+                  echo "Repository: ${{ github.repository }}"
+                  echo "Purge cache requested: ${{ inputs.purge_cache }}"
+                  echo ""
+                  
+                  # Obtenir les statistiques actuelles du cache
+                  CACHE_COUNT=$(gh api repos/${{ github.repository }}/actions/caches --paginate \
+                    --jq '.actions_caches | length' 2>/dev/null || echo "0")
+                  TOTAL_CACHE_SIZE=$(gh api repos/${{ github.repository }}/actions/caches --paginate \
+                    --jq '[.actions_caches[] | .size_in_bytes] | add // 0' 2>/dev/null || echo "0")
+                  
+                  echo "📊 Current cache status:"
+                  echo "Total caches: $CACHE_COUNT"
+                  echo "Total size: $(echo $TOTAL_CACHE_SIZE | numfmt --to=iec --suffix=B)"
+                  
+                  # Sauvegarder pour usage ultérieur
+                  echo "CACHE_COUNT_BEFORE=$CACHE_COUNT" >> $GITHUB_ENV
+                  echo "TOTAL_CACHE_SIZE_BEFORE=$TOTAL_CACHE_SIZE" >> $GITHUB_ENV
+                  
+                  if [ $CACHE_COUNT -gt 0 ]; then
+                    echo ""
+                    echo "🗂️ Cache breakdown by type:"
+                    gh api repos/${{ github.repository }}/actions/caches --paginate \
+                      --jq '.actions_caches[] | 
+                      if .key | startswith("buildkit-blob") then "Docker-Layers"
+                      elif .key | startswith("index-buildkit") then "Docker-Index" 
+                      elif .key | contains("pnpm") then "PNPM-Cache"
+                      elif .key | contains("npm") then "NPM-Cache"
+                      elif .key | contains("yarn") then "Yarn-Cache"
+                      else "Other"
+                      end' \
+                      | sort | uniq -c | while read count type; do
+                        echo "  $type: $count entries"
+                      done 2>/dev/null || echo "  Could not categorize caches"
+                    
+                    echo ""
+                    echo "📋 Largest caches (top 5):"
+                    gh api repos/${{ github.repository }}/actions/caches --paginate \
+                      --jq '.actions_caches[] | {size_mb: (.size_in_bytes / 1048576 | floor), key: (.key | .[0:50] + "..."), created: .created_at}' \
+                      | jq -s 'sort_by(.size_mb) | reverse | .[0:5][] | "  \(.size_mb)MB - \(.key) (\(.created))"' \
+                      2>/dev/null || echo "  Could not list largest caches"
+                  else
+                    echo "✅ No caches found"
+                  fi
+              env:
+                  GH_TOKEN: ${{ github.token }}
+
+            - name: Purge all GitHub Actions caches
+              if: inputs.purge_cache == true
+              run: |
+                  echo "🧹 CACHE PURGE REQUESTED - Deleting ALL caches"
+                  echo "⚠️  This will permanently delete $CACHE_COUNT_BEFORE caches ($TOTAL_CACHE_SIZE_BEFORE bytes)"
+                  echo ""
+                  
+                  if [ "$CACHE_COUNT_BEFORE" -eq 0 ]; then
+                    echo "✅ No caches to purge"
+                    exit 0
+                  fi
+                  
+                  echo "🗑️  Starting cache purge..."
+                  
+                  # Obtenir tous les IDs de cache
+                  CACHE_IDS=$(gh api repos/${{ github.repository }}/actions/caches --paginate \
+                    --jq '.actions_caches[].id' 2>/dev/null || echo "")
+                  
+                  if [ -z "$CACHE_IDS" ]; then
+                    echo "✅ No cache IDs found to delete"
+                    exit 0
+                  fi
+                  
+                  DELETED_COUNT=0
+                  FAILED_COUNT=0
+                  TOTAL_IDS=$(echo "$CACHE_IDS" | wc -l)
+                  
+                  echo "Found $TOTAL_IDS cache IDs to delete"
+                  echo ""
+                  
+                  # Supprimer chaque cache
+                  for CACHE_ID in $CACHE_IDS; do
+                    echo -n "Deleting cache ID $CACHE_ID... "
+                    if gh api -X DELETE repos/${{ github.repository }}/actions/caches/$CACHE_ID >/dev/null 2>&1; then
+                      echo "✅"
+                      ((DELETED_COUNT++))
+                    else
+                      echo "❌"
+                      ((FAILED_COUNT++))
+                    fi
+                    
+                    # Progress indicator
+                    PROGRESS=$((DELETED_COUNT + FAILED_COUNT))
+                    if [ $((PROGRESS % 10)) -eq 0 ]; then
+                      echo "Progress: $PROGRESS/$TOTAL_IDS caches processed"
+                    fi
+                  done
+                  
+                  echo ""
+                  echo "📊 Purge Results:"
+                  echo "✅ Successfully deleted: $DELETED_COUNT caches"
+                  echo "❌ Failed to delete: $FAILED_COUNT caches"
+                  echo "Space freed: $(echo $TOTAL_CACHE_SIZE_BEFORE | numfmt --to=iec --suffix=B)"
+                  
+                  # Vérifier le résultat
+                  echo ""
+                  echo "🔍 Verifying purge results..."
+                  sleep 3  # Attendre que l'API se mette à jour
+                  
+                  REMAINING_CACHES=$(gh api repos/${{ github.repository }}/actions/caches --jq '.actions_caches | length' 2>/dev/null || echo "unknown")
+                  echo "Remaining caches: $REMAINING_CACHES"
+                  
+                  if [ "$REMAINING_CACHES" = "0" ]; then
+                    echo "🎉 SUCCESS: All caches have been purged!"
+                  elif [ "$REMAINING_CACHES" = "unknown" ]; then
+                    echo "⏳ Cache status unknown (API delay), check manually"
+                  else
+                    echo "⚠️  $REMAINING_CACHES caches remain (may need time to reflect or failed deletions)"
+                  fi
+              env:
+                  GH_TOKEN: ${{ github.token }}
+
+            - name: Log post-purge status
+              if: inputs.purge_cache == true
+              run: |
+                  echo "📊 Cache status after purge:"
+                  CURRENT_CACHES=$(gh api repos/${{ github.repository }}/actions/caches --jq '.actions_caches | length' 2>/dev/null || echo "unknown")
+                  CURRENT_SIZE=$(gh api repos/${{ github.repository }}/actions/caches --paginate \
+                    --jq '[.actions_caches[] | .size_in_bytes] | add // 0' 2>/dev/null || echo "0")
+                  
+                  echo "Current caches: $CURRENT_CACHES"
+                  echo "Current size: $(echo $CURRENT_SIZE | numfmt --to=iec --suffix=B)"
+                  echo ""
+                  echo "💡 Next build will:"
+                  echo "• Start with 0 cache (completely fresh)"
+                  echo "• Take longer to complete (8-15 minutes)"
+                  echo "• Build all Docker layers from scratch"
+                  echo "• Re-download all dependencies"
+              env:
+                  GH_TOKEN: ${{ github.token }}
 
             # ────────────────────────────── CHECKOUTS ──────────────────────────────
             - name: Checkout main repo
@@ -157,39 +304,6 @@ jobs:
             - name: Login to ACR
               run: az acr login --name ${{ vars.registry_name }}
 
-            # ────────────────────────────── CACHE ANALYSIS (READ ONLY) ────────────
-            - name: Analyze existing GitHub Actions caches (read-only)
-              run: |
-                  echo "🔍 GitHub Actions Caches Analysis (NOT USED FOR BUILD):"
-                  echo "Repository: ${{ github.repository }}"
-                  echo "Workflow: ${{ github.workflow }}"
-                  echo "Branch: ${{ github.ref_name }}"
-                  echo "🚫 CACHE DISABLED FOR THIS BUILD"
-                  echo ""
-                  
-                  echo "📋 Available caches (not used):"
-                  gh api repos/${{ github.repository }}/actions/caches --paginate \
-                    --jq '.actions_caches[] | "Key: \(.key) | Size: \(.size_in_bytes | tonumber | . / 1048576 | floor)MB | Created: \(.created_at)"' \
-                    2>/dev/null || echo "Cannot access GitHub cache API"
-                  
-                  echo ""
-                  echo "🐳 Docker buildx caches (ignored):"
-                  gh api repos/${{ github.repository }}/actions/caches --paginate \
-                    --jq '.actions_caches[] | select(.key | contains("gha")) | "Key: \(.key) | Size: \(.size_in_bytes | tonumber | . / 1048576 | floor)MB"' \
-                    2>/dev/null || echo "No gha caches found"
-                  
-                  echo ""
-                  echo "💾 Total cache storage (unused):"
-                  TOTAL_CACHE_SIZE=$(gh api repos/${{ github.repository }}/actions/caches --paginate \
-                    --jq '[.actions_caches[] | .size_in_bytes] | add // 0' 2>/dev/null || echo "0")
-                  echo "Total: $(echo $TOTAL_CACHE_SIZE | numfmt --to=iec --suffix=B) (will NOT be used)"
-                  
-                  # Sauvegarder pour comparaison (bien qu'on ne l'utilise pas)
-                  echo "$TOTAL_CACHE_SIZE" > /tmp/cache_before.txt
-                  echo "CACHE_BEFORE=$TOTAL_CACHE_SIZE" >> $GITHUB_ENV
-              env:
-                  GH_TOKEN: ${{ github.token }}
-
             # ────────────────────────────── DOCKER BUILD (NO CACHE) ──────────────
             - name: Set up Docker Buildx (no cache)
               uses: docker/setup-buildx-action@v3
@@ -205,6 +319,9 @@ jobs:
                   echo "• npm/yarn dependencies will be downloaded fresh"
                   echo "• Build time will be longer but completely fresh"
                   echo "• No cache dependencies or corruption risks"
+                  if [ "${{ inputs.purge_cache }}" = "true" ]; then
+                    echo "• All previous caches have been purged"
+                  fi
                   echo ""
                   echo "⏱️ Expected build time: 8-15 minutes (vs 2-5 min with cache)"
 
@@ -222,6 +339,7 @@ jobs:
                       org.opencontainers.image.build.version=${{ env.VERSION_DEPLOYED }}
                       org.opencontainers.image.build.commit=${{ env.COMMIT_HASH }}
                       org.opencontainers.image.build.cache=disabled
+                      org.opencontainers.image.build.purged=${{ inputs.purge_cache }}
 
             - name: Create Dockerfile (no cache optimizations)
               run: |
@@ -383,36 +501,42 @@ jobs:
                   echo "💭 Build Analysis:"
                   echo "• Every layer built from scratch"
                   echo "• All dependencies downloaded fresh"
+                  if [ "${{ inputs.purge_cache }}" = "true" ]; then
+                    echo "• All previous caches were purged"
+                  fi
                   echo "• No cache corruption risks"
                   echo "• Longer build time but maximum reliability"
 
-            - name: Analyze cache status after no-cache build
+            - name: Final cache status summary
               run: |
-                  echo "📊 Post-build cache analysis (NO CACHE BUILD):"
+                  echo "📊 Final Cache Status Summary:"
                   echo ""
                   
-                  echo "💾 GitHub Actions cache status:"
-                  TOTAL_CACHE_SIZE=$(gh api repos/${{ github.repository }}/actions/caches --paginate \
+                  FINAL_CACHES=$(gh api repos/${{ github.repository }}/actions/caches --jq '.actions_caches | length' 2>/dev/null || echo "unknown")
+                  FINAL_SIZE=$(gh api repos/${{ github.repository }}/actions/caches --paginate \
                     --jq '[.actions_caches[] | .size_in_bytes] | add // 0' 2>/dev/null || echo "0")
-                  CACHE_DIFFERENCE=$((TOTAL_CACHE_SIZE - CACHE_BEFORE))
                   
-                  echo "Before build: $(echo $CACHE_BEFORE | numfmt --to=iec --suffix=B)"
-                  echo "After build:  $(echo $TOTAL_CACHE_SIZE | numfmt --to=iec --suffix=B)"
-                  echo "Difference:   $(echo $CACHE_DIFFERENCE | numfmt --to=iec --suffix=B)"
+                  echo "🏁 FINAL STATUS:"
+                  echo "Caches at start: $CACHE_COUNT_BEFORE"
+                  echo "Cache purge requested: ${{ inputs.purge_cache }}"
+                  echo "Caches now: $FINAL_CACHES"
+                  echo "Current cache size: $(echo $FINAL_SIZE | numfmt --to=iec --suffix=B)"
                   
-                  if [ $CACHE_DIFFERENCE -eq 0 ]; then
-                    echo "✅ NO CACHE USED - Cache size unchanged (as expected)"
-                  elif [ $CACHE_DIFFERENCE -gt 0 ]; then
-                    echo "⚠️ Cache increased despite no-cache flag - investigate"
+                  if [ "${{ inputs.purge_cache }}" = "true" ]; then
+                    if [ "$FINAL_CACHES" = "0" ]; then
+                      echo "✅ SUCCESS: All caches purged successfully!"
+                    else
+                      echo "⚠️  Some caches remain: $FINAL_CACHES (may need time to reflect)"
+                    fi
                   else
-                    echo "🗑️ Cache decreased (cleanup occurred)"
+                    echo "ℹ️  No cache purge was requested"
                   fi
                   
                   echo ""
-                  echo "🔍 Verification:"
-                  echo "• no-cache: true was set in build step"
-                  echo "• Build should have taken longer than usual"
-                  echo "• All layers should show as 'RUN' not 'CACHED' in logs above"
+                  echo "💡 To enable cache for future builds:"
+                  echo "• Remove 'no-cache: true' from build step"
+                  echo "• Add 'cache-from: type=gha' and 'cache-to: type=gha,mode=max'"
+                  echo "• Set 'purge_cache: false' when calling this workflow"
               env:
                   GH_TOKEN: ${{ github.token }}
 
@@ -429,3 +553,4 @@ jobs:
                   echo "  🔗 Deployment URL: ${{ env.DEPLOYMENT_URL }}"
                   echo "  📝 Commit: ${{ env.COMMIT_HASH }}"
                   echo "  🚫 Cache: DISABLED"
+                  echo "  🧹 Purged: ${{ inputs.purge_cache && 'YES' || 'NO' }}"
