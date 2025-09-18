@@ -156,6 +156,19 @@ jobs:
             - name: Login to ACR
               run: az acr login --name ${{ vars.registry_name }}
 
+            # ────────────────────────────── CACHE TRACKING ────────────────────────
+            - name: Check cache usage before build
+              run: |
+                  echo "📊 Cache usage before build:"
+                  gh api repos/${{ github.repository }}/actions/caches --paginate \
+                    --jq '[.actions_caches[] | select(.key | contains("gha")) | .size_in_bytes] | add // 0' \
+                    > cache_before.txt
+                  CACHE_BEFORE=$(cat cache_before.txt)
+                  echo "Current cache size: ${CACHE_BEFORE} bytes"
+                  echo "CACHE_BEFORE=${CACHE_BEFORE}" >> $GITHUB_ENV
+              env:
+                  GH_TOKEN: ${{ github.token }}
+
             # ────────────────────────────── DOCKER BUILD ──────────────────────────
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v3
@@ -302,6 +315,25 @@ jobs:
                         NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
                   cache-from: type=gha
                   cache-to: type=gha,mode=max
+
+            - name: Check cache usage after build
+              run: |
+                  echo "📊 Cache usage after build:"
+                  gh api repos/${{ github.repository }}/actions/caches --paginate \
+                    --jq '[.actions_caches[] | select(.key | contains("gha")) | .size_in_bytes] | add // 0' \
+                    > cache_after.txt
+                  CACHE_AFTER=$(cat cache_after.txt)
+                  CACHE_CONSUMED=$((CACHE_AFTER - CACHE_BEFORE))
+                  
+                  echo "Cache size after build: ${CACHE_AFTER} bytes"
+                  echo "Cache consumed this build: ${CACHE_CONSUMED} bytes"
+                  echo ""
+                  echo "📈 Cache Summary:"
+                  echo "  Before: $(numfmt --to=iec --suffix=B $CACHE_BEFORE)"
+                  echo "  After:  $(numfmt --to=iec --suffix=B $CACHE_AFTER)"
+                  echo "  Used:   $(numfmt --to=iec --suffix=B $CACHE_CONSUMED)"
+              env:
+                  GH_TOKEN: ${{ github.token }}
 
             - name: Image info
               run: |
