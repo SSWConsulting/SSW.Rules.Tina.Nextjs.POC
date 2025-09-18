@@ -71,8 +71,9 @@ jobs:
         runs-on: ubuntu-latest
         environment: ${{ inputs.tag }}
         permissions:
-            actions: write    # Required for cache monitoring
-            contents: read    # Required for checkout
+            actions: write      # Required for cache monitoring
+            contents: read      # Required for checkout
+            id-token: write     # Required for Azure login
         outputs:
             image_tag: ${{ steps.meta.outputs.tags }}
             image_digest: ${{ steps.build.outputs.digest }}
