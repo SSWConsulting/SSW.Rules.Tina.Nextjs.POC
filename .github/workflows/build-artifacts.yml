@@ -169,8 +169,24 @@ jobs:
               env:
                   GH_TOKEN: ${{ github.token }}
 
+            - name: Debug purge_cache parameter
+              run: |
+                  echo "🔍 Debug purge_cache parameter:"
+                  echo "inputs.purge_cache value: '${{ inputs.purge_cache }}'"
+                  echo "inputs.purge_cache type: $(echo '${{ inputs.purge_cache }}' | wc -c) chars"
+                  echo "String comparison: '${{ inputs.purge_cache }}' == 'true'"
+                  echo "Boolean comparison: ${{ inputs.purge_cache == true }}"
+                  echo "Boolean comparison (string): ${{ inputs.purge_cache == 'true' }}"
+                  echo ""
+                  if [ "${{ inputs.purge_cache }}" = "true" ]; then
+                    echo "✅ Purge will be executed (bash evaluation)"
+                  else
+                    echo "❌ Purge will be SKIPPED (bash evaluation)"
+                    echo "To enable purge, set purge_cache: true in workflow call"
+                  fi
+
             - name: Purge all GitHub Actions caches
-              if: inputs.purge_cache == true
+              if: ${{ inputs.purge_cache == true || inputs.purge_cache == 'true' }}
               run: |
                   echo "🧹 CACHE PURGE REQUESTED - Deleting ALL caches"
                   echo "⚠️  This will permanently delete $CACHE_COUNT_BEFORE caches ($TOTAL_CACHE_SIZE_BEFORE bytes)"
