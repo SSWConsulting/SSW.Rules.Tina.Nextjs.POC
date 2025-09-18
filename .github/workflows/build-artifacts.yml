@@ -71,15 +71,13 @@ defaults:
     run:
         shell: bash
 
-# Permissions needed for cache management
-permissions:
-    actions: write    # Required to delete caches
-    contents: read    # Required for checkout
-
 jobs:
     build-and-push:
         runs-on: ubuntu-latest
         environment: ${{ inputs.tag }}
+        permissions:
+            actions: write    # Required to delete caches
+            contents: read    # Required for checkout
         outputs:
             image_tag: ${{ steps.meta.outputs.tags }}
             image_digest: ${{ steps.build.outputs.digest }}
@@ -237,10 +235,10 @@ jobs:
                     
                     if [ $DELETE_EXIT_CODE -eq 0 ]; then
                       echo "✅"
-                      ((DELETED_COUNT++))
+                      DELETED_COUNT=$((DELETED_COUNT + 1))
                     else
                       echo "❌ ($(echo "$DELETE_RESULT" | head -n1 | cut -c1-50)...)"
-                      ((FAILED_COUNT++))
+                      FAILED_COUNT=$((FAILED_COUNT + 1))
                     fi
                     
                     # Progress indicator
