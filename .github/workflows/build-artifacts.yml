@@ -178,15 +178,20 @@ jobs:
                   echo "Boolean comparison: ${{ inputs.purge_cache == true }}"
                   echo "Boolean comparison (string): ${{ inputs.purge_cache == 'true' }}"
                   echo ""
+                  
+                  # FORCE PURGE FOR TESTING (remove this after testing)
+                  echo "🧪 FORCING PURGE FOR TESTING - Remove this section after test"
+                  echo "FORCE_PURGE=true" >> $GITHUB_ENV
+                  
                   if [ "${{ inputs.purge_cache }}" = "true" ]; then
-                    echo "✅ Purge will be executed (bash evaluation)"
+                    echo "✅ Purge will be executed (parameter set to true)"
                   else
-                    echo "❌ Purge will be SKIPPED (bash evaluation)"
-                    echo "To enable purge, set purge_cache: true in workflow call"
+                    echo "❌ Parameter set to false, but FORCING for test"
+                    echo "To enable purge normally, set purge_cache: true in workflow call"
                   fi
 
             - name: Purge all GitHub Actions caches
-              if: ${{ inputs.purge_cache == true || inputs.purge_cache == 'true' }}
+              if: ${{ inputs.purge_cache == true || inputs.purge_cache == 'true' || env.FORCE_PURGE == 'true' }}
               run: |
                   echo "🧹 CACHE PURGE REQUESTED - Deleting ALL caches"
                   echo "⚠️  This will permanently delete $CACHE_COUNT_BEFORE caches ($TOTAL_CACHE_SIZE_BEFORE bytes)"
@@ -258,7 +263,7 @@ jobs:
                   GH_TOKEN: ${{ github.token }}
 
             - name: Log post-purge status
-              if: inputs.purge_cache == true
+              if: ${{ inputs.purge_cache == true || inputs.purge_cache == 'true' || env.FORCE_PURGE == 'true' }}
               run: |
                   echo "📊 Cache status after purge:"
                   CURRENT_CACHES=$(gh api repos/${{ github.repository }}/actions/caches --jq '.actions_caches | length' 2>/dev/null || echo "unknown")
