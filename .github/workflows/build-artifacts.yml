@@ -71,6 +71,11 @@ defaults:
     run:
         shell: bash
 
+# Permissions needed for cache management
+permissions:
+    actions: write    # Required to delete caches
+    contents: read    # Required for checkout
+
 jobs:
     build-and-push:
         runs-on: ubuntu-latest
