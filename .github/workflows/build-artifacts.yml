@@ -156,22 +156,61 @@ jobs:
             - name: Login to ACR
               run: az acr login --name ${{ vars.registry_name }}
 
-            # ────────────────────────────── CACHE TRACKING ────────────────────────
-            - name: Check cache usage before build
+            # ────────────────────────────── CACHE ANALYSIS ────────────────────────
+            - name: Analyze GitHub Actions caches
               run: |
-                  echo "📊 Cache usage before build:"
+                  echo "🔍 GitHub Actions Caches Analysis:"
+                  echo "Repository: ${{ github.repository }}"
+                  echo "Workflow: ${{ github.workflow }}"
+                  echo "Branch: ${{ github.ref_name }}"
+                  echo ""
+                  
+                  echo "📋 All available caches:"
                   gh api repos/${{ github.repository }}/actions/caches --paginate \
-                    --jq '[.actions_caches[] | select(.key | contains("gha")) | .size_in_bytes] | add // 0' \
-                    > cache_before.txt
-                  CACHE_BEFORE=$(cat cache_before.txt)
-                  echo "Current cache size: ${CACHE_BEFORE} bytes"
-                  echo "CACHE_BEFORE=${CACHE_BEFORE}" >> $GITHUB_ENV
+                    --jq '.actions_caches[] | "Key: \(.key) | Size: \(.size_in_bytes | tonumber | . / 1048576 | floor)MB | Created: \(.created_at)"' \
+                    2>/dev/null || echo "Cannot access GitHub cache API"
+                  
+                  echo ""
+                  echo "🐳 Docker buildx caches (gha):"
+                  gh api repos/${{ github.repository }}/actions/caches --paginate \
+                    --jq '.actions_caches[] | select(.key | contains("gha")) | "Key: \(.key) | Size: \(.size_in_bytes | tonumber | . / 1048576 | floor)MB"' \
+                    2>/dev/null || echo "No gha caches found"
+                  
+                  echo ""
+                  echo "💾 Cache storage used:"
+                  TOTAL_CACHE_SIZE=$(gh api repos/${{ github.repository }}/actions/caches --paginate \
+                    --jq '[.actions_caches[] | .size_in_bytes] | add // 0' 2>/dev/null || echo "0")
+                  echo "Total: $(echo $TOTAL_CACHE_SIZE | numfmt --to=iec --suffix=B)"
+                  
+                  # Sauvegarder pour comparaison
+                  echo "$TOTAL_CACHE_SIZE" > /tmp/cache_before.txt
               env:
                   GH_TOKEN: ${{ github.token }}
 
             # ────────────────────────────── DOCKER BUILD ──────────────────────────
             - name: Set up Docker Buildx
               uses: docker/setup-buildx-action@v3
+              with:
+                driver-opts: |
+                  env.BUILDKIT_STEP_LOG_MAX_SIZE=10485760
+                  env.BUILDKIT_STEP_LOG_MAX_SPEED=10485760
+
+            - name: Generate cache keys
+              run: |
+                  echo "🔑 Cache key information:"
+                  echo "Workflow: ${{ github.workflow }}"
+                  echo "Repository: ${{ github.repository }}"
+                  echo "Branch: ${{ github.ref_name }}"
+                  echo "Runner OS: ${{ runner.os }}"
+                  echo ""
+                  
+                  # Calculer le hash des fichiers qui impactent le cache
+                  PACKAGE_HASH=$(find . -name "package*.json" -o -name "yarn.lock" -o -name "pnpm-lock.yaml" 2>/dev/null | sort | xargs cat 2>/dev/null | sha256sum | cut -c1-8)
+                  DOCKERFILE_HASH=$(cat Dockerfile 2>/dev/null | sha256sum | cut -c1-8 || echo "no-dockerfile")
+                  
+                  echo "Package files hash: $PACKAGE_HASH"
+                  echo "Expected cache key pattern: buildkit-gha-*"
+                  echo ""
 
             - name: Extract metadata (tags, labels)
               id: meta
@@ -284,7 +323,7 @@ jobs:
                   CMD ["node", "server.js"]
                   EOF
 
-            - name: Build & push image
+            - name: Build & push image (with detailed cache logging)
               id: build
               uses: docker/build-push-action@v5
               with:
@@ -316,24 +355,63 @@ jobs:
                   cache-from: type=gha
                   cache-to: type=gha,mode=max
 
-            - name: Check cache usage after build
+            - name: Analyze cache usage after build
               run: |
-                  echo "📊 Cache usage after build:"
-                  gh api repos/${{ github.repository }}/actions/caches --paginate \
-                    --jq '[.actions_caches[] | select(.key | contains("gha")) | .size_in_bytes] | add // 0' \
-                    > cache_after.txt
-                  CACHE_AFTER=$(cat cache_after.txt)
-                  CACHE_CONSUMED=$((CACHE_AFTER - CACHE_BEFORE))
-                  
-                  echo "Cache size after build: ${CACHE_AFTER} bytes"
-                  echo "Cache consumed this build: ${CACHE_CONSUMED} bytes"
+                  echo "📊 Post-build cache analysis:"
                   echo ""
-                  echo "📈 Cache Summary:"
-                  echo "  Before: $(numfmt --to=iec --suffix=B $CACHE_BEFORE)"
-                  echo "  After:  $(numfmt --to=iec --suffix=B $CACHE_AFTER)"
-                  echo "  Used:   $(numfmt --to=iec --suffix=B $CACHE_CONSUMED)"
+                  
+                  echo "🆕 Updated GitHub Actions caches:"
+                  gh api repos/${{ github.repository }}/actions/caches --paginate \
+                    --jq '.actions_caches[] | select(.key | contains("gha")) | "Key: \(.key) | Size: \(.size_in_bytes | tonumber | . / 1048576 | floor)MB | Updated: \(.created_at)"' \
+                    2>/dev/null || echo "No gha caches found"
+                  
+                  echo ""
+                  echo "💾 Cache storage comparison:"
+                  CACHE_BEFORE=$(cat /tmp/cache_before.txt 2>/dev/null || echo "0")
+                  TOTAL_CACHE_SIZE=$(gh api repos/${{ github.repository }}/actions/caches --paginate \
+                    --jq '[.actions_caches[] | .size_in_bytes] | add // 0' 2>/dev/null || echo "0")
+                  CACHE_DIFFERENCE=$((TOTAL_CACHE_SIZE - CACHE_BEFORE))
+                  
+                  echo "Before build: $(echo $CACHE_BEFORE | numfmt --to=iec --suffix=B)"
+                  echo "After build:  $(echo $TOTAL_CACHE_SIZE | numfmt --to=iec --suffix=B)"
+                  echo "Difference:   $(echo $CACHE_DIFFERENCE | numfmt --to=iec --suffix=B)"
+                  
+                  if [ $CACHE_DIFFERENCE -gt 0 ]; then
+                    echo "✅ Cache was updated (+$(echo $CACHE_DIFFERENCE | numfmt --to=iec --suffix=B))"
+                  elif [ $CACHE_DIFFERENCE -lt 0 ]; then
+                    echo "🗑️ Cache was cleaned ($(echo $CACHE_DIFFERENCE | numfmt --to=iec --suffix=B))"
+                  else
+                    echo "➡️ No cache size change (cache likely reused)"
+                  fi
+                  
+                  echo ""
+                  echo "🔍 Docker layer cache hints:"
+                  if [[ "${{ steps.build.outputs.digest }}" == *"sha256"* ]]; then
+                    echo "✅ Image built successfully"
+                    echo "Build time info available in build step logs"
+                  fi
               env:
                   GH_TOKEN: ${{ github.token }}
+
+            - name: Build performance analysis
+              run: |
+                  echo "⏱️ Build Performance Indicators:"
+                  echo "Job started at: $(date -d @$((GITHUB_RUN_START_TIME / 1000)) 2>/dev/null || date)"
+                  echo "Current time:   $(date)"
+                  
+                  echo ""
+                  echo "🏗️ Build context information:"
+                  echo "Build context size: $(du -sh . 2>/dev/null | cut -f1)"
+                  echo "Content directory:  $(du -sh ./content 2>/dev/null | cut -f1 || echo 'Not found')"
+                  echo "Node modules:       $(du -sh ./node_modules 2>/dev/null | cut -f1 || echo 'Not built yet')"
+                  
+                  echo ""
+                  echo "💡 Cache effectiveness hints:"
+                  echo "- Look for 'CACHED' in build step logs above"
+                  echo "- Fast npm/yarn install = dependency cache hit"
+                  echo "- Fast Docker layer pulls = layer cache hit"
+              env:
+                  GITHUB_RUN_START_TIME: ${{ github.event.repository.pushed_at }}
 
             - name: Image info
               run: |
