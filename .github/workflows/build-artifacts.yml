@@ -220,14 +220,21 @@ jobs:
                   echo "Found $TOTAL_IDS cache IDs to delete"
                   echo ""
                   
-                  # Supprimer chaque cache
+                  # Supprimer chaque cache (continuer même en cas d'erreur)
                   for CACHE_ID in $CACHE_IDS; do
                     echo -n "Deleting cache ID $CACHE_ID... "
-                    if gh api -X DELETE repos/${{ github.repository }}/actions/caches/$CACHE_ID >/dev/null 2>&1; then
+                    
+                    # Désactiver temporairement l'arrêt sur erreur
+                    set +e
+                    DELETE_RESULT=$(gh api -X DELETE repos/${{ github.repository }}/actions/caches/$CACHE_ID 2>&1)
+                    DELETE_EXIT_CODE=$?
+                    set -e
+                    
+                    if [ $DELETE_EXIT_CODE -eq 0 ]; then
                       echo "✅"
                       ((DELETED_COUNT++))
                     else
-                      echo "❌"
+                      echo "❌ ($(echo "$DELETE_RESULT" | head -n1 | cut -c1-50)...)"
                       ((FAILED_COUNT++))
                     fi
                     
@@ -236,6 +243,9 @@ jobs:
                     if [ $((PROGRESS % 10)) -eq 0 ]; then
                       echo "Progress: $PROGRESS/$TOTAL_IDS caches processed"
                     fi
+                    
+                    # Petite pause pour éviter le rate limiting
+                    sleep 0.1
                   done
                   
                   echo ""
