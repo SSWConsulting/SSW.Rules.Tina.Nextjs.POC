@@ -10,7 +10,7 @@ const localContentPath = process.env.LOCAL_CONTENT_RELATIVE_PATH ?? undefined;
 const clientId = process.env.NEXT_PUBLIC_TINA_CLIENT_ID;
 const token = process.env.TINA_TOKEN;
 const searchToken = process.env.TINA_SEARCH_TOKEN;
-const basePath = process.env.TINA_BASE_PATH ?? undefined;
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? undefined;
 
 const config = defineConfig({
   clientId: clientId,
@@ -32,7 +32,7 @@ const config = defineConfig({
   build: {
     publicFolder: "public", // The public asset folder for your framework
     outputFolder: "admin", // within the public folder
-    basePath: nextConfig.basePath?.replace(/^\//, "") || "", // The base path of the app (could be /blog)
+    basePath: `/${basePath}`
   },
   schema: {
     collections: [Global, Category, Rule, MegaMenu],

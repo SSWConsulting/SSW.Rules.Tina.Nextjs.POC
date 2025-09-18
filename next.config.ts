@@ -1,5 +1,7 @@
 import type { NextConfig } from 'next'
- 
+
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH ?? undefined;
+
 const nextConfig: NextConfig = {
   output: 'standalone', // Required for the Docker setup
   env: {
@@ -9,7 +11,8 @@ const nextConfig: NextConfig = {
     BUILD_DATE: process.env.BUILD_DATE,
     COMMIT_HASH: process.env.COMMIT_HASH,
   },
-  
+  basePath: `/${basePath}`,
+  assetPrefix: `/${basePath}`,
   images: {
     remotePatterns: [
       {
@@ -58,7 +61,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/rules-beta',
+        permanent: false, // or true if permanent
+      },
+    ]
+  },
   async rewrites() {
     return [
       {

@@ -7,7 +7,7 @@ export default function SignIn() {
     const { user } = useAuth();
 
     if (!user) {
-        const href = `/auth/login?returnTo=/`;
+        const href = `/auth/login`;
         return (
             <a
                 href={href}
