@@ -133,7 +133,7 @@ export default function ClientCategoryPage(props: ClientCategoryPageProps) {
             onIncludeArchivedChange={setIncludeArchived}
           />
         </div>
-        <div className="hidden lg:w-1/3 lg:block md:hidden p-6 pr-0">
+         <div className="hidden lg:block lg:w-1/3 p-6 pr-0">
           <ol className="border-l-3 border-gray-300 pl-6">
             {rightSidebarRules.map((rule, index) => (
               <li key={`sidebar-${rule.guid}-${index}`} className="py-1 ml-4">
