@@ -12,6 +12,7 @@
     --color-ssw-light-red: #d26e6e;
     --color-ssw-gray: #797979;
     --color-ssw-black: #333333;
+    --color-table-odd: #f6f8fa;
 }
 
 @theme inline {
@@ -271,6 +272,24 @@
   blockquote{
     @apply italic text-sm font-light;
   }
+
+  table{
+    @apply w-full text-base !border-gray-200 !border-2 mb-4;
+  }
+
+  th,
+  tr:first-child {
+    @apply text-left font-bold border-b-4 border-gray-300 pb-2;
+  }
+
+  tr:nth-child(odd) {
+    @apply bg-table-odd;
+  }
+
+  td{
+    @apply !px-4 !py-2;
+  }
+
 }
 
 @layer components {
