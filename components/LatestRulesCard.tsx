@@ -30,11 +30,11 @@ export default function LatestRulesCard({ rules }: LatestRulesProps) {
   return (
     <Card title="Latest Rules">
       {rules.map((rule, index) => (
-        <ul key={index}>
-          <li>
+        <ul key={index} className="ps-4 p-0 m-0">
+          <li className="relative mb-2">
             <a href={`/${rule?.uri}`}>{rule?.title}</a>
             {rule?.lastUpdated && (
-              <p className="text-gray-500 mt-1">
+              <p className="text-xs text-gray-400 mt-1">
                 <RiTimeFill className="inline mr-2"></RiTimeFill>
                 {timeAgo(rule?.lastUpdated)}
               </p>
@@ -50,7 +50,7 @@ export default function LatestRulesCard({ rules }: LatestRulesProps) {
           className={`px-4 py-2 rounded-md inline-flex items-center ${loading || isPending ? 'text-gray-500' : 'text-ssw-red cursor-pointer hover:underline'}`}
         >
           {(loading || isPending) ? <Spinner size="sm" inline className="mr-2" /> : null}
-          <span className={(loading || isPending) ? 'text-gray-500' : ''}>{(loading || isPending) ? "Loading..." : "See More"}</span>
+          <span>{(loading || isPending) ? "Loading..." : "See More"}</span>
         </button>
       </div>
     </Card>
