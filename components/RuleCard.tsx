@@ -30,12 +30,12 @@ export default function RuleCard({
               {title}
             </h2>
           </Link>
-          <h4 className="flex m-0 text-lg max-sm:text-md">
+          <h4 className="flex m-0 content-center text-lg text-gray-400">
             <span className="font-medium">
               {lastUpdatedBy || 'Unknown'}
             </span>
             {lastUpdated && (
-              <div className="flex items-center ml-4 text-gray-500 font-light">
+              <div className="flex items-center ml-4 text-xs text-gray-400">
                 <RiTimeFill className="inline mr-1" />
                 <span>{timeAgo(lastUpdated)}</span>
               </div>
