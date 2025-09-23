@@ -105,11 +105,15 @@ const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContent
           <div className="flex gap-2">
             <IconLink
               href={`admin/index.html#/collections/edit/category/${categoryUri?.slice(0, -4)}`}
+              title="Edit category"
+              tooltipOpaque={true}
               children={<RiPencilLine size={ICON_SIZE} />}
             />
             <IconLink
               href={`https://github.com/SSWConsulting/SSW.Rules.Content/blob/${process.env.NEXT_PUBLIC_TINA_BRANCH}/categories/${categoryUri}`}
               target="_blank"
+              title="View category on GitHub"
+              tooltipOpaque={true}
               children={<RiGithubLine size={ICON_SIZE} className="rule-icon" />}
             />
           </div>
