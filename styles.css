@@ -247,6 +247,10 @@
     @apply text-base;
   }
 
+  p{
+    @apply mb-4;
+  }
+
   ul,
   ol {
     @apply mb-4 ps-8 m-0 p-0;
@@ -258,6 +262,10 @@
 
   ol {
     @apply list-decimal;
+  }
+
+  li {
+    @apply mb-3;
   }
 
   blockquote{
