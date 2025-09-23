@@ -9,6 +9,7 @@ interface RuleCardProps {
   lastUpdatedBy?: string | null;
   lastUpdated?: string | null;
   index?: number;
+  authorUrl?: string | null;
 }
 
 export default function RuleCard({
@@ -16,8 +17,10 @@ export default function RuleCard({
   slug,
   lastUpdatedBy,
   lastUpdated,
-  index
+  index,
+  authorUrl
 }: RuleCardProps) {
+  console.log(authorUrl);
   return (
     <Card className="mb-4">
       <div className="flex">
@@ -32,7 +35,14 @@ export default function RuleCard({
           </Link>
           <h4 className="flex m-0 content-center text-lg text-gray-400">
             <span className="font-medium">
-              {lastUpdatedBy || 'Unknown'}
+              {authorUrl ? (
+                // Always treat authorUrl as external
+                <a href={authorUrl} target="_blank" rel="noopener noreferrer" className="hover:text-ssw-red hover:underline transition-colors cursor-pointer">
+                  {lastUpdatedBy || "Unknown"}
+                </a>
+              ) : (
+                <span>{lastUpdatedBy || "Unknown"}</span>
+              )}
             </span>
             {lastUpdated && (
               <div className="flex items-center ml-4 text-xs text-gray-400">
