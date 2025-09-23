@@ -274,9 +274,9 @@ export default function ClientRulePage(props: ClientRulePageProps) {
                     <Link
                       key={index}
                       href={`/${category.uri}`}
-                      className="border-2 no-underline border-ssw-red text-ssw-red p-2 rounded-xs font-semibold hover:text-white hover:bg-ssw-red transition-colors duration-200"
+                      className="border-2 no-underline border-ssw-red text-ssw-red py-1 px-2 rounded-xs font-semibold hover:text-white hover:bg-ssw-red transition-colors duration-200"
                     >
-                      {category.title}
+                      {category.title.replace(/^Rules to better\s*/i, '')}
                     </Link>
                   );
                 })}
