@@ -258,7 +258,7 @@
   }
 
   ul {
-    @apply list-none;
+    @apply !list-none;
   }
 
   ol {
@@ -321,7 +321,7 @@
   }
 }
 
-ul li::before {
+ul > li::before {
   content: "\25A0";
   display: inline-block;
   width: 1rem;
