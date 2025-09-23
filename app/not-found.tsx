@@ -22,7 +22,7 @@ export default function NotFound({
   description = "Lost, this page is. In another system, it may be.",
 }: NotFoundProps) {
   return (
-    <div className="relative text-center z-[1] pt-52">
+    <div className="text-center mb-16">
       <h1 className="mt-4 text-balance text-5xl font-semibold tracking-tight text-primary sm:text-7xl">
         {title}
       </h1>
