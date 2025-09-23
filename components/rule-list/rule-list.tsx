@@ -102,7 +102,7 @@ const RuleList: React.FC<RuleListProps> = ({ categoryUri, rules, type, noContent
           <p className="mx-3 hidden sm:block">{rules.length} Rules</p>
         </div>
         {type === 'category' && (
-          <div className="flex gap-2">
+          <div className="hidden md:flex gap-2">
             <IconLink
               href={`admin/index.html#/collections/edit/category/${categoryUri?.slice(0, -4)}`}
               title="Edit category"
