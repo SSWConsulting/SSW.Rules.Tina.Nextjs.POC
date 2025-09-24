@@ -84,12 +84,6 @@ export const historyFields:TinaField[] = [
         },
       },
     },
-    {
-      type: "boolean",
-      name: "isOrphaned",
-      label: "Orphaned",
-      description: "Mark this rule as orphaned (not linked to any category).",
-    },
 ];
 
 export const historyBeforeSubmit = async ({

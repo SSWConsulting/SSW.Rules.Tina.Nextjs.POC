@@ -5,7 +5,6 @@ export interface Rule {
   body: any;
   isArchived?: boolean;
   archivedreason?: string;
-  isOrphaned?: boolean;
   authors?: { title: string }[];
   lastUpdated?: string;
   lastUpdatedBy?: string;

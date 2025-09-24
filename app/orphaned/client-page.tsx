@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import RuleList from "@/components/rule-list";
 import { getAccessToken } from "@auth0/nextjs-auth0";
@@ -8,11 +8,7 @@ import { BookmarkService } from "@/lib/bookmarkService";
 import { useAuth } from "@/components/auth/UserClientProvider";
 import { Rule } from "@/models/Rule";
 
-export interface OrphanedClientPageProps {
-  orphanedRules: Rule[];
-}
-
-export default function OrphanedClientPage(props: OrphanedClientPageProps) {
+export default function OrphanedClientPage(props) {
   const { orphanedRules } = props;
 
   const { user, isLoading: authLoading } = useAuth();

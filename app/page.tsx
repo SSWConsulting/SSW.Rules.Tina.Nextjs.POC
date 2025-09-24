@@ -4,7 +4,7 @@ import client from "@/tina/__generated__/client";
 import HomeClientPage from "./client-page";
 import ruleToCategories from "../rule-to-categories.json";
 import Breadcrumbs from "@/components/Breadcrumbs";
-import { fetchArchivedRules, fetchArchivedRulesData, fetchLatestRules, fetchOrphanedRulesData, fetchRuleCount } from "@/lib/services/rules";
+import { fetchArchivedRules, fetchArchivedRulesData, fetchLatestRules, fetchRuleCount } from "@/lib/services/rules";
 import { QuickLink } from "@/types/quickLink";
 
 export const revalidate = 300;
@@ -54,26 +54,24 @@ function buildCategoryRuleCounts(): Record<string, number> {
 }
 
 export default async function Home() {
-  const [topCategories, latestRules, ruleCount, categoryRuleCounts, quickLinks, orphanedRules, archivedRules] = await Promise.all([
+  const [topCategories, latestRules, ruleCount, categoryRuleCounts, quickLinks, archivedRules] = await Promise.all([
     fetchTopCategoriesWithSubcategories(),
     fetchLatestRules(),
     fetchRuleCount(),
     Promise.resolve(buildCategoryRuleCounts()),
     fetchQuickLinks(),
-    fetchOrphanedRulesData(),
     fetchArchivedRulesData()
   ]);
 
   return (
       <Section>
         <Breadcrumbs isHomePage />
-        <HomeClientPage 
-          topCategories={topCategories} 
-          latestRules={latestRules} 
-          ruleCount={ruleCount} 
-          categoryRuleCounts={categoryRuleCounts} 
-          quickLinks={quickLinks} 
-          orphanedRules={orphanedRules}
+        <HomeClientPage
+          topCategories={topCategories}
+          latestRules={latestRules}
+          ruleCount={ruleCount}
+          categoryRuleCounts={categoryRuleCounts}
+          quickLinks={quickLinks}
           archivedRules={archivedRules} />
       </Section>
     )

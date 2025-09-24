@@ -24,7 +24,7 @@ const CategoryActionButtons: React.FC = () => {
       </Link>
       
       <a
-        href="https://github.com/SSWConsulting/SSW.Rules.Content" 
+        href="https://www.ssw.com.au/ssw/Standards/Default.aspx" 
         target="_blank"
         rel="noopener noreferrer"
         className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-white rounded-md border hover:bg-gray-50 hover:text-ssw-red transition-colors duration-200 no-underline"
