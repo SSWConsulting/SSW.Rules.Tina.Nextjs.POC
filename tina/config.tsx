@@ -32,8 +32,7 @@ const config = defineConfig({
   build: {
     publicFolder: "public", // The public asset folder for your framework
     outputFolder: "admin", // within the public folder
-    // basePath: nextConfig.basePath?.replace(/^\//, "") || "", // The base path of the app (could be /blog)
-    basePath: "rules-beta"
+    basePath: nextConfig.basePath?.replace(/^\//, "") || "", // The base path of the app (could be /blog)
   },
   schema: {
     collections: [Global, Category, Rule, MegaMenu],

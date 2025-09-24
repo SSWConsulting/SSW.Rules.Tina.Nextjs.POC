@@ -3,6 +3,8 @@ import { generateGuid } from "@/utils/guidGenerationUtils";
 import { Collection, Form, TinaCMS } from "tinacms";
 import { historyBeforeSubmit, historyFields } from "./shared/historyFields";
 
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH?.replace(/^\//, "") || ""
+
 const Rule: Collection = {
   name: "rule",
   label: "Rules",
@@ -25,8 +27,14 @@ const Rule: Collection = {
       },
       readonly: true,
     },
+    // router: ({ document }) => {
+    //   return document._sys.relativePath.split("/")[0];
+    // },
     router: ({ document }) => {
-      return document._sys.relativePath.split("/")[0];
+      const slug =
+        document?._sys?.relativePath?.split("/")?.[0] ??
+        "";
+      return `${basePath}/${slug}`;
     },
     beforeSubmit: historyBeforeSubmit,
   },
