@@ -6,7 +6,6 @@ const basePath = isProd ? process.env.NEXT_PUBLIC_BASE_PATH : ''
 const nextConfig: NextConfig = {
   output: 'standalone', // Required for the Docker setup
   basePath: basePath,
-  assetPrefix: basePath,
   async redirects() {
     return isProd
       ? [
@@ -28,7 +27,6 @@ const nextConfig: NextConfig = {
   },
   
   images: {
-    path: `${basePath}/_next/image`,
     remotePatterns: [
       {
         protocol: 'https',
