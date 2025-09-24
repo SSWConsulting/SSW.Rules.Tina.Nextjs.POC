@@ -6,6 +6,7 @@ import {
   withFigureEmbedTemplateFields,
 } from "./componentWithFigure";
 import { CodeXml, Info } from "lucide-react";
+import MarkdownComponentMapping from "../tina-markdown/markdown-component-mapping";
 
 type AsideVariant =
   | "greybox"
@@ -28,14 +29,14 @@ const variantConfig: Record<AsideVariant, VariantConfig> = {
     info: {
       containerClass: "bg-white border text-gray-800",
       icon: (
-        <div className="w-8 h-8 mr-4 flex items-center justify-center text-red-600">
+        <div className="w-8 h-8 mr-4 flex items-center justify-center text-[var(--ssw-red)]">
           <Info className="w-8 h-8" />
         </div>
       ),
     },
     todo: {
-      containerClass: "bg-white border border-red-500 text-red-700 font-semibold",
-      textClass: "text-red-600",
+      containerClass: "bg-white border border-red-500 text-[var(--ssw-red)] font-semibold",
+      textClass: "text-[var(--ssw-red)]",
     },
     china: {
       containerClass: "bg-white border text-gray-800",
@@ -54,7 +55,7 @@ const variantConfig: Record<AsideVariant, VariantConfig> = {
     codeauditor: {
       containerClass: "bg-white border text-gray-800",
       icon: (
-        <div className="w-8 h-8 mr-4 flex items-center justify-center text-red-600">
+        <div className="w-8 h-8 mr-4 flex items-center justify-center text-[var(--ssw-red)]">
           <CodeXml className="w-8 h-8" />
         </div>
       ),
@@ -74,7 +75,7 @@ export function AsideEmbed({ data }: { data: any }) {
             <div className="flex items-start">
             {config.icon}
             <div className={`prose prose-sm max-w-none text-base ${config.textClass ?? ""}`}>
-                <TinaMarkdown content={data.body} />
+                <TinaMarkdown content={data.body} components={MarkdownComponentMapping} />
             </div>
             </div>
         </div>
