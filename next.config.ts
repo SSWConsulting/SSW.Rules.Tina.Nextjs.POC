@@ -12,7 +12,7 @@ const nextConfig: NextConfig = {
       ? [
           {
             source: '/',
-            destination: basePath || '' ,
+            destination: basePath || '/' ,
             permanent: true,
             basePath: false,
           },
