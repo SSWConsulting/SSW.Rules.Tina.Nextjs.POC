@@ -61,6 +61,7 @@ export default function Breadcrumbs({
             width={16}
             height={16}
             className="block w-4 h-4"
+            unoptimized
           />
           <ChevronIcon className="ml-2 hidden md:block" size={18} />
         </a>
