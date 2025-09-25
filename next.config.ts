@@ -1,23 +1,11 @@
 import type { NextConfig } from 'next'
 
-const isProd = process.env.NODE_ENV === 'production';
-const basePath = isProd ? process.env.NEXT_PUBLIC_BASE_PATH : ''
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH;
  
 const nextConfig: NextConfig = {
   output: 'standalone', // Required for the Docker setup
-  basePath: basePath,
-  async redirects() {
-    return isProd
-      ? [
-          {
-            source: '/',
-            destination: basePath || '/' ,
-            permanent: true,
-            basePath: false,
-          },
-        ]
-      : [];
-  },
+  basePath: `/${basePath}`,
+  assetPrefix: `/${basePath}`,
   env: {
     BUILD_TIMESTAMP: process.env.BUILD_TIMESTAMP,
     VERSION_DEPLOYED: process.env.VERSION_DEPLOYED,
