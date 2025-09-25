@@ -373,6 +373,7 @@ jobs:
                         NEXT_PUBLIC_GISCUS_CATEGORY_ID=${{ vars.NEXT_PUBLIC_GISCUS_CATEGORY_ID }}
                         NEXT_PUBLIC_GISCUS_THEME_URL=${{ vars.NEXT_PUBLIC_GISCUS_THEME_URL }}
                         NEXT_PUBLIC_API_BASE_URL=${{ secrets.NEXT_PUBLIC_API_BASE_URL }}
+                        NEXT_PUBLIC_BASE_PATH=${{ vars.NEXT_PUBLIC_BASE_PATH }}
                   # CACHE COMPLETELY DISABLED
                   no-cache: true
 
