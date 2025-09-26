@@ -27,9 +27,6 @@ const Rule: Collection = {
       },
       readonly: true,
     },
-    // router: ({ document }) => {
-    //   return document._sys.relativePath.split("/")[0];
-    // },
     router: ({ document }) => {
       const slug =
         document?._sys?.relativePath?.split("/")?.[0] ??
