@@ -3,10 +3,10 @@ import { createDynamicsService } from '@/lib/services/dynamics';
 
 export async function GET(
   _req: NextRequest,
-  ctx: { params: { employee: string } }
+  context: { params: { employee: string } }
 ) {
   try {
-    const nameParam = ctx?.params?.employee ? decodeURIComponent(ctx.params.employee) : '';
+    const nameParam = decodeURIComponent(context.params.employee);
     if (!nameParam) {
       return NextResponse.json({ error: 'Employee name is required' }, { status: 400 });
     }
@@ -24,5 +24,3 @@ export async function GET(
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }
-
-
