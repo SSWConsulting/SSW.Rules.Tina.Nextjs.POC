@@ -4,17 +4,19 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import OrphanedClientPage from "./client-page";
 import client from "@/tina/__generated__/client";
 import { Rule } from "@/models/Rule";
+import { OrphanedRulesData } from "@/models/OrphanedRule";
 import orphanedRulesData from "@/orphaned_rules.json";
 
 export const revalidate = 300;
 
 const fetchOrphanedRulesData = async (): Promise<Rule[]> => {
   const rules: Rule[] = [];
-
-  for (const ruleUri of orphanedRulesData.orphaned_rules) {
+  const typedOrphanedRulesData: OrphanedRulesData = orphanedRulesData;
+console.log(typedOrphanedRulesData);
+  for (const orphanedRule of typedOrphanedRulesData) {
     try {
       const ruleData = await client.queries.rule({
-        relativePath: `${ruleUri}/rule.mdx`,
+        relativePath: `${orphanedRule.uri}/rule.mdx`,
       });
 
       if (ruleData?.data?.rule) {
@@ -22,7 +24,7 @@ const fetchOrphanedRulesData = async (): Promise<Rule[]> => {
         rules.push({
           guid: rule.guid || "",
           title: rule.title || "",
-          uri: rule.uri || ruleUri,
+          uri: rule.uri || orphanedRule.uri,
           body: rule.body || "",
           isArchived: rule.isArchived || false,
           archivedreason: rule.archivedreason || undefined,
@@ -32,7 +34,7 @@ const fetchOrphanedRulesData = async (): Promise<Rule[]> => {
         });
       }
     } catch (error) {
-      console.error(`Error fetching rule data for ${ruleUri}:`, error);
+      console.error(`Error fetching rule data for ${orphanedRule.uri}:`, error);
     }
   }
 
