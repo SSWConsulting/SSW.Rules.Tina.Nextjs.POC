@@ -1,7 +1,7 @@
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { parentSiteUrl, siteUrlRelative } from "@/site-config";
+import { withBasePath } from "@/lib/withBasePath";
 
 interface BreadcrumbProps {
   categories?: { link: string; title: string }[];
@@ -55,18 +55,20 @@ export default function Breadcrumbs({
           href={parentSiteUrl}
           className="inline-flex items-center shrink-0 translate-y-[2px] md:translate-y-0 md:h-[1.5em]"
         >
-          <Image
+          <img
             alt="SSW Foursquare"
-            src={iconSrc}
+            src={withBasePath(iconSrc)}
             width={16}
             height={16}
             className="block w-4 h-4"
+            loading="lazy"
+            decoding="async"
           />
           <ChevronIcon className="ml-2 hidden md:block" size={18} />
         </a>
 
         <ol className="flex min-w-0 list-none p-0 m-0 flex-col items-start md:flex-row md:items-center">
-          <li className="flex items-center md:h-[1.5em]">
+          <li className="flex items-center mb-0 md:h-[1.5em]">
             <ChevronIcon className="mr-2 block md:hidden" size={18} />
             <Link
               href={siteUrlRelative}
@@ -78,7 +80,7 @@ export default function Breadcrumbs({
 
           {showCategories &&
             categoryList.map((cat, i) => (
-              <li key={i} className="mt-1 flex items-center md:mt-0">
+              <li key={i} className="mt-1 flex items-center mb-0 md:mt-0">
                 <ChevronIcon className="mr-2 md:mx-2 block" size={18} />
                 <Link
                   href={cat.link}
@@ -90,7 +92,7 @@ export default function Breadcrumbs({
             ))}
 
           {!isHomePage && (
-            <li className="mt-1 flex items-center md:mt-0" aria-current="page">
+            <li className="mt-1 flex items-center mb-0 md:mt-0" aria-current="page">
               <ChevronIcon className="mr-2 md:mx-2 block" size={18} />
               <span className="truncate">{tailText}</span>
             </li>

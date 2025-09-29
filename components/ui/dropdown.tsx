@@ -13,9 +13,10 @@ interface DropdownProps {
   value: string;
   onChange: (value: string) => void;
   className?: string;
+  showBorder?: boolean;
 }
 
-export default function Dropdown({ options, value, onChange, className = '' }: DropdownProps) {
+export default function Dropdown({ options, value, onChange, className = '', showBorder = false }: DropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -39,11 +40,11 @@ export default function Dropdown({ options, value, onChange, className = '' }: D
   };
 
   return (
-    <div className={`relative ${className}`} ref={dropdownRef} style={{ zIndex: 10000 }}>
+    <div className={`relative ${className}`} ref={dropdownRef}>
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="border-none bg-transparent focus:outline-none cursor-pointer flex items-center"
+        className={`${showBorder ? 'border border-gray-200 rounded-md px-3 py-2 bg-white' : 'border-none bg-transparent'} focus:outline-none cursor-pointer flex items-center`}
         type="button"
       >
         <span>{selectedOption?.label || 'Select...'}</span>
@@ -60,8 +61,9 @@ export default function Dropdown({ options, value, onChange, className = '' }: D
         <div 
           className="fixed mt-1 bg-white border border-gray-200 rounded-md shadow-lg min-w-[160px]" 
           style={{ 
-            zIndex: 10000,
-            position: 'fixed',
+            // lower z-index so it doesn't compete with global / admin styles
+            zIndex: 1000,
+            // position is already set via the className above
             left: dropdownRef.current ? dropdownRef.current.getBoundingClientRect().left : 0,
             top: dropdownRef.current ? dropdownRef.current.getBoundingClientRect().bottom + 4 : 0
           }}

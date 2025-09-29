@@ -18,6 +18,7 @@ export function MegaMenuWrapper(props) {
             linkComponent={(props) => <CustomLink {...props} className={classNames('unstyled', props.className)} />}
             url='/rules'
             searchUrl='https://www.ssw.com.au/rules'
+            isFlagVisible={false}
         />
     );
 }
@@ -43,7 +44,7 @@ const ActionButtons = () => {
                 </Tooltip>
 
                 <Tooltip text='Create an SSW Rule'>
-                    <a target='_blank' rel='noopener noreferrer' href={`/rules/admin/#/collections/rule/new`} className='action-btn-link-underlined'>
+                    <a target='_blank' rel='noopener noreferrer' href={`/admin/index.html#/collections/rule/~`} className='action-btn-link-underlined'>
                         <RiAddCircleFill className='header-icon' />
                     </a>
                 </Tooltip>

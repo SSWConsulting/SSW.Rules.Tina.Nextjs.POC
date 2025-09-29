@@ -15,10 +15,11 @@ import { selectLatestRuleFilesByPath } from '@/utils/selectLatestRuleFilesByPath
 import LoadMoreButton from '@/components/LoadMoreButton';
 import RuleCard from '@/components/RuleCard';
 import Spinner from '@/components/Spinner';
+import { FaUserCircle } from 'react-icons/fa';
 
 const Tabs = {
   LAST_MODIFIED: 'last-modified',
-  ACKNOWLEDGMENT: 'acknowledgment',
+  Acknowledged: 'acknowledged',
 } as const;
 
 type TabKey = typeof Tabs[keyof typeof Tabs];
@@ -35,7 +36,7 @@ export default function UserRulesClientPage({ ruleCount }) {
   const [nextPageCursor, setNextPageCursor] = useState('');
   const [hasNext, setHasNext] = useState(false);
 
-  // Acknowledgment
+  // Acknowledged
   const [authoredRules, setAuthoredRules] = useState<any[]>([]);
   const [author, setAuthor] = useState<{ fullName?: string; slug?: string; gitHubUrl?: string }>({});
   const [loadingAuthored, setLoadingAuthored] = useState(false);
@@ -43,9 +44,10 @@ export default function UserRulesClientPage({ ruleCount }) {
   const [authoredNextCursor, setAuthoredNextCursor] = useState<string | null>(null);
   const [authoredHasNext, setAuthoredHasNext] = useState(false);
   const [loadingMoreAuthored, setLoadingMoreAuthored] = useState(false);
+  const [githubError, setGithubError] = useState<string | null>(null);
 
   const resolveAuthor = async (): Promise<string> => {
-    const res = await fetch(`/api/crm/employees?query=${encodeURIComponent(queryStringRulesAuthor)}`);
+    const res = await fetch(`./api/crm/employees?query=${encodeURIComponent(queryStringRulesAuthor)}`);
     if (!res.ok) throw new Error('Failed to resolve author');
     const profile = await res.json();
     setAuthor(profile);
@@ -55,6 +57,8 @@ export default function UserRulesClientPage({ ruleCount }) {
   const getLastModifiedRules = async (opts?: { append?: boolean }) => {
     const append = !!opts?.append;
     try {
+      // clear previous GitHub errors when starting a fetch
+      setGithubError(null);
       append ? setLoadingMoreLastModified(true) : setLoadingLastModified(true);
   
       const params = new URLSearchParams();
@@ -62,8 +66,17 @@ export default function UserRulesClientPage({ ruleCount }) {
       if (append && nextPageCursor) params.set('cursor', nextPageCursor);
       params.set('direction', 'after');
   
-      const res = await fetch(`/api/github/rules/prs?${params.toString()}`);
-      if (!res.ok) throw new Error('Failed to fetch GitHub PR search');
+      const url = `./api/github/rules/prs?${params.toString()}`;
+      const res = await fetch(url);
+      if (!res.ok) {
+        let body = '';
+        try {
+          body = await res.text();
+        } catch (e) {
+          body = String(e);
+        }
+        throw new Error(`Failed to fetch GitHub PR search: ${res.status} ${res.statusText} - ${body}`);
+      }
       const prSearchData = await res.json();
   
       const resultList = prSearchData.search.nodes;
@@ -86,7 +99,9 @@ export default function UserRulesClientPage({ ruleCount }) {
       setNextPageCursor(endCursor || '');
       setHasNext(!!hasNextPage);
     } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
       console.error('Failed to fetch GitHub data:', err);
+      setGithubError(message);
     } finally {
       append ? setLoadingMoreLastModified(false) : setLoadingLastModified(false);
     }
@@ -199,11 +214,11 @@ export default function UserRulesClientPage({ ruleCount }) {
   };
 
   const TabHeader = () => (
-    <div role="tablist" aria-label="User Rules Tabs" className="flex items-center gap-2 mt-2 mb-4">
+    <div role="tablist" aria-label="User Rules Tabs" className="flex mt-2 mb-4 divide-x divide-gray-200 rounded">
       {[
         { key: Tabs.LAST_MODIFIED, label: `Last Modified (${lastModifiedRules.length})` },
-        { key: Tabs.ACKNOWLEDGMENT, label: `Acknowledgment (${authoredRules.length})` },
-      ].map((t) => {
+        { key: Tabs.Acknowledged, label: `Authored (${authoredRules.length})` },
+      ].map((t, i) => {
         const isActive = activeTab === t.key;
         return (
           <button
@@ -213,12 +228,13 @@ export default function UserRulesClientPage({ ruleCount }) {
             aria-selected={isActive}
             onClick={() => setActiveTab(t.key)}
             className={[
-              'group px-4 py-1 text-sm border rounded cursor-pointer hover:text-white transition-colors',
-              'hover:bg-ssw-red/100 hover:text-white hover:cursor-pointer',
+              "px-4 py-1 text-sm transition-colors hover:cursor-pointer",
+              i === 0 ? "rounded-l" : "-ml-px",
+              i === 1 ? "rounded-r" : "",
               isActive
-                ? 'bg-ssw-red text-white shadow-sm'
-                : 'bg-white hover:text-ssw-red',
-            ].join(' ')}
+                ? "bg-ssw-red text-white shadow-sm border-0"
+                : "bg-white hover:text-ssw-red border",
+            ].join(" ")}
           >
             {t.label}
           </button>
@@ -259,6 +275,7 @@ export default function UserRulesClientPage({ ruleCount }) {
             slug={rule.uri}
             lastUpdatedBy={rule.lastUpdatedBy ?? null}
             lastUpdated={rule.lastUpdated ?? null}
+            authorUrl={author.gitHubUrl ?? null}
           />
         ))}
         {hasNextPage && (
@@ -277,12 +294,24 @@ export default function UserRulesClientPage({ ruleCount }) {
       <Breadcrumbs breadcrumbText={author?.fullName ? `${author.fullName}'s Rules` : 'User Rules'} />
 
       <div className="layout-two-columns">
-        <div className="layout-main-section">
+        <div className="layout-main-section mt-6">
+          {githubError && (
+            <div className="mb-4 rounded-md bg-red-50 border border-red-200 p-3">
+              <strong className="text-red-800">GitHub data error: </strong>
+              <span className="text-sm text-red-700">{githubError}</span>
+            </div>
+          )}
           {author.fullName && (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between">
-              <h2 className="text-ssw-red">{author.fullName}&#39;s Rules</h2>
-              <a href={`https://ssw.com.au/people/${author.slug}/`} className="underline unstyled hover:text-ssw-red">
-                View people profile
+            <div className="flex flex-col sm:flex-row items-center sm:items-center justify-between gap-4">
+              <h2 className="text-ssw-red mt-1.5">{author.fullName}'s Rules</h2>
+            
+              <a
+                target="_blank"
+                href={`https://ssw.com.au/people/${author.slug}/`}
+                className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-gray-800 border border-gray-400 rounded-md hover:border-ssw-red hover:text-ssw-red transition-colors leading-5"
+              >
+                <FaUserCircle className="w-4 h-4 mr-1" />
+                View SSW People profile
               </a>
             </div>
           )}
@@ -298,7 +327,7 @@ export default function UserRulesClientPage({ ruleCount }) {
                   onLoadMore: handleLoadMoreLastModified,
                 })}
 
-              {activeTab === Tabs.ACKNOWLEDGMENT &&
+              {activeTab === Tabs.Acknowledged &&
                 renderList(authoredRules, {
                   loadingInitial: loadingAuthored,
                   loadingMore: loadingMoreAuthored,

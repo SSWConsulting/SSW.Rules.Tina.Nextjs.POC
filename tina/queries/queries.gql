@@ -9,6 +9,10 @@ query latestRulesQuery($size: Float, $sortOption: String) {
         created
         createdBy
         uri
+        authors {
+          title
+          url
+        }
       }
     }
   }
@@ -73,7 +77,6 @@ query paginatedTopCategoriesQuery($first: Float, $after: String) {
     }
   }
 }
-
 
 query categoryWithRulesQuery($relativePath: String!) {
   category(relativePath: $relativePath) {
@@ -147,7 +150,9 @@ query rulesByAuthor($authorTitle: String!, $first: Float, $after: String) {
         title
         uri
         body
-        authors { title }
+        authors {
+          title
+        }
         lastUpdated
         lastUpdatedBy
       }
@@ -178,6 +183,43 @@ query archivedRulesQuery($first: Float, $after: String) {
         }
         lastUpdated
         lastUpdatedBy
+      }
+    }
+  }
+}
+
+query paginatedRulesQuery(
+  $before: String
+  $after: String
+  $first: Float
+  $last: Float
+  $sort: String
+  $filter: RuleFilter
+) {
+  ruleConnection(
+    before: $before
+    after: $after
+    first: $first
+    last: $last
+    sort: $sort
+    filter: $filter
+  ) {
+    totalCount
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+    edges {
+      cursor
+      node {
+        id
+        title
+        uri
+        _sys {
+          relativePath
+        }
       }
     }
   }
