@@ -3,10 +3,11 @@ import { createDynamicsService } from '@/lib/services/dynamics';
 
 export async function GET(
   _req: NextRequest,
-  context: { params: { employee: string } }
+  { params }: { params: Promise<{ employee: string }> }
 ) {
   try {
-    const nameParam = decodeURIComponent(context.params.employee);
+    const { employee: employeeParam } = await params;
+    const nameParam = employeeParam ? decodeURIComponent(employeeParam) : '';
     if (!nameParam) {
       return NextResponse.json({ error: 'Employee name is required' }, { status: 400 });
     }
