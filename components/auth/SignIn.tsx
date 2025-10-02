@@ -3,13 +3,13 @@
 import { useAuth } from './UserClientProvider';
 import UserDropdown from './UserDropdown';
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH?.replace(/^\//, "") || ""
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH?.replace(/^\//, "") || "";
 
 export default function SignIn() {
     const { user } = useAuth();
 
     if (!user) {
-        const href = `${basePath}/auth/login?returnTo=/`;
+        const href = `/${basePath}/auth/login`;
         return (
             <a
                 href={href}
