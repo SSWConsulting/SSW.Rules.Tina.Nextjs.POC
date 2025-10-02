@@ -30,12 +30,14 @@ export default function Bookmark({ ruleGuid, isBookmarked, onBookmarkToggle, cla
   }, [isBookmarked]);
 
   const handleBookmarkToggle = async () => {
-    const currentPath = window.location.pathname;
     const userId = user?.sub;
     const current = query ? `${pathname}?${query}` : pathname;
 
     if (!userId) {
-      router.push(`/auth/login?returnTo=${encodeURIComponent(current)}`);
+      const ok = window.confirm('Sign in to bookmark this rule?');
+      if (ok) {
+        router.push(`/auth/login?returnTo=${encodeURIComponent(current)}`);
+      }
       return;
     }
 
