@@ -9,6 +9,7 @@ import { ICON_SIZE } from '@/constants';
 import { useAuth } from './auth/UserClientProvider';
 import Spinner from './Spinner';
 import Tooltip from './tooltip/tooltip';
+import { BookmarkData } from '@/types';
 
 interface BookmarkProps {
   ruleGuid: string;
@@ -17,7 +18,7 @@ interface BookmarkProps {
   className?: string;
 }
 
-export default function Bookmark({ ruleGuid, isBookmarked, onBookmarkToggle, className = '' }: BookmarkProps) {
+const Bookmark = ({ ruleGuid, isBookmarked, onBookmarkToggle, className = '' }: BookmarkProps) => {
   const { user } = useAuth();
   const router = useRouter();
   const [bookmarked, setBookmarked] = useState<boolean>(isBookmarked);
@@ -28,10 +29,9 @@ export default function Bookmark({ ruleGuid, isBookmarked, onBookmarkToggle, cla
   }, [isBookmarked]);
 
   const handleBookmarkToggle = async () => {
-    const currentPath = window.location.pathname;
     const userId = user?.sub;
     if (!userId) {
-      router.push(`/auth/login?returnTo=${encodeURIComponent(currentPath)}`);
+      router.push(`/auth/login`);
       return;
     }
 
@@ -46,7 +46,7 @@ export default function Bookmark({ ruleGuid, isBookmarked, onBookmarkToggle, cla
         return;
       }
 
-      const data = { ruleGuid: ruleGuid, UserId: userId };
+      const data: BookmarkData = { ruleGuid, userId };
 
       if (bookmarked) {
         const result = await BookmarkService.removeBookmark(data, accessToken);
@@ -91,3 +91,5 @@ export default function Bookmark({ ruleGuid, isBookmarked, onBookmarkToggle, cla
     </Tooltip>
   );
 }
+
+export default Bookmark;
