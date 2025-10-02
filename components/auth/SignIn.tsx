@@ -1,6 +1,5 @@
 'use client';
 
-import { usePathname, useSearchParams } from 'next/navigation';
 import { useAuth } from './UserClientProvider';
 import UserDropdown from './UserDropdown';
 
