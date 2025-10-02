@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import {  getAccessToken } from '@auth0/nextjs-auth0';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { BookmarkService } from '@/lib/bookmarkService';
 import { RiBookmarkLine, RiBookmarkFill } from 'react-icons/ri';
 import { ICON_SIZE } from '@/constants';
@@ -23,6 +23,8 @@ const Bookmark = ({ ruleGuid, isBookmarked, onBookmarkToggle, className = '' }: 
   const router = useRouter();
   const [bookmarked, setBookmarked] = useState<boolean>(isBookmarked);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const pathname = usePathname() ?? '/';
+  const query = useSearchParams()?.toString();
 
   useEffect(() => {
     setBookmarked(isBookmarked);
@@ -30,8 +32,13 @@ const Bookmark = ({ ruleGuid, isBookmarked, onBookmarkToggle, className = '' }: 
 
   const handleBookmarkToggle = async () => {
     const userId = user?.sub;
+    const current = query ? `${pathname}?${query}` : pathname;
+
     if (!userId) {
-      router.push(`/auth/login`);
+      const ok = window.confirm('Sign in to bookmark this rule?');
+      if (ok) {
+        router.push(`/auth/login?returnTo=${encodeURIComponent(current)}`);
+      }
       return;
     }
 
