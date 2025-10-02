@@ -190,6 +190,10 @@ jobs:
             - name: Generate rule‑category mapping files
               working-directory: content-temp/scripts/tina-migration
               run: python build-rule-category-map.py
+            
+            - name: Generate orphaned rules files
+              working-directory: content-temp/scripts/tina-migration
+              run: python orphaned_rules_check.py
 
             - name: Generate orphaned_rules file
               working-directory: content-temp/scripts/tina-migration
