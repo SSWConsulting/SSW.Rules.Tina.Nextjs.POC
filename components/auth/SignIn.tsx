@@ -3,7 +3,7 @@
 import { useAuth } from './UserClientProvider';
 import UserDropdown from './UserDropdown';
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH?.replace(/^\//, "") || "";
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
 export default function SignIn() {
   const { user } = useAuth();
