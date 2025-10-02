@@ -187,12 +187,16 @@ jobs:
             - name: Generate rule‑category mapping files
               working-directory: content-temp/scripts/tina-migration
               run: python build-rule-category-map.py
+            
+            - name: Generate orphaned rules files
+              working-directory: content-temp/scripts/tina-migration
+              run: python orphaned_rules_check.py
 
             - name: Copy generated mapping + content
               run: |
                   cp content-temp/scripts/tina-migration/rule-to-categories.json ./
                   cp content-temp/scripts/tina-migration/category-uri-title-map.json ./
-                  cp content-temp/scripts/tina-migration/orphaned_rules_check.json ./
+                  cp content-temp/scripts/tina-migration/orphaned_rules.json ./
                   mv content-temp ./content
 
             # ────────────────────────────── AZURE LOGIN ───────────────────────────
