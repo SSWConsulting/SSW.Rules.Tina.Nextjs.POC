@@ -1,6 +1,5 @@
 'use client';
 
-import { usePathname, useSearchParams } from 'next/navigation';
 import { useAuth } from './UserClientProvider';
 import UserDropdown from './UserDropdown';
 
@@ -8,12 +7,9 @@ const basePath = process.env.NEXT_PUBLIC_BASE_PATH?.replace(/^\//, "") || "";
 
 export default function SignIn() {
   const { user } = useAuth();
-  const pathname = usePathname() ?? '/';
-  const query = useSearchParams()?.toString()
-  const current = query ? `${pathname}?${query}` : pathname;
 
   if (!user) {
-    const href = `/${basePath}/auth/login?returnTo=${encodeURIComponent(current)}`;
+    const href = `/${basePath}/auth/login`;
 
     return (
       <a

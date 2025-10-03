@@ -37,7 +37,7 @@ const Bookmark = ({ ruleGuid, isBookmarked, onBookmarkToggle, className = '' }: 
     if (!userId) {
       const ok = window.confirm('Sign in to bookmark this rule?');
       if (ok) {
-        router.push(`/auth/login?returnTo=${encodeURIComponent(current)}`);
+        router.push(`/auth/login`);
       }
       return;
     }
