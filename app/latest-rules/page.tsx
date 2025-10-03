@@ -14,7 +14,7 @@ const MAX_SIZE = 50;
 export default async function LatestRulePage({ searchParams }: LatestRulePageProps) {
   const { size: sizeStr } = await searchParams;
 
-  let size = sizeStr ? parseInt(sizeStr, 10) : 5;
+  let size = sizeStr ? parseInt(sizeStr, 10) : DEFAULT_SIZE;
   if (isNaN(size) || size <= 0) {
     size = DEFAULT_SIZE;
   } else if (size > MAX_SIZE) {
