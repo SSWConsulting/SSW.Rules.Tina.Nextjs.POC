@@ -183,10 +183,6 @@ jobs:
               uses: actions/setup-python@v4
               with:
                   python-version: '3.x'
-            
-            - name: Install dependencies
-              working-directory: content-temp/scripts/tina-migration
-              run: pip install --upgrade pip && pip install -r requirements.txt
 
             - name: Install dependencies
               run: pip install pyyaml
@@ -194,10 +190,6 @@ jobs:
             - name: Generate rule‑category mapping files
               working-directory: content-temp/scripts/tina-migration
               run: python build-rule-category-map.py
-            
-            - name: Generate orphaned rules files
-              working-directory: content-temp/scripts/tina-migration
-              run: python orphaned_rules_check.py
 
             - name: Generate orphaned_rules file
               working-directory: content-temp/scripts/tina-migration
