@@ -1,4 +1,3 @@
-import Layout from '@/components/layout/layout';
 import { Section } from '@/components/layout/section';
 import LatestRuleClientPage from './client-page';
 import { fetchLatestRules, fetchRuleCount } from '@/lib/services/rules';
