@@ -200,7 +200,7 @@ export default function ClientRulePage(props: ClientRulePageProps) {
                     See history <RiHistoryLine />
                   </a>
                 </p>
-                <div className="flex align-center gap-4 text-2xl">
+                <div className="flex items-center gap-4 text-2xl">
                   <Bookmark 
                     ruleGuid={rule?.guid || ''} 
                     isBookmarked={isBookmarked}
