@@ -167,7 +167,7 @@ export default function ClientRulePage(props: ClientRulePageProps) {
                 <p className="mt-4">
                   Updated by{" "}
                   {rule?.lastUpdatedBy ? (
-                      <a
+                    <a
                       href="#"
                       onClick={(e) => {
                         if (!authorUsername) {
@@ -176,15 +176,16 @@ export default function ClientRulePage(props: ClientRulePageProps) {
                             openUserRule(rule?.lastUpdatedBy || '');
                           }
                         }}
-                        className={`font-semibold ssw-link ${
-                          isLoadingUsername ? 'opacity-50 cursor-not-allowed' : ''
-                        }`}
-                        title={authorUsername ? `View ${authorUsername}'s GitHub profile` : `View ${rule.lastUpdatedBy}'s rules`}
-                        target={authorUsername ? '_blank' : undefined}
-                        rel={authorUsername ? 'noopener noreferrer' : undefined}
-                      >
-                        {isLoadingUsername ? 'Loading...' : rule.lastUpdatedBy}
-                      </a>
+                      }
+                      className={`font-semibold ssw-link ${
+                        isLoadingUsername ? 'opacity-50 cursor-not-allowed' : ''
+                      }`}
+                      title={authorUsername ? `View ${authorUsername}'s GitHub profile` : `View ${rule.lastUpdatedBy}'s rules`}
+                      target={authorUsername ? '_blank' : undefined}
+                      rel={authorUsername ? 'noopener noreferrer' : undefined}
+                    >
+                      {isLoadingUsername ? 'Loading...' : rule.lastUpdatedBy}
+                    </a>
                   ) : (
                     <b>Unknown</b>
                   )}{" "}
