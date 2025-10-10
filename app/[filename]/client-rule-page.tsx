@@ -47,6 +47,9 @@ export default function ClientRulePage(props: ClientRulePageProps) {
   }).data;
   const rule = ruleData?.rule;
 
+  // Remove any extra slashes from the base path
+  const sanitizedBasePath = (process.env.NEXT_PUBLIC_BASE_PATH || '').replace(/^\/+/, '');
+
   const relativeTime = useMemo(() => {
     return rule?.lastUpdated ? timeAgo(rule?.lastUpdated) : "";
   }, [rule?.lastUpdated]);
@@ -207,7 +210,7 @@ export default function ClientRulePage(props: ClientRulePageProps) {
                     onBookmarkToggle={(newStatus) => setIsBookmarked(newStatus)}
                   />
                   <button>
-                    <Link href={`./admin#/~/${rule?.uri}`}>
+                    <Link href={`./admin#/~/${sanitizedBasePath}/${rule?.uri}`}>
                       <RiPencilLine
                         size={ICON_SIZE}
                         className="rule-icon"
