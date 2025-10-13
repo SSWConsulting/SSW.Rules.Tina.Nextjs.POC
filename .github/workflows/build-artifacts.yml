@@ -26,6 +26,8 @@ on:
                 required: false
             NEXT_PUBLIC_TINA_CLIENT_ID:
                 required: false
+            NEXT_PUBLIC_TINA_TOKEN:
+                required: false
             TOKEN:
                 required: true
             NEXT_PUBLIC_ALGOLIA_APP_ID:
@@ -277,6 +279,7 @@ jobs:
                   # Existing build arguments
                   ARG TINA_TOKEN
                   ARG NEXT_PUBLIC_TINA_CLIENT_ID
+                  ARG NEXT_PUBLIC_TINA_TOKEN
                   ARG NEXT_PUBLIC_TINA_BRANCH
                   ARG NEXT_PUBLIC_ALGOLIA_APP_ID
                   ARG NEXT_PUBLIC_ALGOLIA_ADMIN_KEY
@@ -299,6 +302,7 @@ jobs:
                         COMMIT_HASH=$COMMIT_HASH \
                         TINA_TOKEN=$TINA_TOKEN \
                         NEXT_PUBLIC_TINA_CLIENT_ID=$NEXT_PUBLIC_TINA_CLIENT_ID \
+                        NEXT_PUBLIC_TINA_TOKEN=$NEXT_PUBLIC_TINA_TOKEN \
                         NEXT_PUBLIC_TINA_BRANCH=$NEXT_PUBLIC_TINA_BRANCH \
                         NEXT_PUBLIC_ALGOLIA_APP_ID=$NEXT_PUBLIC_ALGOLIA_APP_ID \
                         NEXT_PUBLIC_ALGOLIA_ADMIN_KEY=$NEXT_PUBLIC_ALGOLIA_ADMIN_KEY \
@@ -369,6 +373,7 @@ jobs:
                         COMMIT_HASH=${{ env.COMMIT_HASH }}
                         TINA_TOKEN=${{ secrets.TINA_TOKEN }}
                         NEXT_PUBLIC_TINA_CLIENT_ID=${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}
+                        NEXT_PUBLIC_TINA_TOKEN=${{ secrets.NEXT_PUBLIC_TINA_TOKEN }}
                         NEXT_PUBLIC_ALGOLIA_APP_ID=${{ secrets.NEXT_PUBLIC_ALGOLIA_APP_ID }}
                         NEXT_PUBLIC_ALGOLIA_ADMIN_KEY=${{ secrets.NEXT_PUBLIC_ALGOLIA_ADMIN_KEY }}
                         NEXT_PUBLIC_ALGOLIA_INDEX_NAME=${{ secrets.NEXT_PUBLIC_ALGOLIA_INDEX_NAME }}

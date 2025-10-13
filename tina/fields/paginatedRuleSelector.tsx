@@ -8,7 +8,7 @@ import {
   Transition,
   PopoverPanel,
 } from "@headlessui/react";
-import { client } from "../__generated__/client";
+import { client } from "../client-wrapper";
 import type { PaginatedRulesQueryQueryVariables } from "../__generated__/types";
 
 interface Rule {
@@ -28,6 +28,7 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
   const [debouncedFilter, setDebouncedFilter] = useState("");
   const [allRules, setAllRules] = useState<Rule[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [hasPreviousPage, setHasPreviousPage] = useState(false);
   const [endCursor, setEndCursor] = useState<string | null>(null);
@@ -42,9 +43,17 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
 
   const fetchRules = async (searchFilter: string = "", after?: string, before?: string, reset: boolean = false) => {
     setLoading(true);
+    setError(null);
     try {
+      // Check if the client has the paginatedRulesQuery method
+      if (!client.queries?.paginatedRulesQuery) {
+        throw new Error(
+          "paginatedRulesQuery is not available. This may indicate that TinaCMS is not properly configured or the GraphQL endpoint is unreachable."
+        );
+      }
+
       const isSearch = searchFilter.trim().length > 0;
-      
+
       const variables = {
         first: after || !before ? (isSearch ? SEARCH_FETCH_SIZE : RULES_PER_PAGE) : undefined,
         last: before && !after ? (isSearch ? SEARCH_FETCH_SIZE : RULES_PER_PAGE) : undefined,
@@ -54,7 +63,7 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
       };
 
       const response = await client.queries.paginatedRulesQuery(variables);
-      
+
       if (response?.data?.ruleConnection) {
         const connection = response.data.ruleConnection;
         const newRules = connection.edges?.map(edge => ({
@@ -79,8 +88,10 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
         setStartCursor(connection.pageInfo.startCursor);
         setTotalCount(connection.totalCount);
       }
-    } catch (error) {
-      console.error("Failed to fetch rules:", error);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Failed to fetch rules";
+      console.error("Failed to fetch rules:", err);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -270,15 +281,33 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
                         )}
                       </div>
 
+                      {/* Error state */}
+                      {error && (
+                        <div className="p-4 text-center">
+                          <div className="text-red-600 text-sm font-medium mb-2">
+                            Error loading rules
+                          </div>
+                          <div className="text-xs text-gray-600 mb-3">
+                            {error}
+                          </div>
+                          <button
+                            onClick={() => fetchRules("", undefined, undefined, true)}
+                            className="text-xs px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600"
+                          >
+                            Retry
+                          </button>
+                        </div>
+                      )}
+
                       {/* Loading state */}
-                      {loading && (
+                      {loading && !error && (
                         <div className="p-4 text-center text-gray-500">
                           Loading rules...
                         </div>
                       )}
 
                       {/* Empty state */}
-                      {!loading && displayRules.length === 0 && (
+                      {!loading && !error && displayRules.length === 0 && (
                         <div className="p-4 text-center text-gray-400">
                           {filter ? "No rules found matching your search" : "No rules available"}
                         </div>
