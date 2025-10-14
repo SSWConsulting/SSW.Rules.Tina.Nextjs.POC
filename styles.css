@@ -263,11 +263,7 @@
   }
 
   ul {
-    @apply !list-none;
-  }
-
-  ul > li {
-    @apply list-[square]
+   @apply list-[square]
   }
 
   ul > li > ul {
