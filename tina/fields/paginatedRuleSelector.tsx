@@ -8,8 +8,7 @@ import {
   Transition,
   PopoverPanel,
 } from "@headlessui/react";
-import { client } from "../__generated__/client";
-import type { PaginatedRulesQueryQueryVariables } from "../__generated__/types";
+import client from "@/tina/__generated__/client";
 
 interface Rule {
   id: string;
