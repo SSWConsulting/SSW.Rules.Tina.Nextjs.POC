@@ -1,6 +1,5 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
-import { Button } from "tinacms";
 import { BiChevronRight, BiChevronLeft, BiChevronDown, BiSearch } from "react-icons/bi";
 import {
   Popover,
@@ -8,7 +7,6 @@ import {
   Transition,
   PopoverPanel,
 } from "@headlessui/react";
-import client from "@/tina/__generated__/client";
 
 interface Rule {
   id: string;
@@ -21,6 +19,7 @@ interface Rule {
 
 const RULES_PER_PAGE = 25;
 const SEARCH_FETCH_SIZE = 100;
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 
 export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
   const [filter, setFilter] = useState("");
@@ -59,7 +58,7 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
       if (after) params.set("after", after);
       if (before) params.set("before", before);
   
-      const res = await fetch(`/rules-beta/api/rules/paginated?${params.toString()}`, {
+      const res = await fetch(`${basePath}/api/rules/paginated?${params.toString()}`, {
         method: "GET",
         cache: "no-store",
       });
@@ -68,7 +67,7 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
   
       const data = await res.json();
   
-      const newRules: Rule[] = (data?.edges ?? [])
+      const newRules: Rule[] = (data?.items ?? [])
         .map((node: any) => ({
           id: node?.id || "",
           title: node?.title || "",
@@ -127,15 +126,7 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
     setEndCursor(null);
     setStartCursor(null);
     
-    if (isSearch) {
-      // For search, fetch more rules to filter client-side
-      // fetchRules("", undefined, undefined, true);
-      fetchRules(debouncedFilter, undefined, undefined, true);
-    } else {
-      // For normal pagination, fetch normally
-      // fetchRules("", undefined, undefined, true);
-      fetchRules(debouncedFilter, undefined, undefined, true);
-    }
+    fetchRules(debouncedFilter, undefined, undefined, true);
   }, [debouncedFilter]);
 
   // Comprehensive client-side search function
@@ -179,7 +170,6 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
   const displayRules = isSearchMode ? paginatedRules : filteredRules;
 
   const handleRuleSelect = (rule: Rule) => {
-    // const rulePath = `public/uploads/rules/${rule._sys.relativePath}`;
     const rulePath = `rules/${rule._sys.relativePath}`;
     input.onChange(rulePath);
   };
@@ -217,12 +207,6 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
   };
 
   // Find the selected rule details for display
-  // const selectedRuleDetails = useMemo(() => {
-  //   if (!selectedRule) return null;
-  //   const rulePath = selectedRule.replace('rules/', '');
-  //   return allRules.find(rule => rule._sys.relativePath === rulePath);
-  // }, [selectedRule, allRules]);
-
   const selectedRuleDetails = useMemo(() => {
     if (!selectedRule) return null;
     const rel = selectedRule.startsWith('rules/')

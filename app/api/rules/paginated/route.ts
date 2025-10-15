@@ -13,8 +13,15 @@ export async function GET(req: Request) {
   const last = lastStr ? Number(lastStr) : undefined;
 
   try {
-    const data = await fetchPaginatedRules({ first, last, after, before });
-    return NextResponse.json(data, { status: 200 });
+    const result = await fetchPaginatedRules({ first, last, after, before });
+    return NextResponse.json(
+      {
+        items: result.items,
+        pageInfo: result.pageInfo,
+        totalCount: result.totalCount,
+      },
+      { status: 200 }
+    );
   } catch (err: any) {
     console.error("[/api/rules/paginated] error:", err);
     return NextResponse.json(
