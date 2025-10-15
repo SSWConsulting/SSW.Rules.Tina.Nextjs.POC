@@ -23,9 +23,9 @@ on:
             AZURE_SUBSCRIPTION_ID:
                 required: true
             TINA_TOKEN:
-                required: false
+                required: true
             NEXT_PUBLIC_TINA_CLIENT_ID:
-                required: false
+                required: true
             TOKEN:
                 required: true
             NEXT_PUBLIC_ALGOLIA_APP_ID:
@@ -37,7 +37,7 @@ on:
             NEXT_PUBLIC_ALGOLIA_API_KEY:
                 required: false
             NEXT_PUBLIC_TINA_BRANCH:
-                required: false
+                required: true
             NEXT_PUBLIC_API_BASE_URL:
                 required: false
         outputs:
@@ -109,7 +109,7 @@ jobs:
               run: |
                   echo "Starting NO-CACHE build process"
                   echo "Source branch: ${{ inputs.source_branch || 'Not specified' }}"
-                  echo "Tina branch: ${{ inputs.tina_branch || secrets.NEXT_PUBLIC_TINA_BRANCH || 'Default' }}"
+                  echo "Tina branch: ${{ inputs.tina_branch || vars.NEXT_PUBLIC_TINA_BRANCH || 'Default' }}"
                   echo "Environment tag: ${{ inputs.tag }}"
                   echo "Registry: ${{ vars.registry_name }}"
                   echo "Image: ${{ vars.IMAGE_NAME }}"
@@ -172,7 +172,7 @@ jobs:
               uses: actions/checkout@v4
               with:
                   repository: SSWConsulting/SSW.Rules.Content
-                  ref: ${{ inputs.tina_branch || secrets.NEXT_PUBLIC_TINA_BRANCH }}
+                  ref: ${{ inputs.tina_branch || vars.NEXT_PUBLIC_TINA_BRANCH }}
                   token: ${{ secrets.TOKEN }}
                   path: content-temp
                   fetch-depth: 0
@@ -240,7 +240,7 @@ jobs:
                       type=raw,value=${{ inputs.tag }}
                   labels: |
                       org.opencontainers.image.source.branch=${{ inputs.source_branch }}
-                      org.opencontainers.image.tina.branch=${{ inputs.tina_branch || secrets.NEXT_PUBLIC_TINA_BRANCH }}
+                      org.opencontainers.image.tina.branch=${{ inputs.tina_branch || vars.NEXT_PUBLIC_TINA_BRANCH }}
                       org.opencontainers.image.build.timestamp=${{ env.BUILD_TIMESTAMP }}
                       org.opencontainers.image.build.version=${{ env.VERSION_DEPLOYED }}
                       org.opencontainers.image.build.commit=${{ env.COMMIT_HASH }}
@@ -368,12 +368,12 @@ jobs:
                         BUILD_DATE=${{ env.BUILD_DATE }}
                         COMMIT_HASH=${{ env.COMMIT_HASH }}
                         TINA_TOKEN=${{ secrets.TINA_TOKEN }}
-                        NEXT_PUBLIC_TINA_CLIENT_ID=${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}
+                        NEXT_PUBLIC_TINA_CLIENT_ID=${{ vars.NEXT_PUBLIC_TINA_CLIENT_ID }}
                         NEXT_PUBLIC_ALGOLIA_APP_ID=${{ secrets.NEXT_PUBLIC_ALGOLIA_APP_ID }}
                         NEXT_PUBLIC_ALGOLIA_ADMIN_KEY=${{ secrets.NEXT_PUBLIC_ALGOLIA_ADMIN_KEY }}
                         NEXT_PUBLIC_ALGOLIA_INDEX_NAME=${{ secrets.NEXT_PUBLIC_ALGOLIA_INDEX_NAME }}
                         NEXT_PUBLIC_ALGOLIA_API_KEY=${{ secrets.NEXT_PUBLIC_ALGOLIA_API_KEY }}
-                        NEXT_PUBLIC_TINA_BRANCH=${{ inputs.tina_branch || secrets.NEXT_PUBLIC_TINA_BRANCH }}
+                        NEXT_PUBLIC_TINA_BRANCH=${{ inputs.tina_branch || vars.NEXT_PUBLIC_TINA_BRANCH }}
                         NEXT_PUBLIC_GITHUB_ORG=${{ vars.NEXT_PUBLIC_GITHUB_ORG }}
                         NEXT_PUBLIC_GITHUB_REPO=${{ vars.NEXT_PUBLIC_GITHUB_REPO }}
                         NEXT_PUBLIC_GISCUS_REPO_NAME=${{ vars.NEXT_PUBLIC_GISCUS_REPO_NAME }}
