@@ -81,11 +81,12 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
         if (reset) setCurrentPage(1);
       } else {
         setAllRules(prev => {
-          const map = new Map<string, Rule>();
-          const keyOf = (r: Rule) => (r.id || r._sys?.relativePath);
-          for (const r of prev) map.set(keyOf(r), r);
-          for (const r of newRules) map.set(keyOf(r), r);
-          return Array.from(map.values());
+          const uniqueRules = new Map<string, Rule>();
+          const getKey = (r: Rule) => r.id || r._sys?.relativePath;
+          [...prev, ...newRules].forEach(rule => {
+            uniqueRules.set(getKey(rule), rule);
+          });
+          return Array.from(uniqueRules.values());
         });
       }
   
@@ -100,7 +101,6 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
       setLoading(false);
     }
   };
-  
 
   // Debounce search filter
   useEffect(() => {
