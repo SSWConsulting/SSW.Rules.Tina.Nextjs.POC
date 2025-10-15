@@ -267,7 +267,7 @@
   }
 
   ul > li > ul {
-    @apply py-2 px-4 pt-2;
+    @apply px-4 pt-2;
   }
 
   ul > li > ul > li::before {
