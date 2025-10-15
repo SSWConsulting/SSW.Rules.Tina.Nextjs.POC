@@ -117,3 +117,46 @@ export async function fetchArchivedRulesData(variables: { first?: number; after?
   const result = await fetchArchivedRules(variables);
   return result.data;
 }
+
+export interface PaginatedRulesVars {
+  first?: number;
+  last?: number;
+  after?: string;
+  before?: string;
+}
+
+export interface PaginatedRulesResult<T> {
+  edges: T[];
+  pageInfo: {
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+    startCursor: string | null;
+    endCursor: string | null;
+  };
+  totalCount: number;
+}
+
+export async function fetchPaginatedRules(
+  variables: PaginatedRulesVars = {}
+): Promise<PaginatedRulesResult<Rule>> {
+  const res = await client.queries.paginatedRulesQuery({
+    first: variables.first,
+    last: variables.last,
+    after: variables.after,
+    before: variables.before,
+  });
+
+  const conn = res?.data?.ruleConnection;
+  const edges = (conn?.edges ?? []).map((e: any) => e?.node).filter(Boolean);
+
+  return {
+    edges: edges as Rule[],
+    pageInfo: {
+      hasNextPage: !!conn?.pageInfo?.hasNextPage,
+      hasPreviousPage: !!conn?.pageInfo?.hasPreviousPage,
+      startCursor: conn?.pageInfo?.startCursor ?? null,
+      endCursor: conn?.pageInfo?.endCursor ?? null,
+    },
+    totalCount: conn?.totalCount ?? 0,
+  };
+}

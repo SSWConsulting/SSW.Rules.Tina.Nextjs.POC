@@ -43,41 +43,48 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
     setLoading(true);
     try {
       const isSearch = searchFilter.trim().length > 0;
-      
-      const variables = {
-        first: after || !before ? (isSearch ? SEARCH_FETCH_SIZE : RULES_PER_PAGE) : undefined,
-        last: before && !after ? (isSearch ? SEARCH_FETCH_SIZE : RULES_PER_PAGE) : undefined,
-        after: after || undefined,
-        before: before || undefined,
-        filter: undefined
-      };
-
-      const response = await client.queries.paginatedRulesQuery(variables);
-      
-      if (response?.data?.ruleConnection) {
-        const connection = response.data.ruleConnection;
-        const newRules = connection.edges?.map(edge => ({
-          id: edge?.node?.id || "",
-          title: edge?.node?.title || "",
-          uri: edge?.node?.uri || "",
-          _sys: {
-            relativePath: edge?.node?._sys?.relativePath || ""
-          }
-        })).filter(rule => rule.id) || [];
-
-        if (reset) {
-          setAllRules(newRules);
-          setCurrentPage(1);
-        } else {
-          setAllRules(prev => [...prev, ...newRules]);
-        }
-
-        setHasNextPage(connection.pageInfo.hasNextPage);
-        setHasPreviousPage(connection.pageInfo.hasPreviousPage);
-        setEndCursor(connection.pageInfo.endCursor);
-        setStartCursor(connection.pageInfo.startCursor);
-        setTotalCount(connection.totalCount);
+  
+      const pageSize = isSearch ? SEARCH_FETCH_SIZE : RULES_PER_PAGE;
+  
+      const params = new URLSearchParams();
+      if (after && !before) params.set("first", String(pageSize));
+      if (before && !after) params.set("last", String(pageSize));
+      if (!after && !before) params.set("first", String(pageSize));
+  
+      if (after) params.set("after", after);
+      if (before) params.set("before", before);
+  
+      const res = await fetch(`/rules-beta/api/rules/paginated?${params.toString()}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+  
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}`);
       }
+  
+      const data = await res.json();
+  
+      const newRules: Rule[] = (data?.edges ?? []).map((node: any) => ({
+        id: node?.id || "",
+        title: node?.title || "",
+        uri: node?.uri || "",
+        _sys: { relativePath: node?._sys?.relativePath || "" },
+      })).filter((r: Rule) => r.id);
+  
+      if (reset) {
+        setAllRules(newRules);
+        setCurrentPage(1);
+      } else {
+        setAllRules(prev => [...prev, ...newRules]);
+      }
+  
+      setHasNextPage(!!data?.pageInfo?.hasNextPage);
+      setHasPreviousPage(!!data?.pageInfo?.hasPreviousPage);
+      setEndCursor(data?.pageInfo?.endCursor ?? null);
+      setStartCursor(data?.pageInfo?.startCursor ?? null);
+      setTotalCount(data?.totalCount ?? 0);
+  
     } catch (error) {
       console.error("Failed to fetch rules:", error);
     } finally {
