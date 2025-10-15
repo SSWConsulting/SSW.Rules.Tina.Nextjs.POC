@@ -36,8 +36,6 @@ on:
                 required: false
             NEXT_PUBLIC_ALGOLIA_API_KEY:
                 required: false
-            NEXT_PUBLIC_TINA_BRANCH:
-                required: true
             NEXT_PUBLIC_API_BASE_URL:
                 required: false
         outputs:
@@ -460,7 +458,7 @@ jobs:
                   echo "Image tag   : ${{ steps.meta.outputs.tags }}"
                   echo "Image digest: ${{ steps.build.outputs.digest }}"
                   echo "Source branch: ${{ inputs.source_branch || 'Not specified' }}"
-                  echo "Content branch: ${{ inputs.tina_branch || secrets.NEXT_PUBLIC_TINA_BRANCH }}"
+                  echo "Content branch: ${{ inputs.tina_branch || vars.NEXT_PUBLIC_TINA_BRANCH }}"
                   echo "Build Info:"
                   echo "  Build Date: ${{ env.BUILD_DATE }}"
                   echo "  Version: ${{ env.VERSION_DEPLOYED }}"
