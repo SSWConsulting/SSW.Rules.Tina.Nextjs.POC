@@ -53,7 +53,44 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
         filter: undefined
       };
 
-      const response = await client.queries.paginatedRulesQuery(variables);
+      const response = await client.request({
+        query: `query paginatedRulesQuery(
+  $before: String
+  $after: String
+  $first: Float
+  $last: Float
+  $sort: String
+  $filter: RuleFilter
+) {
+  ruleConnection(
+    before: $before
+    after: $after
+    first: $first
+    last: $last
+    sort: $sort
+    filter: $filter
+  ) {
+    totalCount
+    pageInfo {
+      hasPreviousPage
+      hasNextPage
+      startCursor
+      endCursor
+    }
+    edges {
+      cursor
+      node {
+        id
+        title
+        uri
+        _sys {
+          relativePath
+        }
+      }
+    }
+  }
+}`,
+        variables}, { fetchOptions: {} });
       
       if (response?.data?.ruleConnection) {
         const connection = response.data.ruleConnection;
