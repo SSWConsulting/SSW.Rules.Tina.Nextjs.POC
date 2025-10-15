@@ -39,7 +39,12 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
     return input.value || null;
   }, [input.value]);
 
-  const fetchRules = async (searchFilter: string = "", after?: string, before?: string, reset: boolean = false) => {
+  const fetchRules = async (
+    searchFilter: string = "",
+    after?: string,
+    before?: string,
+    reset: boolean = false
+  ) => {
     setLoading(true);
     try {
       const isSearch = searchFilter.trim().length > 0;
@@ -59,24 +64,30 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
         cache: "no-store",
       });
   
-      if (!res.ok) {
-        throw new Error(`HTTP ${res.status}`);
-      }
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
   
       const data = await res.json();
   
-      const newRules: Rule[] = (data?.edges ?? []).map((node: any) => ({
-        id: node?.id || "",
-        title: node?.title || "",
-        uri: node?.uri || "",
-        _sys: { relativePath: node?._sys?.relativePath || "" },
-      })).filter((r: Rule) => r.id);
+      const newRules: Rule[] = (data?.edges ?? [])
+        .map((node: any) => ({
+          id: node?.id || "",
+          title: node?.title || "",
+          uri: node?.uri || "",
+          _sys: { relativePath: node?._sys?.relativePath || "" },
+        }))
+        .filter((r: Rule) => r.id || r._sys?.relativePath);
   
-      if (reset) {
+      if (reset || !isSearch) {
         setAllRules(newRules);
-        setCurrentPage(1);
+        if (reset) setCurrentPage(1);
       } else {
-        setAllRules(prev => [...prev, ...newRules]);
+        setAllRules(prev => {
+          const map = new Map<string, Rule>();
+          const keyOf = (r: Rule) => (r.id || r._sys?.relativePath);
+          for (const r of prev) map.set(keyOf(r), r);
+          for (const r of newRules) map.set(keyOf(r), r);
+          return Array.from(map.values());
+        });
       }
   
       setHasNextPage(!!data?.pageInfo?.hasNextPage);
@@ -84,13 +95,13 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
       setEndCursor(data?.pageInfo?.endCursor ?? null);
       setStartCursor(data?.pageInfo?.startCursor ?? null);
       setTotalCount(data?.totalCount ?? 0);
-  
     } catch (error) {
       console.error("Failed to fetch rules:", error);
     } finally {
       setLoading(false);
     }
   };
+  
 
   // Debounce search filter
   useEffect(() => {
@@ -118,10 +129,12 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
     
     if (isSearch) {
       // For search, fetch more rules to filter client-side
-      fetchRules("", undefined, undefined, true);
+      // fetchRules("", undefined, undefined, true);
+      fetchRules(debouncedFilter, undefined, undefined, true);
     } else {
       // For normal pagination, fetch normally
-      fetchRules("", undefined, undefined, true);
+      // fetchRules("", undefined, undefined, true);
+      fetchRules(debouncedFilter, undefined, undefined, true);
     }
   }, [debouncedFilter]);
 
@@ -166,7 +179,8 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
   const displayRules = isSearchMode ? paginatedRules : filteredRules;
 
   const handleRuleSelect = (rule: Rule) => {
-    const rulePath = `public/uploads/rules/${rule._sys.relativePath}`;
+    // const rulePath = `public/uploads/rules/${rule._sys.relativePath}`;
+    const rulePath = `rules/${rule._sys.relativePath}`;
     input.onChange(rulePath);
   };
 
@@ -176,12 +190,10 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
 
   const handleNextPage = () => {
     if (isSearchMode) {
-      // Client-side pagination for search results
       if (currentPage * RULES_PER_PAGE < filteredRules.length) {
         setCurrentPage(prev => prev + 1);
       }
     } else {
-      // Server-side pagination for normal browsing
       if (hasNextPage && endCursor) {
         setCurrentPage(prev => prev + 1);
         fetchRules("", endCursor);
@@ -205,10 +217,18 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
   };
 
   // Find the selected rule details for display
+  // const selectedRuleDetails = useMemo(() => {
+  //   if (!selectedRule) return null;
+  //   const rulePath = selectedRule.replace('rules/', '');
+  //   return allRules.find(rule => rule._sys.relativePath === rulePath);
+  // }, [selectedRule, allRules]);
+
   const selectedRuleDetails = useMemo(() => {
     if (!selectedRule) return null;
-    const rulePath = selectedRule.replace('rules/', '');
-    return allRules.find(rule => rule._sys.relativePath === rulePath);
+    const rel = selectedRule.startsWith('rules/')
+      ? selectedRule.slice('rules/'.length)
+      : selectedRule;
+    return allRules.find(rule => rule._sys.relativePath === rel) || null;
   }, [selectedRule, allRules]);
 
   const labelText = selectedRuleDetails 
@@ -299,7 +319,7 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
                             
                             return (
                               <button
-                                key={rule.id}
+                                key={rule.id || rule._sys.relativePath}
                                 className={`w-full text-left p-4 hover:bg-gray-50 border-b border-gray-100 transition-colors block ${
                                   isSelected ? 'bg-blue-50 border-blue-200' : ''
                                 }`}
