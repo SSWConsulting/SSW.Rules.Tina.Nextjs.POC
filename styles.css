@@ -270,7 +270,7 @@
     @apply px-4 pt-2;
   }
 
-  ul > li > ul > li::before {
+  ul > li > ul > li::marker {
     color: var(--grey-600);
   }
 
