@@ -168,7 +168,7 @@ export default function ClientRulePage(props: ClientRulePageProps) {
                   Updated by{" "}
                   {rule?.lastUpdatedBy ? (
                     authorUsername ? (
-                      <Link href={`./user?author=${encodeURIComponent(authorUsername || rule.lastUpdatedBy)}`}
+                      <Link href={`./user?author=${encodeURIComponent(authorUsername)}`}
                         className="font-semibold ssw-link"
                         title={`View ${rule.lastUpdatedBy}'s rules`}
                       >
