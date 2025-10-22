@@ -6,9 +6,8 @@ type AnyUser = { sub?: string; name?: string; email?: string; picture?: string; 
 type Ctx = { 
   user: AnyUser | null; 
   isLoading: boolean; 
-  checkAuth: () => Promise<void>;
 };
-const Ctx = createContext<Ctx>({ user: null, isLoading: true, checkAuth: async () => {} });
+const Ctx = createContext<Ctx>({ user: null, isLoading: true });
 export const useAuth = () => useContext(Ctx);
 
 const withBase = (path: string) => {
@@ -20,21 +19,6 @@ export default function UserClientProvider({ children }: { children: React.React
   const [user, setUser] = useState<AnyUser | null>(null);
   const [isLoading, setLoading] = useState(true);
   const inited = useRef(false);
-
-  const checkAuth = async () => {
-    try {
-      const res = await fetch(withBase('/auth/profile'), { credentials: 'include' });
-      if (res.ok) {
-        setUser(await res.json());
-      } else if (res.status === 401) {
-        // User is not authenticated, clear any stale user data
-        setUser(null);
-      }
-    } catch (error) {
-      // Network error or other issues, don't set user
-      console.debug('Auth check failed:', error);
-    }
-  };
 
   useEffect(() => {
     if (inited.current) return;
@@ -58,6 +42,6 @@ export default function UserClientProvider({ children }: { children: React.React
     return () => { alive = false; };
   }, []);
 
-  const value = useMemo(() => ({ user, isLoading, checkAuth }), [user, isLoading, checkAuth]);
+  const value = useMemo(() => ({ user, isLoading }), [user, isLoading]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
