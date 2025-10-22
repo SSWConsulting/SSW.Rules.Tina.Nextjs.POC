@@ -5,7 +5,7 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth0.getSession();
     if (session) {
-      return NextResponse.json({ isAuthenticated: true }, { status: 203 });
+      return NextResponse.json({ isAuthenticated: true }, { status: 200 });
     }
     return NextResponse.json({ authenticated: false }, { status: 200 });
   } catch (error) {
