@@ -7,6 +7,7 @@ import ClientRulePage from "./client-rule-page";
 import { notFound } from "next/navigation";
 import ruleToCategoryIndex from '@/rule-to-categories.json'; 
 import categoryTitleIndex from '@/category-uri-title-map.json';
+import CategoryPageServer from "./CategoryPageServer";
 
 export const revalidate = 300;
 
@@ -163,10 +164,15 @@ export default async function Page({
 
   const category = await getCategoryData(filename);
   if (category?.data) {
+    const includeArchivedDefault = false;
+
     return (
       <Suspense fallback={null}>
         <Section>
-          <ClientCategoryPage categoryQueryProps={category}/>
+          <CategoryPageServer
+            categoryQueryProps={category}
+            includeArchived={includeArchivedDefault}
+          />
         </Section>
       </Suspense>
     );
