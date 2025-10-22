@@ -167,14 +167,12 @@ export default async function Page({
     const includeArchivedDefault = false;
 
     return (
-      <Suspense fallback={null}>
         <Section>
           <CategoryPageServer
             categoryQueryProps={category}
             includeArchived={includeArchivedDefault}
           />
         </Section>
-      </Suspense>
     );
   }
 
