@@ -42,29 +42,15 @@ export default function UserClientProvider({ children }: { children: React.React
     let alive = true;
     (async () => {
       try {
-        // Check if we have any indication that the user might be authenticated
-        // by checking for Auth0 session cookies or other indicators
-        const hasAuthCookies = document.cookie.includes('appSession') || 
-                              document.cookie.includes('auth0') ||
-                              document.cookie.includes('session') ||
-                              document.cookie.includes('appSession.0') ||
-                              document.cookie.includes('appSession.1');
-        
-        if (!hasAuthCookies) {
-          // No auth cookies found, user is likely not authenticated
-          // Skip the API call to avoid unnecessary 401 errors
-          if (alive) {
-            setUser(null);
-            setLoading(false);
-          }
-          return;
+        const sessionCheck = await fetch(withBase('/api/session/check'));
+        const session = await sessionCheck.json();
+        if(session.isAuthenticated) {
+          const res = await fetch(withBase('/auth/profile'), { credentials: 'include' });
+          if (alive && res.ok) setUser(await res.json());
+        } else {
+          setUser(null);
         }
 
-        // Only make the API call if we have auth cookies
-        await checkAuth();
-      } catch (error) {
-        // Network error or other issues, don't set user
-        console.debug('Auth check failed:', error);
       } finally {
         if (alive) setLoading(false);
       }
