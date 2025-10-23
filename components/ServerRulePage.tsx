@@ -9,6 +9,8 @@ import Discussion from "@/components/Discussion";
 import { IconLink } from "@/components/ui";
 import { RiGithubLine, RiHistoryLine, RiPencilLine } from "react-icons/ri";
 import { ICON_SIZE } from "@/constants";
+import Acknowledgements from "./Acknowledgements";
+import HelpCard from "./HelpCard";
 
 interface ServerRulePageProps {
   rule: any;
@@ -27,6 +29,7 @@ export default function ServerRulePage({
   const created = rule?.created ? formatDateLong(rule.created) : "Unknown";
   const updated = rule?.lastUpdated ? formatDateLong(rule.lastUpdated) : "Unknown";
   const historyTooltip = `Created ${created}\nLast Updated ${updated}`;
+  const relatedRules = relatedRulesMapping || [];
 
   const primaryCategory = ruleCategoriesMapping?.[0];
   const breadcrumbCategories = primaryCategory
@@ -137,6 +140,30 @@ export default function ServerRulePage({
               ))}
             </div>
           </Card>
+          <Card title="Acknowledgements">
+            <Acknowledgements authors={rule.authors} />
+          </Card>
+          <Card title="Related rules">
+            {relatedRules.length > 0 ? (
+              <ul className="pl-4">
+                {relatedRules.map((r) => (
+                  <li key={r.uri} className="not-last:mb-2">
+                    <Link
+                      href={`/${r.uri}`}
+                      className="no-underline">
+                      {r.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="text-sm text-gray-500">No related rules.</div>
+            )}
+          </Card>
+          <HelpCard />
+          <div className="block md:hidden">
+            <Discussion ruleGuid={rule?.guid || ''} />
+          </div>
         </div>
       </div>
     </>
