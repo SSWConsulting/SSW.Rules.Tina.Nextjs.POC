@@ -119,7 +119,7 @@ export default function ServerRulePage({
 
           <div className="hidden md:block">
             <hr className="my-6 mx-0" />
-            {/* <Discussion ruleGuid={rule?.guid || ""} /> */}
+            <Discussion ruleGuid={rule?.guid || ""} />
           </div>
         </Card>
 
