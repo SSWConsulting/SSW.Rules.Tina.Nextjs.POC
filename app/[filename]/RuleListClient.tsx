@@ -3,9 +3,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import RuleList from "@/components/rule-list";
-import { getAccessToken } from "@auth0/nextjs-auth0";
-import { BookmarkService } from "@/lib/bookmarkService";
-import { useAuth } from "@/components/auth/UserClientProvider";
 
 interface Props {
   initialRules: any[];
@@ -16,7 +13,6 @@ interface Props {
 export default function RuleListClient({ initialRules, categoryUri, initialIncludeArchived }: Props) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { user, isLoading: authLoading } = useAuth();
 
   const [includeArchived, setIncludeArchived] = useState(initialIncludeArchived);
   const [bookmarkedGuids, setBookmarkedGuids] = useState<string[]>([]);
@@ -27,32 +23,33 @@ export default function RuleListClient({ initialRules, categoryUri, initialInclu
     setIncludeArchived(fromUrl);
   }, [searchParams]);
 
-  useEffect(() => {
-    let cancelled = false;
-    async function fetchBookmarks() {
-      if (authLoading) return;
-      if (!user?.sub) {
-        setBookmarkedGuids([]);
-        return;
-      }
-      try {
-        const accessToken = await getAccessToken();
-        if (!accessToken) {
-          setBookmarkedGuids([]);
-          return;
-        }
-        const bookmarkResult: any = await BookmarkService.getUserBookmarks(user.sub, accessToken);
-        const guids: string[] = (bookmarkResult?.bookmarkedRules || [])
-          .map((b: any) => b?.ruleGuid)
-          .filter((g: any): g is string => Boolean(g));
-        if (!cancelled) setBookmarkedGuids(guids);
-      } catch {
-        if (!cancelled) setBookmarkedGuids([]);
-      }
-    }
-    fetchBookmarks();
-    return () => { cancelled = true; };
-  }, [authLoading, user?.sub]);
+  // useEffect(() => {
+  //   let cancelled = false;
+  //   async function fetchBookmarks() {
+  //     if (authLoading) return;
+  //     if (!user?.sub) {
+  //       setBookmarkedGuids([]);
+  //       return;
+  //     }
+  //     try {
+  //       // const accessToken = await getAccessToken();
+  //       const accessToken = null
+  //       if (!accessToken) {
+  //         setBookmarkedGuids([]);
+  //         return;
+  //       }
+  //       const bookmarkResult: any = await BookmarkService.getUserBookmarks(user.sub, accessToken);
+  //       const guids: string[] = (bookmarkResult?.bookmarkedRules || [])
+  //         .map((b: any) => b?.ruleGuid)
+  //         .filter((g: any): g is string => Boolean(g));
+  //       if (!cancelled) setBookmarkedGuids(guids);
+  //     } catch {
+  //       if (!cancelled) setBookmarkedGuids([]);
+  //     }
+  //   }
+  //   fetchBookmarks();
+  //   return () => { cancelled = true; };
+  // }, [authLoading, user?.sub]);
 
   const enhancedRules = useMemo(() => {
     return (initialRules || []).map((r: any) => ({
