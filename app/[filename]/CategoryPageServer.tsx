@@ -25,6 +25,15 @@ export default function CategoryPageServer({ categoryQueryProps, includeArchived
   const archivedRules = baseRules.filter((r: any) => r?.isArchived === true);
   const finalRules = includeArchived ? [...activeRules, ...archivedRules] : activeRules;
 
+  const finalRulesForClient = finalRules.map((r: any) => ({
+    guid: r.guid ?? null,
+    uri: r.uri ?? '',
+    title: r.title ?? '',
+    isArchived: !!r.isArchived,
+    archivedreason: r.archivedreason ?? null,
+    // body: r.body ? JSON.parse(JSON.stringify(r.body)) : null,
+  }));
+
   return (
     <div>
       <div className="flex">
@@ -38,7 +47,7 @@ export default function CategoryPageServer({ categoryQueryProps, includeArchived
           </div>
 
           <RuleListClient
-            initialRules={finalRules}
+            initialRules={finalRulesForClient}
             categoryUri={path}
             initialIncludeArchived={includeArchived}
           />
@@ -46,7 +55,7 @@ export default function CategoryPageServer({ categoryQueryProps, includeArchived
 
         <div className="hidden lg:block lg:w-1/3 p-6 pr-0">
           <ol className="border-l-3 border-gray-300 pl-6">
-            {finalRules.map((rule: any) => (
+            {finalRulesForClient.map((rule: any) => (
               <li key={`sidebar-${rule.guid}`} className="py-1 ml-4">
                 <Link href={rule.uri} className="text-gray-700 hover:text-ssw-red">
                   {rule.title}

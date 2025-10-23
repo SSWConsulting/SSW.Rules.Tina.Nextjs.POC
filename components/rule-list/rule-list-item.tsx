@@ -71,11 +71,11 @@ const RuleListItem: React.FC<RuleListItemProps> = ({ rule, index, filter, onBook
           </div>
         </div>
       )}
-      {filter !== RuleListFilter.TitleOnly && (
+      {/* {filter !== RuleListFilter.TitleOnly && (
         <div data-tina-field={tinaField(rule, 'body')} className="pt-4 pl-8 pr-2" ref={contentRef}>
           <TinaMarkdown content={getContentForViewStyle(filter, rule.body)} components={MarkdownComponentMapping} />
         </div>
-      )}
+      )} */}
     </li>
   );
 };
