@@ -54,10 +54,13 @@ export const getTypographyComponents = (enableAnchors = false) => ({
     <p className="mb-4" {...props} />
   ),
   a: (props: any) => (
-    <a className="ssw-link" href={props.url} {...props} />
+    <a className="underline" href={props.url} {...props} />
   ),
   li: (props) => (
     <li {...props} />
+  ),
+  mark: (props: any) => (
+    <mark {...props} />
   ),
   blockquote: (props: any) => (
     <blockquote
