@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import Link from "next/link";
 import { TinaMarkdown } from "tinacms/dist/rich-text";
 import MarkdownComponentMapping from "@/components/tina-markdown/markdown-component-mapping";
@@ -46,11 +46,13 @@ export default function CategoryPageServer({ categoryQueryProps, includeArchived
             <TinaMarkdown content={category?.body} components={MarkdownComponentMapping} />
           </div>
 
-          <RuleListClient
-            initialRules={finalRulesForClient}
-            categoryUri={path}
-            initialIncludeArchived={includeArchived}
-          />
+          <Suspense fallback={null}>
+            <RuleListClient
+              initialRules={finalRulesForClient}
+              categoryUri={path}
+              initialIncludeArchived={includeArchived}
+            />
+          </Suspense>
         </div>
 
         <div className="hidden lg:block lg:w-1/3 p-6 pr-0">

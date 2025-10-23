@@ -157,22 +157,23 @@ export async function generateStaticParams() {
 
 export default async function Page({
   params,
+  searchParams
 }: {
-  params: Promise<{ filename: string }>;
+  params: { filename: string };
+  searchParams: { [key: string]: string | string[] | undefined };
 }) {
-  const { filename } = await params;
+  const { filename } = params;
+  const includeArchivedDefault = searchParams?.archived === 'true';
 
   const category = await getCategoryData(filename);
   if (category?.data) {
-    const includeArchivedDefault = false;
-
     return (
-        <Section>
-          <CategoryPageServer
-            categoryQueryProps={category}
-            includeArchived={includeArchivedDefault}
-          />
-        </Section>
+      <Section>
+        <CategoryPageServer
+          categoryQueryProps={category}
+          includeArchived={includeArchivedDefault}
+        />
+      </Section>
     );
   }
 
