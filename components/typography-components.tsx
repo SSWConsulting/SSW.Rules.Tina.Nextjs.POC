@@ -56,9 +56,6 @@ export const getTypographyComponents = (enableAnchors = false) => ({
   a: (props: any) => (
     <a className="ssw-link" {...props} />
   ),
-  span: (props: any) => (
-    <span className="ssw-rule-link ssw-link" />
-  ),
   mark: (props: any) => (
     <mark {...props} />
   ),
