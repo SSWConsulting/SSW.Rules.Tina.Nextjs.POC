@@ -1,5 +1,3 @@
-'use client';
-
 import classNames from 'classnames';
 import { MegaMenuLayout } from 'ssw.megamenu';
 import useAppInsights from '../hooks/useAppInsights';
@@ -10,6 +8,7 @@ import { RiAddCircleFill, RiOpenaiFill, RiQuestionFill } from 'react-icons/ri';
 
 export function MegaMenuWrapper(props) {
     return (
+        <div className='mx-auto max-w-7xl px-0 py-4'>
         <MegaMenuLayout
             title='Rules'
             menuBarItems={props.menu}
@@ -20,6 +19,7 @@ export function MegaMenuWrapper(props) {
             searchUrl='https://www.ssw.com.au/rules'
             isFlagVisible={false}
         />
+        </div>
     );
 }
 
