@@ -203,11 +203,9 @@ export default async function Page({
 
   if (rule?.data) {
     return (
-      <Suspense fallback={null}>
         <Section>
           <ClientRulePage ruleQueryProps={rule} ruleCategoriesMapping={ruleCategoriesMapping} relatedRulesMapping={relatedRulesMapping} />
         </Section>
-      </Suspense>
     );
   }
 
