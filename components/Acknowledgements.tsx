@@ -24,7 +24,7 @@ export default function Acknowledgements({ authors }: AcknowledgementsProps) {
 
     if (url?.includes('ssw.com.au/people')) {
       // Extract the part after '/people/'
-      const match = url.match(/people\/([^/]+)/);
+      const match = url.match(/people\/([^/?#]+)/);
       const slug = match ? match[1] : null;
 
       if (slug) {
