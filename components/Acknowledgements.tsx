@@ -44,9 +44,9 @@ export default function Acknowledgements({ authors }: AcknowledgementsProps) {
     }
 
     return placeholderImg;
-  }, []);
+  }, [placeholderImg]);
 
-  const [imgSrcList, setImgSrcList] = useState<string[]>(authors.map(getImgSource));
+  const [imgSrcList, setImgSrcList] = useState<string[]>([]);
 
   useEffect(() => {
     setImgSrcList(authors.map(getImgSource));
