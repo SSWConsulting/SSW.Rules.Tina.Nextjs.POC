@@ -41,17 +41,19 @@ export default function ClientRulePage(props: ClientRulePageProps) {
   const relatedRules = props.relatedRulesMapping || [];
   const router = useRouter();
   const [isLoadingUsername, setIsLoadingUsername] = useState(false);
+  const [isAdminPage, setIsAdminPage] = useState(false);
   
   // Remove any extra slashes from the base path
   const sanitizedBasePath = (process.env.NEXT_PUBLIC_BASE_PATH || '').replace(/^\/+/, '');
 
-  const isAdminPage = typeof window !== 'undefined' && (() => {
+  useEffect(() => {
     try {
-      return window.top?.location?.pathname.includes('/admin');
+      const isAdmin = window.top?.location?.pathname.includes('/admin') ?? false;
+      setIsAdminPage(isAdmin);
     } catch {
-      return false;
+      setIsAdminPage(false);
     }
-  })();
+  }, []);
 
   const ruleData = useTina({
     query: ruleQueryProps?.query,
