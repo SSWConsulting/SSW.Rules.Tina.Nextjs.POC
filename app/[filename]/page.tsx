@@ -7,6 +7,7 @@ import ClientRulePage from "./client-rule-page";
 import { notFound } from "next/navigation";
 import ruleToCategoryIndex from '@/rule-to-categories.json'; 
 import categoryTitleIndex from '@/category-uri-title-map.json';
+import ServerRulePage from "@/components/ServerRulePage";
 
 export const revalidate = 300;
 export const dynamicParams = false;
@@ -166,6 +167,7 @@ export async function generateStaticParams() {
     }
 
     console.log(`🚀 ~ generateStaticParams ~ Generated ${paths.length} paths (${rules.length} rules, ${categories.length} categories)`);
+
     return paths;
   } catch (error) {
     console.error("Error fetching static params:", error);
@@ -221,12 +223,16 @@ export default async function Page({
   }
 
   if (rule?.data) {
+    const sanitizedBasePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/^\/+/, "");
     return (
-      <Suspense fallback={null}>
-        <Section>
-          <ClientRulePage ruleQueryProps={rule} ruleCategoriesMapping={ruleCategoriesMapping} relatedRulesMapping={relatedRulesMapping} />
-        </Section>
-      </Suspense>
+      <Section>
+        <ServerRulePage
+          rule={rule.data.rule}
+          ruleCategoriesMapping={ruleCategoriesMapping}
+          relatedRulesMapping={relatedRulesMapping}
+          sanitizedBasePath={sanitizedBasePath}
+        />
+      </Section>
     );
   }
 
