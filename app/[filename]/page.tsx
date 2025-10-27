@@ -1,5 +1,4 @@
 import React, { Suspense } from "react";
-import Layout from "@/components/layout/layout";
 import { Section } from "@/components/layout/section";
 import client from "@/tina/__generated__/client";
 import ClientCategoryPage from "./client-category-page";
@@ -7,7 +6,6 @@ import ClientRulePage from "./client-rule-page";
 import { notFound } from "next/navigation";
 import ruleToCategoryIndex from '@/rule-to-categories.json'; 
 import categoryTitleIndex from '@/category-uri-title-map.json';
-import ServerRulePage from "@/components/ServerRulePage";
 
 export const revalidate = 300;
 export const dynamicParams = false;
