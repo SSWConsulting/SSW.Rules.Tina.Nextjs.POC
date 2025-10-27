@@ -1,5 +1,6 @@
 import React, { PropsWithChildren } from 'react';
 import { LayoutProvider } from './layout-context';
+import { MenuProvider } from './MenuProvider';
 import client from '../../tina/__generated__/client';
 import { Header } from './nav/header';
 import { Footer } from './nav/footer';
@@ -28,11 +29,13 @@ export default async function Layout({ children, rawPageData }: LayoutProps) {
 
     return (
         <LayoutProvider globalSettings={globalData.global} pageData={rawPageData}>
-            <div className='flex flex-col flex-1'>
-                <Header menuGroups={menuGroups} />
-                <main className='flex-1 overflow-x-hidden main-container max-sm:p-2'>{children}</main>
-                <Footer />
-            </div>
+            <MenuProvider initialMenuGroups={menuGroups}>
+                <div className='flex flex-col flex-1'>
+                    <Header />
+                    <main className='flex-1 overflow-x-hidden main-container max-sm:p-2'>{children}</main>
+                    <Footer />
+                </div>
+            </MenuProvider>
         </LayoutProvider>
     );
 }

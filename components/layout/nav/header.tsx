@@ -4,6 +4,7 @@ import React from 'react';
 import posed from 'react-pose';
 import { MenuWrapper } from '@/components/MenuWrapper';
 import { MegaMenuWrapper } from '@/components/server/MegaMenuWrapper';
+import { useMenu } from '../MenuProvider';
 
 const AnimatedContainer = posed.div({
     enter: {
@@ -20,12 +21,18 @@ const AnimatedContainer = posed.div({
     },
 });
 
-export const Header = ({ menuGroups }: { menuGroups: any[] }) => {
+export const Header = () => {
+    const { menuGroups, isLoading, error } = useMenu();
+
+    if (error) {
+        console.error('Menu loading error:', error);
+    }
+
     return (
         <AnimatedContainer>
             <header className='no-print z-1 main-container max-sm:m-4! sm:px-8'>
                 <MenuWrapper>
-                    <MegaMenuWrapper menu={menuGroups} />
+                    <MegaMenuWrapper menu={menuGroups || []} />
                 </MenuWrapper>
             </header>
         </AnimatedContainer>
