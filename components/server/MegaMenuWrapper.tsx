@@ -7,6 +7,7 @@ import Tooltip from '../tooltip/tooltip';
 import SignIn from '../auth/SignIn';
 import { CustomLink } from '../customLink';
 import { RiAddCircleFill, RiOpenaiFill, RiQuestionFill } from 'react-icons/ri';
+import { Suspense } from 'react';
 
 export function MegaMenuWrapper(props) {
     return (
@@ -60,7 +61,9 @@ const ActionButtons = () => {
                 </Tooltip>
             </div>
             
-            <SignIn />
+            <Suspense fallback={<div className="w-8 h-8" />}>
+                <SignIn />
+            </Suspense>
         </div>
     );
 };
