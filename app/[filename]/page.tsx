@@ -186,6 +186,7 @@ export default async function Page({
   if (category?.data) {
     return (
       <Suspense fallback={null}>
+        Testing Client Category Page
         <Section>
           <ClientCategoryPage categoryQueryProps={category}/>
         </Section>
@@ -223,16 +224,16 @@ export default async function Page({
   }
 
   if (rule?.data) {
-    const sanitizedBasePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/^\/+/, "");
     return (
+      <Suspense fallback={null}>
       <Section>
-        <ServerRulePage
-          rule={rule.data.rule}
-          ruleCategoriesMapping={ruleCategoriesMapping}
-          relatedRulesMapping={relatedRulesMapping}
-          sanitizedBasePath={sanitizedBasePath}
-        />
+          <ClientRulePage 
+            ruleQueryProps={rule} 
+            ruleCategoriesMapping={ruleCategoriesMapping} 
+            relatedRulesMapping={relatedRulesMapping} 
+          />
       </Section>
+      </Suspense>
     );
   }
 
