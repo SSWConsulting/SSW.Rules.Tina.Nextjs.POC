@@ -42,6 +42,7 @@ const Rule: Collection = {
       name: "title",
       isTitle: true,
       required: true,
+      searchable: true
     },
     {
       type: "image",
@@ -55,6 +56,7 @@ const Rule: Collection = {
       label: "Uri",
       description: "The URI of the rule - this defines the slug and refereces.",
       required: true,
+      searchable: true,
       ui: {
         validate: (value?: string): string | void => {
           const v = (value ?? "").trim();
