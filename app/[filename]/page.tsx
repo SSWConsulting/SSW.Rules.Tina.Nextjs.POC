@@ -9,6 +9,7 @@ import ruleToCategoryIndex from '@/rule-to-categories.json';
 import categoryTitleIndex from '@/category-uri-title-map.json';
 
 export const revalidate = 300;
+export const dynamicParams = false;
 
 const getFullRelativePathFromFilename = async (filename: string): Promise<string | null> => {
   let hasNextPage = true;
