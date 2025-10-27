@@ -76,7 +76,11 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  
+  experimental: {
+    staticGenerationRetryCount: 2,
+    staticGenerationMaxConcurrency: 200,
+    staticGenerationMinPagesPerWorker: 100,
+  },
   async rewrites() {
     return [
       {
