@@ -121,13 +121,54 @@ export async function generateStaticParams() {
       return allEdges;
     };
 
-    // Fetch all categories and rules with pagination
-    const [allCategoryEdges, allRuleEdges] = await Promise.all([
+    // Helper function to fetch all top categories with their child categories (same logic as getFullRelativePathFromFilename)
+    const fetchAllTopCategoriesWithChildren = async () => {
+      const allChildCategories: { filename: string }[] = [];
+      let hasNextPage = true;
+      let after: string | null = null;
+
+      while (hasNextPage) {
+        try {
+          const res = await client.queries.topCategoryWithIndexQuery({
+            first: 50,
+            after,
+          });
+
+          const topCategories = res?.data.categoryConnection?.edges || [];
+
+          for (const edge of topCategories) {
+            const node = edge?.node;
+            if (node?.__typename === "CategoryTop_category") {
+              const children = node.index || [];
+              for (const child of children) {
+                if (child?.category?.__typename === "CategoryCategory" && child?.category?._sys?.filename) {
+                  allChildCategories.push({ 
+                    filename: child.category._sys.filename 
+                  });
+                }
+              }
+            }
+          }
+
+          hasNextPage = res?.data?.categoryConnection?.pageInfo?.hasNextPage;
+          after = res?.data?.categoryConnection?.pageInfo?.endCursor;
+        } catch (err) {
+          console.warn("Error fetching top categories with children:", err);
+          hasNextPage = false;
+        }
+      }
+
+      return allChildCategories;
+    };
+
+    // Fetch all categories, rules, and child categories with pagination
+    const [allCategoryEdges, allRuleEdges, childCategories] = await Promise.all([
       fetchAllPages(client.queries.categoryConnection, 'category'),
       fetchAllPages(client.queries.ruleConnection, 'rule'),
+      fetchAllTopCategoriesWithChildren(),
     ]);
 
-    if (allCategoryEdges.length === 0 && allRuleEdges.length === 0) {
+    if (allCategoryEdges.length === 0 && allRuleEdges.length === 0 && childCategories.length === 0) {
       console.error("Failed to fetch any valid connections data");
       return [];
     }
@@ -158,13 +199,14 @@ export async function generateStaticParams() {
       }
     }
 
-    const paths = [...rules, ...categories];
+    // Combine all paths: rules, direct categories, and child categories
+    const paths = [...rules, ...categories, ...childCategories];
 
     if (paths.length === 0) {
       console.warn("No static params generated - no valid rules or categories found");
     }
 
-    console.log(`🚀 ~ generateStaticParams ~ Generated ${paths.length} paths (${rules.length} rules, ${categories.length} categories)`);
+    console.log(`🚀 ~ generateStaticParams ~ Generated ${paths.length} paths (${rules.length} rules, ${categories.length} direct categories, ${childCategories.length} child categories)`);
 
     return paths;
   } catch (error) {
