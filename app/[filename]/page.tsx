@@ -89,55 +89,72 @@ export async function generateStaticParams() {
       return [];
     }
 
-    const [categoryConnection, ruleConnection] = await Promise.all([
-      client.queries.categoryConnection().catch((err) => {
-        const isRecordNotFound = err?.message?.includes('Unable to find record');
-        if (!isRecordNotFound) {
-          console.warn("Error fetching categories:", err?.message || err);
+    // Helper function to fetch all pages from a connection
+    const fetchAllPages = async (queryFunction: (args?: any) => Promise<any>, queryName: string) => {
+      const allEdges: any[] = [];
+      let hasNextPage = true;
+      let after: string | null = null;
+
+      while (hasNextPage) {
+        try {
+          const result = await queryFunction({ first: 50, after }).catch((err) => {
+            const isRecordNotFound = err?.message?.includes('Unable to find record');
+            if (!isRecordNotFound) {
+              console.warn(`Error fetching ${queryName}:`, err?.message || err);
+            }
+            return { data: { [`${queryName}Connection`]: { edges: [], pageInfo: { hasNextPage: false } } } };
+          });
+
+          const connection = result?.data?.[`${queryName}Connection`];
+          if (connection?.edges && Array.isArray(connection.edges)) {
+            allEdges.push(...connection.edges);
+          }
+
+          hasNextPage = connection?.pageInfo?.hasNextPage || false;
+          after = connection?.pageInfo?.endCursor || null;
+        } catch (err) {
+          console.warn(`Error fetching ${queryName} page:`, err);
+          hasNextPage = false;
         }
-        return { data: { categoryConnection: { edges: [] } } };
-      }),
-      client.queries.ruleConnection().catch((err) => {
-        const isRecordNotFound = err?.message?.includes('Unable to find record');
-        if (!isRecordNotFound) {
-          console.warn("Error fetching rules:", err?.message || err);
-        }
-        return { data: { ruleConnection: { edges: [] } } };
-      }),
+      }
+
+      return allEdges;
+    };
+
+    // Fetch all categories and rules with pagination
+    const [allCategoryEdges, allRuleEdges] = await Promise.all([
+      fetchAllPages(client.queries.categoryConnection, 'category'),
+      fetchAllPages(client.queries.ruleConnection, 'rule'),
     ]);
 
-    if (!categoryConnection?.data && !ruleConnection?.data) {
+    if (allCategoryEdges.length === 0 && allRuleEdges.length === 0) {
       console.error("Failed to fetch any valid connections data");
       return [];
     }
 
     const rules: { filename: string }[] = [];
-    if (ruleConnection?.data?.ruleConnection?.edges && Array.isArray(ruleConnection.data.ruleConnection.edges)) {
-      for (const page of ruleConnection.data.ruleConnection.edges) {
-        try {
-          if (page?.node?._sys?.filename === "rule" && page?.node?._sys?.relativePath) {
-            const relativePath = page.node._sys.relativePath;
-            const pathParts = relativePath.split("/");
-            if (pathParts.length > 0 && pathParts[0]) {
-              rules.push({ filename: pathParts[0] });
-            }
+    for (const page of allRuleEdges) {
+      try {
+        if (page?.node?._sys?.filename === "rule" && page?.node?._sys?.relativePath) {
+          const relativePath = page.node._sys.relativePath;
+          const pathParts = relativePath.split("/");
+          if (pathParts.length > 0 && pathParts[0]) {
+            rules.push({ filename: pathParts[0] });
           }
-        } catch (err) {
-          console.warn("Error processing rule page:", err);
         }
+      } catch (err) {
+        console.warn("Error processing rule page:", err);
       }
     }
 
     const categories: { filename: string }[] = [];
-    if (categoryConnection?.data?.categoryConnection?.edges && Array.isArray(categoryConnection.data.categoryConnection.edges)) {
-      for (const page of categoryConnection.data.categoryConnection.edges) {
-        try {
-          if (page?.node?._sys?.filename && page.node._sys.filename !== "index") {
-            categories.push({ filename: page.node._sys.filename });
-          }
-        } catch (err) {
-          console.warn("Error processing category page:", err);
+    for (const page of allCategoryEdges) {
+      try {
+        if (page?.node?._sys?.filename && page.node._sys.filename !== "index") {
+          categories.push({ filename: page.node._sys.filename });
         }
+      } catch (err) {
+        console.warn("Error processing category page:", err);
       }
     }
 
@@ -147,6 +164,7 @@ export async function generateStaticParams() {
       console.warn("No static params generated - no valid rules or categories found");
     }
 
+    console.log(`🚀 ~ generateStaticParams ~ Generated ${paths.length} paths (${rules.length} rules, ${categories.length} categories)`);
     return paths;
   } catch (error) {
     console.error("Error fetching static params:", error);
