@@ -43,7 +43,7 @@ export default function RelatedRules({ relatedUris, initialMapping }: RelatedRul
         console.error(e);
       }
     })();
-  }, [urisKey, rules.length], 2000);
+  }, [urisKey], 2000);
 
   if (!rules || rules.length === 0) {
     return <div className="text-sm text-gray-500">No related rules.</div>;
