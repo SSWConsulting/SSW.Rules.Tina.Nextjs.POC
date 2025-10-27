@@ -5,7 +5,7 @@ import Breadcrumbs from "@/components/Breadcrumbs";
 import { IconLink } from "@/components/ui";
 import { ICON_SIZE } from "@/constants";
 import { RiPencilLine, RiGithubLine } from "react-icons/ri";
-import RuleList from "./rule-list/rule-list";
+import RuleListWrapper from "./rule-list/rule-list-wrapper";
 
 interface ServerCategoryPageProps {
   category: any;
@@ -68,15 +68,15 @@ export default function ServerCategoryPage({
             <TinaMarkdown content={category?.body} components={MarkdownComponentMapping} />
           </div>
 
-          {/* <RuleList
+          <RuleListWrapper
             categoryUri={path}
             rules={finalRules}
-            view={view}
-            page={page}
-            perPage={perPage}
+            initialView={view}
+            initialPage={page}
+            initialPerPage={perPage}
             includeArchived={includeArchived}
             showFilterControls={true}
-          /> */}
+          />
         </div>
 
         <div className="hidden lg:block lg:w-1/3 p-6 pr-0">
