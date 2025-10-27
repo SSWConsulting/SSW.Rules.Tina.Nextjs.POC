@@ -2,6 +2,7 @@ import { Card } from "@/components/ui/card";
 import { TinaMarkdown } from "tinacms/dist/rich-text";
 import Image from "next/image";
 import Link from "next/link";
+import { Suspense } from "react";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { getMarkdownComponentMapping } from "@/components/tina-markdown/markdown-component-mapping";
 import { formatDateLong, timeAgo } from "@/lib/dateUtils";
@@ -11,6 +12,7 @@ import { RiGithubLine, RiHistoryLine, RiPencilLine } from "react-icons/ri";
 import { ICON_SIZE } from "@/constants";
 import Acknowledgements from "./Acknowledgements";
 import HelpCard from "./HelpCard";
+import Bookmark from "./Bookmark";
 
 interface ServerRulePageProps {
   rule: any;
@@ -72,6 +74,9 @@ export default function ServerRulePage({
                 </p>
 
                 <div className="flex items-center gap-4 text-2xl">
+                  <Suspense fallback={<span className="opacity-50">...</span>}>
+                    <Bookmark ruleGuid={rule?.guid || ''} />
+                  </Suspense>
                   <IconLink
                     href={`/admin#/~/${sanitizedBasePath}/${rule?.uri}`}
                     title="Edit rule"
