@@ -12,7 +12,6 @@ import AboutSSWCard from '@/components/AboutSSWCard';
 import JoinConversationCard from '@/components/JoinConversationCard';
 import { appendNewRules } from '@/utils/appendNewRules';
 import { selectLatestRuleFilesByPath } from '@/utils/selectLatestRuleFilesByPath';
-import LoadMoreButton from '@/components/LoadMoreButton';
 import Spinner from '@/components/Spinner';
 import { FaUserCircle } from 'react-icons/fa';
 import RuleList from '@/components/rule-list';
@@ -35,16 +34,21 @@ export default function UserRulesClientPage({ ruleCount }) {
   const [loadingMoreLastModified, setLoadingMoreLastModified] = useState(false);
   const [nextPageCursor, setNextPageCursor] = useState('');
   const [hasNext, setHasNext] = useState(false);
+  const [totalLastModified, setTotalLastModified] = useState<number>(0);
+  const [currentPageLastModified, setCurrentPageLastModified] = useState(1);
+  const LAST_MODIFIED_PAGE_SIZE = 10;
 
   // Acknowledged
   const [authoredRules, setAuthoredRules] = useState<any[]>([]);
   const [author, setAuthor] = useState<{ fullName?: string; slug?: string; gitHubUrl?: string }>({});
   const [loadingAuthored, setLoadingAuthored] = useState(false);
-  const AUTHORED_PAGE_SIZE = 6;
+  const AUTHORED_PAGE_SIZE = 10;
   const [authoredNextCursor, setAuthoredNextCursor] = useState<string | null>(null);
   const [authoredHasNext, setAuthoredHasNext] = useState(false);
   const [loadingMoreAuthored, setLoadingMoreAuthored] = useState(false);
   const [githubError, setGithubError] = useState<string | null>(null);
+  const [totalAuthored, setTotalAuthored] = useState<number>(0);
+  const [currentPageAuthored, setCurrentPageAuthored] = useState(1);
 
   const resolveAuthor = async (): Promise<string> => {
     const res = await fetch(`./api/crm/employees?query=${encodeURIComponent(queryStringRulesAuthor)}`);
@@ -54,18 +58,19 @@ export default function UserRulesClientPage({ ruleCount }) {
     return profile.fullName as string;
   };
 
-  const getLastModifiedRules = async (opts?: { append?: boolean }) => {
+  const getLastModifiedRules = async (opts?: { append?: boolean; page?: number }) => {
     const append = !!opts?.append;
+    const page = opts?.page ?? 1;
     try {
       // clear previous GitHub errors when starting a fetch
       setGithubError(null);
       append ? setLoadingMoreLastModified(true) : setLoadingLastModified(true);
-  
+
       const params = new URLSearchParams();
       params.set('author', queryStringRulesAuthor);
       if (append && nextPageCursor) params.set('cursor', nextPageCursor);
       params.set('direction', 'after');
-  
+
       const url = `./api/github/rules/prs?${params.toString()}`;
       const res = await fetch(url);
       if (!res.ok) {
@@ -78,7 +83,7 @@ export default function UserRulesClientPage({ ruleCount }) {
         throw new Error(`Failed to fetch GitHub PR search: ${res.status} ${res.statusText} - ${body}`);
       }
       const prSearchData = await res.json();
-  
+
       const resultList = prSearchData.search.nodes;
       const allRules = resultList
         .flatMap((pr: any) => pr.files.nodes)
@@ -90,14 +95,23 @@ export default function UserRulesClientPage({ ruleCount }) {
 
       if (allRules.length === 0 && !append) {
         setLastModifiedRules([]);
+        setTotalLastModified(0);
       } else if (allRules.length > 0) {
         const uniqueRules = selectLatestRuleFilesByPath(allRules);
         await updateFilteredItems(uniqueRules, append);
+        // Update total count from GitHub search
+        if (prSearchData.search.repositoryCount !== undefined) {
+          setTotalLastModified(prSearchData.search.repositoryCount);
+        }
       }
-  
+
       const { endCursor, hasNextPage } = prSearchData.search.pageInfo;
       setNextPageCursor(endCursor || '');
       setHasNext(!!hasNextPage);
+
+      if (!append) {
+        setCurrentPageLastModified(page);
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error('Failed to fetch GitHub data:', err);
@@ -157,27 +171,34 @@ export default function UserRulesClientPage({ ruleCount }) {
     }
   };
 
-  const getAuthoredRules = async (authorName: string, opts?: { append?: boolean }) => {
+  const getAuthoredRules = async (authorName: string, opts?: { append?: boolean; page?: number }) => {
     const append = !!opts?.append;
+    const page = opts?.page ?? 1;
     try {
       append ? setLoadingMoreAuthored(true) : setLoadingAuthored(true);
-  
+
       const res = await client.queries.rulesByAuthor({
         authorTitle: authorName || '',
         first: AUTHORED_PAGE_SIZE,
         after: append ? authoredNextCursor : undefined,
       });
-  
+
       const edges = res?.data?.ruleConnection?.edges ?? [];
       const nodes = edges.map((e: any) => e?.node).filter(Boolean);
-  
+
       const pageInfo = res?.data?.ruleConnection?.pageInfo;
       const totalFetched = nodes.length;
       const hasMorePages = !!pageInfo?.hasNextPage;
 
       setAuthoredNextCursor(pageInfo?.endCursor ?? null);
       setAuthoredHasNext(hasMorePages && totalFetched === AUTHORED_PAGE_SIZE);
-  
+
+      if (!append) {
+        setTotalAuthored(nodes.length);
+      } else {
+        setTotalAuthored((prev) => prev + nodes.length);
+      }
+
       const batch = nodes.map((fullRule: any) => ({
         guid: fullRule.guid,
         title: fullRule.title,
@@ -190,8 +211,12 @@ export default function UserRulesClientPage({ ruleCount }) {
         lastUpdated: fullRule.lastUpdated,
         lastUpdatedBy: fullRule.lastUpdatedBy
       }));
-  
+
       setAuthoredRules((prev) => (append ? appendNewRules(prev, batch) : batch));
+
+      if (!append) {
+        setCurrentPageAuthored(page);
+      }
     } finally {
       append ? setLoadingMoreAuthored(false) : setLoadingAuthored(false);
     }
@@ -207,21 +232,34 @@ export default function UserRulesClientPage({ ruleCount }) {
     })();
   }, [queryStringRulesAuthor]);
 
-  const handleLoadMoreLastModified = () => {
+  const handleNextPageLastModified = () => {
     if (loadingMoreLastModified || !hasNext) return;
-    getLastModifiedRules({ append: true });
+    setCurrentPageLastModified((prev) => prev + 1);
+    getLastModifiedRules({ append: true, page: currentPageLastModified + 1 });
   };
 
-  const handleLoadMoreAcknowledgment = () => {
+  const handlePrevPageLastModified = () => {
+    if (currentPageLastModified <= 1) return;
+  };
+
+  const handleNextPageAuthored = () => {
     if (loadingMoreAuthored || !authoredHasNext) return;
-    getAuthoredRules(author.fullName || '', { append: true });
+    setCurrentPageAuthored((prev) => prev + 1);
+    getAuthoredRules(author.fullName || '', { append: true, page: currentPageAuthored + 1 });
+  };
+
+  const handlePrevPageAuthored = () => {
+    if (currentPageAuthored <= 1) return;
+    // For previous page, we would need to implement a cursor stack
+    // This is a simplified version - real implementation would require storing previous cursors
+    console.warn('Previous page not fully implemented');
   };
 
   const TabHeader = () => (
     <div role="tablist" aria-label="User Rules Tabs" className="flex mt-2 mb-4 divide-x divide-gray-200 rounded">
       {[
-        { key: Tabs.AUTHORED, label: `Authored (${authoredRules.length})` },
-        { key: Tabs.MODIFIED, label: `Last Modified (${lastModifiedRules.length})` },
+        { key: Tabs.AUTHORED, label: `Authored (${totalAuthored || authoredRules.length})` },
+        { key: Tabs.MODIFIED, label: `Last Modified (${totalLastModified || lastModifiedRules.length})` },
       ].map((t, i) => {
         const isActive = activeTab === t.key;
         return (
@@ -253,30 +291,71 @@ export default function UserRulesClientPage({ ruleCount }) {
       loadingInitial,
       loadingMore,
       hasNextPage,
-      onLoadMore,
+      hasPrevPage,
+      onNextPage,
+      onPrevPage,
+      currentPage,
+      totalItems,
+      pageSize,
       emptyText = 'No results found.',
+      showGithubLoading = false,
     }: {
       loadingInitial: boolean;
       loadingMore: boolean;
       hasNextPage: boolean;
-      onLoadMore: () => void;
+      hasPrevPage: boolean;
+      onNextPage: () => void;
+      onPrevPage: () => void;
+      currentPage: number;
+      totalItems: number;
+      pageSize: number;
       emptyText?: string;
+      showGithubLoading?: boolean;
     },
   ) => {
     if (items.length === 0 && loadingInitial) {
-      return <Spinner size="lg" className='center' />
+      return (
+        <div className="flex flex-col items-center justify-center py-8">
+          <Spinner size="lg" className='center' />
+          {showGithubLoading && (
+            <p className="mt-4 text-sm text-gray-600">
+              Fetching data from GitHub... this might take a minute.
+            </p>
+          )}
+        </div>
+      );
     }
     if (items.length === 0) {
       return <div className="py-4 text-sm text-gray-500">{emptyText}</div>;
     }
+
+    const startItem = (currentPage - 1) * pageSize + 1;
+    const endItem = Math.min(currentPage * pageSize, items.length);
+    const displayItems = items.slice(startItem - 1, endItem);
+
     return (
       <>
-        <RuleList rules={items} showFilterControls={false} showPagination={false} />
-        {hasNextPage && (
-          <div className="mt-4 flex justify-center">
-            <LoadMoreButton onClick={onLoadMore} disabled={loadingMore} loading={loadingMore}>
-              {loadingMore ? 'Loading…' : 'Load More'}
-            </LoadMoreButton>
+        <div className="mb-3 text-sm text-gray-600">
+          Showing {startItem}-{endItem} of {totalItems} {totalItems === 1 ? 'rule' : 'rules'}
+        </div>
+        <RuleList rules={displayItems} showFilterControls={false} showPagination={false} />
+        {(hasNextPage || hasPrevPage) && (
+          <div className="mt-4 flex items-center justify-between">
+            <button
+              onClick={onPrevPage}
+              disabled={!hasPrevPage || loadingMore}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              Previous
+            </button>
+            <span className="text-sm text-gray-600">Page {currentPage}</span>
+            <button
+              onClick={onNextPage}
+              disabled={!hasNextPage || loadingMore}
+              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loadingMore ? 'Loading...' : 'Next'}
+            </button>
           </div>
         )}
       </>
@@ -318,7 +397,13 @@ export default function UserRulesClientPage({ ruleCount }) {
                   loadingInitial: loadingLastModified,
                   loadingMore: loadingMoreLastModified,
                   hasNextPage: hasNext,
-                  onLoadMore: handleLoadMoreLastModified,
+                  hasPrevPage: currentPageLastModified > 1,
+                  onNextPage: handleNextPageLastModified,
+                  onPrevPage: handlePrevPageLastModified,
+                  currentPage: currentPageLastModified,
+                  totalItems: totalLastModified || lastModifiedRules.length,
+                  pageSize: LAST_MODIFIED_PAGE_SIZE,
+                  showGithubLoading: true,
                 })}
 
               {activeTab === Tabs.AUTHORED &&
@@ -326,7 +411,12 @@ export default function UserRulesClientPage({ ruleCount }) {
                   loadingInitial: loadingAuthored,
                   loadingMore: loadingMoreAuthored,
                   hasNextPage: authoredHasNext,
-                  onLoadMore: handleLoadMoreAcknowledgment,
+                  hasPrevPage: currentPageAuthored > 1,
+                  onNextPage: handleNextPageAuthored,
+                  onPrevPage: handlePrevPageAuthored,
+                  currentPage: currentPageAuthored,
+                  totalItems: totalAuthored || authoredRules.length,
+                  pageSize: AUTHORED_PAGE_SIZE,
               })}
           </div>
         </div>
