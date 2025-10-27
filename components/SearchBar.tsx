@@ -5,6 +5,7 @@ import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { searchClient } from '@/lib/algoliaClient';
 import { Search } from 'lucide-react';
+import SearchBarSkeleton from './SearchBarSkeleton';
 
 interface SearchResult {
     objectID: string;
@@ -23,7 +24,7 @@ function SearchResults({ onResults, sortBy }: { onResults?: (results: SearchResu
     const { hits } = useHits();
     
     useEffect(() => {
-        let sortedHits = [...hits] as unknown as SearchResult[];
+        const sortedHits = [...hits] as unknown as SearchResult[];
         
         if (sortBy === 'created') {
             sortedHits.sort((a, b) => new Date(b.created || 0).getTime() - new Date(a.created || 0).getTime());
@@ -77,7 +78,21 @@ function CustomSearchBox({ onSubmit }: { onSubmit: (query: string) => void }) {
 
 export default function SearchBar({ keyword = '', sortBy, onResults }: SearchBarProps) {
     const [submitted, setSubmitted] = useState(false);
+    const [isInitialized, setIsInitialized] = useState(false);
     const indexName = process.env.NEXT_PUBLIC_ALGOLIA_INDEX_NAME!;
+
+    useEffect(() => {
+        // Small delay to ensure InstantSearch has time to initialize
+        const timer = setTimeout(() => {
+            setIsInitialized(true);
+        }, 100);
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (!isInitialized) {
+        return <SearchBarSkeleton />;
+    }
 
     return (
         <InstantSearch
