@@ -78,7 +78,7 @@ const nextConfig: NextConfig = {
   },
   experimental: {
     staticGenerationRetryCount: 2,
-    staticGenerationMaxConcurrency: 20,
+    staticGenerationMaxConcurrency: 50,
   },
   async rewrites() {
     return [
