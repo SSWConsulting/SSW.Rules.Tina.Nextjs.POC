@@ -28,9 +28,7 @@ const Rule: Collection = {
       readonly: true,
     },
     router: ({ document }) => {
-      const slug =
-        document?._sys?.relativePath?.split("/")?.[0] ??
-        "";
+      const slug = document?._sys?.relativePath?.split("/")?.[0] ?? "";
       return `${basePath}/${slug}`;
     },
     beforeSubmit: historyBeforeSubmit,
@@ -42,12 +40,13 @@ const Rule: Collection = {
       name: "title",
       isTitle: true,
       required: true,
+      searchable: true
     },
     {
       type: "image",
       label: "Rule thumbnail",
       name: "thumbnail",
-      description: "Use a JPG or PNG image that is at least 175 x 175px",
+      description: "Use a JPG or PNG image that is at least 175 x 175px"
     },
     {
       type: "string",
@@ -55,6 +54,7 @@ const Rule: Collection = {
       label: "Uri",
       description: "The URI of the rule - this defines the slug and refereces.",
       required: true,
+      searchable: true,
       ui: {
         validate: (value?: string): string | void => {
           const v = (value ?? "").trim();
