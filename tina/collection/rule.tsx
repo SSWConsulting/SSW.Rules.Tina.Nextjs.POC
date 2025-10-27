@@ -71,6 +71,7 @@ const Rule: Collection = {
       name: "authors",
       label: "Authors",
       description: "The list of contributors for this rule.",
+      searchable: false,
       list: true,
       ui: {
         itemProps: (item) => {
@@ -105,12 +106,14 @@ const Rule: Collection = {
       description:
         "The URIs of rules that should be suggested based on the content of this rule.",
       list: true,
+      searchable: false,
     },
     {
       type: "string",
       name: "redirects",
       label: "Redirects",
       list: true,
+      searchable: false,
     },
     {
       type: "string",
@@ -128,12 +131,14 @@ const Rule: Collection = {
       label: "SEO Description",
       description:
         "A summary of the page content, used for SEO purposes. This can be generated automatically with AI.",
+      searchable: false,
     },
     {
       type: "rich-text",
       name: "body",
       label: "Body",
       isBody: true,
+      searchable: false,
       templates: embedTemplates,
       toolbarOverride: ['embed', 'heading', 'link', 'quote', 'ul', 'ol', 'bold', 'italic', 'code', 'codeBlock', 'mermaid', 'table', 'raw']
     },
