@@ -54,7 +54,7 @@ const Rule: Collection = {
       type: "string",
       name: "uri",
       label: "Uri",
-      description: "The URI of the rule - this defines the slug and refereces.",
+      description: "The URI of the rule - this defines the slug and references.",
       required: true,
       searchable: true,
       ui: {
