@@ -1,3 +1,5 @@
+'use client';
+
 import classNames from 'classnames';
 import { MegaMenuLayout } from 'ssw.megamenu';
 import useAppInsights from '../hooks/useAppInsights';
