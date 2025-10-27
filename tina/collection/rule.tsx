@@ -41,7 +41,7 @@ const Rule: Collection = {
       label: "Title",
       name: "title",
       isTitle: true,
-      required: true
+      required: true,
     },
     {
       type: "image",
