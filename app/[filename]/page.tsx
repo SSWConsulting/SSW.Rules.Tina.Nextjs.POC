@@ -7,8 +7,11 @@ import categoryTitleIndex from "@/category-uri-title-map.json";
 import ServerRulePage from "@/components/ServerRulePage";
 import ServerCategoryPage from "@/components/ServerCategoryPage";
 
-export const revalidate = 300;
+export const revalidate = 3600;
 export const dynamicParams = false;
+
+// Add this to force static generation
+export const dynamic = 'force-static';
 
 const getFullRelativePathFromFilename = async (filename: string): Promise<string | null> => {
   let hasNextPage = true;
