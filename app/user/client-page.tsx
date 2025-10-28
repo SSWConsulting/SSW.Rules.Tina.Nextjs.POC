@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'next/navigation';
 import client from '@/tina/__generated__/client';
 import Breadcrumbs from '@/components/Breadcrumbs';
@@ -15,6 +15,7 @@ import { selectLatestRuleFilesByPath } from '@/utils/selectLatestRuleFilesByPath
 import Spinner from '@/components/Spinner';
 import { FaUserCircle } from 'react-icons/fa';
 import RuleList from '@/components/rule-list';
+import Pagination from '@/components/ui/pagination';
 
 const Tabs = {
   MODIFIED: 'modified',
@@ -34,21 +35,20 @@ export default function UserRulesClientPage({ ruleCount }) {
   const [loadingMoreLastModified, setLoadingMoreLastModified] = useState(false);
   const [nextPageCursor, setNextPageCursor] = useState('');
   const [hasNext, setHasNext] = useState(false);
-  const [totalLastModified, setTotalLastModified] = useState<number>(0);
   const [currentPageLastModified, setCurrentPageLastModified] = useState(1);
-  const LAST_MODIFIED_PAGE_SIZE = 10;
+  const [itemsPerPageLastModified, setItemsPerPageLastModified] = useState(10);
 
   // Acknowledged
   const [authoredRules, setAuthoredRules] = useState<any[]>([]);
   const [author, setAuthor] = useState<{ fullName?: string; slug?: string; gitHubUrl?: string }>({});
   const [loadingAuthored, setLoadingAuthored] = useState(false);
-  const AUTHORED_PAGE_SIZE = 10;
   const [authoredNextCursor, setAuthoredNextCursor] = useState<string | null>(null);
   const [authoredHasNext, setAuthoredHasNext] = useState(false);
   const [loadingMoreAuthored, setLoadingMoreAuthored] = useState(false);
   const [githubError, setGithubError] = useState<string | null>(null);
-  const [totalAuthored, setTotalAuthored] = useState<number>(0);
   const [currentPageAuthored, setCurrentPageAuthored] = useState(1);
+  const [itemsPerPageAuthored, setItemsPerPageAuthored] = useState(10);
+  const FETCH_PAGE_SIZE = 10;
 
   const resolveAuthor = async (): Promise<string> => {
     const res = await fetch(`./api/crm/employees?query=${encodeURIComponent(queryStringRulesAuthor)}`);
@@ -95,14 +95,9 @@ export default function UserRulesClientPage({ ruleCount }) {
 
       if (allRules.length === 0 && !append) {
         setLastModifiedRules([]);
-        setTotalLastModified(0);
       } else if (allRules.length > 0) {
         const uniqueRules = selectLatestRuleFilesByPath(allRules);
         await updateFilteredItems(uniqueRules, append);
-        // Update total count from GitHub search
-        if (prSearchData.search.repositoryCount !== undefined) {
-          setTotalLastModified(prSearchData.search.repositoryCount);
-        }
       }
 
       const { endCursor, hasNextPage } = prSearchData.search.pageInfo;
@@ -179,7 +174,7 @@ export default function UserRulesClientPage({ ruleCount }) {
 
       const res = await client.queries.rulesByAuthor({
         authorTitle: authorName || '',
-        first: AUTHORED_PAGE_SIZE,
+        first: FETCH_PAGE_SIZE,
         after: append ? authoredNextCursor : undefined,
       });
 
@@ -191,13 +186,7 @@ export default function UserRulesClientPage({ ruleCount }) {
       const hasMorePages = !!pageInfo?.hasNextPage;
 
       setAuthoredNextCursor(pageInfo?.endCursor ?? null);
-      setAuthoredHasNext(hasMorePages && totalFetched === AUTHORED_PAGE_SIZE);
-
-      if (!append) {
-        setTotalAuthored(nodes.length);
-      } else {
-        setTotalAuthored((prev) => prev + nodes.length);
-      }
+      setAuthoredHasNext(hasMorePages && totalFetched === FETCH_PAGE_SIZE);
 
       const batch = nodes.map((fullRule: any) => ({
         guid: fullRule.guid,
@@ -232,34 +221,11 @@ export default function UserRulesClientPage({ ruleCount }) {
     })();
   }, [queryStringRulesAuthor]);
 
-  const handleNextPageLastModified = () => {
-    if (loadingMoreLastModified || !hasNext) return;
-    setCurrentPageLastModified((prev) => prev + 1);
-    getLastModifiedRules({ append: true, page: currentPageLastModified + 1 });
-  };
-
-  const handlePrevPageLastModified = () => {
-    if (currentPageLastModified <= 1) return;
-  };
-
-  const handleNextPageAuthored = () => {
-    if (loadingMoreAuthored || !authoredHasNext) return;
-    setCurrentPageAuthored((prev) => prev + 1);
-    getAuthoredRules(author.fullName || '', { append: true, page: currentPageAuthored + 1 });
-  };
-
-  const handlePrevPageAuthored = () => {
-    if (currentPageAuthored <= 1) return;
-    // For previous page, we would need to implement a cursor stack
-    // This is a simplified version - real implementation would require storing previous cursors
-    console.warn('Previous page not fully implemented');
-  };
-
   const TabHeader = () => (
     <div role="tablist" aria-label="User Rules Tabs" className="flex mt-2 mb-4 divide-x divide-gray-200 rounded">
       {[
-        { key: Tabs.AUTHORED, label: `Authored (${totalAuthored || authoredRules.length})` },
-        { key: Tabs.MODIFIED, label: `Last Modified (${totalLastModified || lastModifiedRules.length})` },
+        { key: Tabs.AUTHORED, label: `Authored (${authoredRules.length})` },
+        { key: Tabs.MODIFIED, label: `Last Modified (${lastModifiedRules.length})` },
       ].map((t, i) => {
         const isActive = activeTab === t.key;
         return (
@@ -285,81 +251,46 @@ export default function UserRulesClientPage({ ruleCount }) {
     </div>
   );
 
-  const renderList = (
-    items: any[],
-    {
-      loadingInitial,
-      loadingMore,
-      hasNextPage,
-      hasPrevPage,
-      onNextPage,
-      onPrevPage,
-      currentPage,
-      totalItems,
-      pageSize,
-      emptyText = 'No results found.',
-      showGithubLoading = false,
-    }: {
-      loadingInitial: boolean;
-      loadingMore: boolean;
-      hasNextPage: boolean;
-      hasPrevPage: boolean;
-      onNextPage: () => void;
-      onPrevPage: () => void;
-      currentPage: number;
-      totalItems: number;
-      pageSize: number;
-      emptyText?: string;
-      showGithubLoading?: boolean;
-    },
-  ) => {
-    if (items.length === 0 && loadingInitial) {
-      return (
-        <div className="flex flex-col items-center justify-center py-8">
-          <Spinner size="lg" className='center' />
-          {showGithubLoading && (
-            <p className="mt-4 text-sm text-gray-600">
-              Fetching data from GitHub... this might take a minute.
-            </p>
-          )}
-        </div>
-      );
-    }
-    if (items.length === 0) {
-      return <div className="py-4 text-sm text-gray-500">{emptyText}</div>;
-    }
+  // Pagination helpers for Last Modified
+  const totalPagesLastModified = itemsPerPageLastModified >= lastModifiedRules.length ? 1 : Math.ceil(lastModifiedRules.length / itemsPerPageLastModified);
 
-    const startItem = (currentPage - 1) * pageSize + 1;
-    const endItem = Math.min(currentPage * pageSize, items.length);
-    const displayItems = items.slice(startItem - 1, endItem);
+  const paginatedLastModifiedRules = useMemo(() => {
+    if (itemsPerPageLastModified >= lastModifiedRules.length) {
+      return lastModifiedRules;
+    }
+    const startIndex = (currentPageLastModified - 1) * itemsPerPageLastModified;
+    const endIndex = startIndex + itemsPerPageLastModified;
+    return lastModifiedRules.slice(startIndex, endIndex);
+  }, [lastModifiedRules, currentPageLastModified, itemsPerPageLastModified]);
 
-    return (
-      <>
-        <div className="mb-3 text-sm text-gray-600">
-          Showing {startItem}-{endItem} of {totalItems} {totalItems === 1 ? 'rule' : 'rules'}
-        </div>
-        <RuleList rules={displayItems} showFilterControls={false} showPagination={false} />
-        {(hasNextPage || hasPrevPage) && (
-          <div className="mt-4 flex items-center justify-between">
-            <button
-              onClick={onPrevPage}
-              disabled={!hasPrevPage || loadingMore}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              Previous
-            </button>
-            <span className="text-sm text-gray-600">Page {currentPage}</span>
-            <button
-              onClick={onNextPage}
-              disabled={!hasNextPage || loadingMore}
-              className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {loadingMore ? 'Loading...' : 'Next'}
-            </button>
-          </div>
-        )}
-      </>
-    );
+  const handlePageChangeLastModified = (page: number) => {
+    setCurrentPageLastModified(page);
+  };
+
+  const handleItemsPerPageChangeLastModified = (newItemsPerPage: number) => {
+    setItemsPerPageLastModified(newItemsPerPage);
+    setCurrentPageLastModified(1);
+  };
+
+  // Pagination helpers for Authored
+  const totalPagesAuthored = itemsPerPageAuthored >= authoredRules.length ? 1 : Math.ceil(authoredRules.length / itemsPerPageAuthored);
+
+  const paginatedAuthoredRules = useMemo(() => {
+    if (itemsPerPageAuthored >= authoredRules.length) {
+      return authoredRules;
+    }
+    const startIndex = (currentPageAuthored - 1) * itemsPerPageAuthored;
+    const endIndex = startIndex + itemsPerPageAuthored;
+    return authoredRules.slice(startIndex, endIndex);
+  }, [authoredRules, currentPageAuthored, itemsPerPageAuthored]);
+
+  const handlePageChangeAuthored = (page: number) => {
+    setCurrentPageAuthored(page);
+  };
+
+  const handleItemsPerPageChangeAuthored = (newItemsPerPage: number) => {
+    setItemsPerPageAuthored(newItemsPerPage);
+    setCurrentPageAuthored(1);
   };
   
   return (
@@ -392,32 +323,64 @@ export default function UserRulesClientPage({ ruleCount }) {
           <TabHeader />
 
           <div className="rounded-lg border border-gray-100 bg-white p-4">
-              {activeTab === Tabs.MODIFIED &&
-                  renderList(lastModifiedRules, {
-                  loadingInitial: loadingLastModified,
-                  loadingMore: loadingMoreLastModified,
-                  hasNextPage: hasNext,
-                  hasPrevPage: currentPageLastModified > 1,
-                  onNextPage: handleNextPageLastModified,
-                  onPrevPage: handlePrevPageLastModified,
-                  currentPage: currentPageLastModified,
-                  totalItems: totalLastModified || lastModifiedRules.length,
-                  pageSize: LAST_MODIFIED_PAGE_SIZE,
-                  showGithubLoading: true,
-                })}
+              {activeTab === Tabs.MODIFIED && (
+                <>
+                  {lastModifiedRules.length === 0 && loadingLastModified ? (
+                    <div className="flex items-center justify-center py-8 gap-3">
+                      <Spinner size="lg" />
+                      <p className="text-sm text-gray-600">
+                        Fetching data from GitHub... this might take a minute.
+                      </p>
+                    </div>
+                  ) : lastModifiedRules.length === 0 ? (
+                    <div className="py-4 text-sm text-gray-500">No rules found.</div>
+                  ) : (
+                    <>
+                      <RuleList
+                        rules={paginatedLastModifiedRules}
+                        showFilterControls={false}
+                        showPagination={false}
+                      />
+                      <Pagination
+                        currentPage={currentPageLastModified}
+                        totalPages={totalPagesLastModified}
+                        totalItems={lastModifiedRules.length}
+                        itemsPerPage={itemsPerPageLastModified}
+                        onPageChange={handlePageChangeLastModified}
+                        onItemsPerPageChange={handleItemsPerPageChangeLastModified}
+                      />
+                    </>
+                  )}
+                </>
+              )}
 
-              {activeTab === Tabs.AUTHORED &&
-                renderList(authoredRules, {
-                  loadingInitial: loadingAuthored,
-                  loadingMore: loadingMoreAuthored,
-                  hasNextPage: authoredHasNext,
-                  hasPrevPage: currentPageAuthored > 1,
-                  onNextPage: handleNextPageAuthored,
-                  onPrevPage: handlePrevPageAuthored,
-                  currentPage: currentPageAuthored,
-                  totalItems: totalAuthored || authoredRules.length,
-                  pageSize: AUTHORED_PAGE_SIZE,
-              })}
+              {activeTab === Tabs.AUTHORED && (
+                <>
+                  {authoredRules.length === 0 && loadingAuthored ? (
+                    <div className="flex items-center justify-center py-8">
+                      <Spinner size="lg" />
+                    </div>
+                  ) : authoredRules.length === 0 ? (
+                    <div className="py-4 text-sm text-gray-500">No rules found.</div>
+                  ) : (
+                    <>
+                      <RuleList
+                        rules={paginatedAuthoredRules}
+                        showFilterControls={false}
+                        showPagination={false}
+                      />
+                      <Pagination
+                        currentPage={currentPageAuthored}
+                        totalPages={totalPagesAuthored}
+                        totalItems={authoredRules.length}
+                        itemsPerPage={itemsPerPageAuthored}
+                        onPageChange={handlePageChangeAuthored}
+                        onItemsPerPageChange={handleItemsPerPageChangeAuthored}
+                      />
+                    </>
+                  )}
+                </>
+              )}
           </div>
         </div>
 
