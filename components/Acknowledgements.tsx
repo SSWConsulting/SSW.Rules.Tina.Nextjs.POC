@@ -83,7 +83,7 @@ export default function Acknowledgements({ authors }: AcknowledgementsProps) {
           >
             <div className="w-12 h-12 overflow-hidden rounded-full relative">
               <a href={author.url} target="_blank" rel="noopener noreferrer">
-                {imgSrc && imgSrc.trim() !== "" && (
+                {imgSrc?.trim() && (
                   <Image
                     src={imgSrc}
                     alt={title}

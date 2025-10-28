@@ -90,7 +90,7 @@ export default function UserDropdown() {
                     dark:border-b-gray-900'
       />
       <div className='flex items-center gap-3 p-4'>
-        {u.picture && u.picture.trim() !== "" && (
+        {u?.picture?.trim() && (
           <img src={u.picture} alt={displayName} className='h-10 w-10 rounded-full object-cover' referrerPolicy='no-referrer' />
         )}
         <div className='min-w-0'>
@@ -139,7 +139,7 @@ export default function UserDropdown() {
           aria-haspopup='menu'
           aria-expanded={open}
         >
-          {u.picture && u.picture.trim() !== "" && (
+          {u?.picture?.trim() && (
             <img src={u.picture} alt={displayName} className='h-10 w-10 rounded-full object-cover cursor-pointer' referrerPolicy='no-referrer' />
           )}
         </button>
