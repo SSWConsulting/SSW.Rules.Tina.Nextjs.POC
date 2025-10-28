@@ -30,7 +30,11 @@ export default function ServerRulePage({
   serverRulePageProps,
   tinaProps,
 }: ServerRulePagePropsWithTinaProps) {
-  const { rule, ruleCategoriesMapping, relatedRulesMapping, sanitizedBasePath } = serverRulePageProps;
+  const { data } = tinaProps;
+  const rule = data?.rule;
+  const ruleCategoriesMapping = data?.ruleCategoriesMapping;
+  const relatedRulesMapping = data?.relatedRulesMapping;
+  const sanitizedBasePath = data?.sanitizedBasePath;
 
   const relativeTime = rule?.lastUpdated ? timeAgo(rule.lastUpdated) : "";
   const created = rule?.created ? formatDateLong(rule.created) : "Unknown";
