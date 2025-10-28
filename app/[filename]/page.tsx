@@ -10,7 +10,9 @@ import { TinaRuleWrapper } from "./tina-rule-wrapper";
 export const revalidate = 3600;
 export const dynamicParams = false;
 
-// Add this to force static generation
+// Add this to force static generation - ensure that the getRuleData and getCategoryData 
+// functions are called at build time and have them cached.
+
 export const dynamic = 'force-static';
 
 const getFullRelativePathFromFilename = async (filename: string): Promise<string | null> => {
