@@ -4,8 +4,8 @@ import client from "@/tina/__generated__/client";
 import { notFound } from "next/navigation";
 import ruleToCategoryIndex from "@/rule-to-categories.json";
 import categoryTitleIndex from "@/category-uri-title-map.json";
-import ServerRulePage from "@/components/ServerRulePage";
 import ServerCategoryPage from "@/components/ServerCategoryPage";
+import { TinaRuleWrapper } from "./tina-rule-wrapper";
 
 export const revalidate = 3600;
 export const dynamicParams = false;
@@ -290,11 +290,14 @@ export default async function Page({
     const sanitizedBasePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/^\/+/, "");
     return (
       <Section>
-        <ServerRulePage
-          rule={rule.data.rule}
-          ruleCategoriesMapping={ruleCategoriesMapping}
-          relatedRulesMapping={relatedRulesMapping}
-          sanitizedBasePath={sanitizedBasePath}
+        <TinaRuleWrapper
+          tinaQueryProps={rule}
+          serverRulePageProps={{
+            rule: rule.data.rule,
+            ruleCategoriesMapping: ruleCategoriesMapping,
+            relatedRulesMapping: relatedRulesMapping,
+            sanitizedBasePath: sanitizedBasePath,
+          }}
         />
       </Section>
     );

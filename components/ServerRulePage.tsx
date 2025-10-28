@@ -14,19 +14,24 @@ import Acknowledgements from "./Acknowledgements";
 import HelpCard from "./HelpCard";
 import Bookmark from "./Bookmark";
 
-interface ServerRulePageProps {
+export interface ServerRulePageProps {
   rule: any;
   ruleCategoriesMapping: { title: string; uri: string }[];
   relatedRulesMapping: { uri: string; title: string }[];
   sanitizedBasePath: string;
 }
 
+export type ServerRulePagePropsWithTinaProps = {
+  serverRulePageProps: ServerRulePageProps;
+  tinaProps: any;
+}
+
 export default function ServerRulePage({
-  rule,
-  ruleCategoriesMapping,
-  relatedRulesMapping,
-  sanitizedBasePath,
-}: ServerRulePageProps) {
+  serverRulePageProps,
+  tinaProps,
+}: ServerRulePagePropsWithTinaProps) {
+  const { rule, ruleCategoriesMapping, relatedRulesMapping, sanitizedBasePath } = serverRulePageProps;
+
   const relativeTime = rule?.lastUpdated ? timeAgo(rule.lastUpdated) : "";
   const created = rule?.created ? formatDateLong(rule.created) : "Unknown";
   const updated = rule?.lastUpdated ? formatDateLong(rule.lastUpdated) : "Unknown";
