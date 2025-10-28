@@ -215,11 +215,52 @@ export default function UserRulesClientPage({ ruleCount }) {
     (async () => {
       if (queryStringRulesAuthor) {
         setLoadingAuthored(true);
-        const [_, resolvedAuthorName] = await Promise.all([getLastModifiedRules(), resolveAuthor()]);
-        await getAuthoredRules(resolvedAuthorName as string);
+        const [_, resolvedAuthorName] = await Promise.all([
+          loadAllLastModifiedRules(),
+          resolveAuthor()
+        ]);
+        await loadAllAuthoredRules(resolvedAuthorName as string);
       }
     })();
   }, [queryStringRulesAuthor]);
+
+  // Function to load ALL last modified rules (not just one page)
+  const loadAllLastModifiedRules = async () => {
+    setLoadingLastModified(true);
+    setLastModifiedRules([]);
+    let cursor = '';
+    let hasMore = true;
+
+    try {
+      while (hasMore) {
+        await getLastModifiedRules({ append: cursor !== '', page: 1 });
+        // Check if there are more pages after this fetch
+        hasMore = hasNext && nextPageCursor !== '';
+        cursor = nextPageCursor;
+      }
+    } finally {
+      setLoadingLastModified(false);
+    }
+  };
+
+  // Function to load ALL authored rules (not just one page)
+  const loadAllAuthoredRules = async (authorName: string) => {
+    setLoadingAuthored(true);
+    setAuthoredRules([]);
+    let cursor: string | null = null;
+    let hasMore = true;
+
+    try {
+      while (hasMore) {
+        await getAuthoredRules(authorName, { append: cursor !== null, page: 1 });
+        // Check if there are more pages after this fetch
+        hasMore = authoredHasNext && authoredNextCursor !== null;
+        cursor = authoredNextCursor;
+      }
+    } finally {
+      setLoadingAuthored(false);
+    }
+  };
 
   const TabHeader = () => (
     <div role="tablist" aria-label="User Rules Tabs" className="flex mt-2 mb-4 divide-x divide-gray-200 rounded">
@@ -326,11 +367,11 @@ export default function UserRulesClientPage({ ruleCount }) {
               {activeTab === Tabs.MODIFIED && (
                 <>
                   {lastModifiedRules.length === 0 && loadingLastModified ? (
-                    <div className="flex items-center justify-center py-8 gap-3">
-                      <Spinner size="lg" />
-                      <p className="text-sm text-gray-600">
-                        Fetching data from GitHub... this might take a minute.
-                      </p>
+                    <div className="flex items-center justify-center py-8">
+                      <Spinner
+                        size="lg"
+                        text="Fetching data from GitHub... this might take a minute."
+                      />
                     </div>
                   ) : lastModifiedRules.length === 0 ? (
                     <div className="py-4 text-sm text-gray-500">No rules found.</div>
