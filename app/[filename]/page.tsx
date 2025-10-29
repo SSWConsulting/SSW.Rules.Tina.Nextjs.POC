@@ -4,7 +4,7 @@ import client from "@/tina/__generated__/client";
 import { notFound } from "next/navigation";
 import ruleToCategoryIndex from "@/rule-to-categories.json";
 import categoryTitleIndex from "@/category-uri-title-map.json";
-import ServerCategoryPage from "@/components/ServerCategoryPage";
+import ServerCategoryPage from "@/app/[filename]/ServerCategoryPage";
 import { TinaRuleWrapper } from "./tina-rule-wrapper";
 
 export const revalidate = 3600;
