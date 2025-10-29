@@ -7,7 +7,7 @@ import categoryTitleIndex from "@/category-uri-title-map.json";
 import ServerCategoryPage from "@/components/ServerCategoryPage";
 import { TinaRuleWrapper } from "./tina-rule-wrapper";
 
-export const revalidate = 3600;
+export const revalidate = 300;
 export const dynamicParams = false;
 
 // Add this to force static generation - ensure that the getRuleData and getCategoryData 
