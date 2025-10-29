@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import ruleToCategoryIndex from "@/rule-to-categories.json";
 import categoryTitleIndex from "@/category-uri-title-map.json";
 import ServerCategoryPage from "@/app/[filename]/ServerCategoryPage";
-import { TinaRuleWrapper } from "./tina-rule-wrapper";
+import { TinaRuleWrapper } from "./TinaRuleWrapper";
 
 export const revalidate = 3600;
 export const dynamicParams = false;
