@@ -38,8 +38,7 @@ export async function POST(req: Request) {
     }
 
     for (const route of routesToRevalidate) {
-      console.log(`Revalidating path: ${route}`);
-      revalidatePath(route, "page");
+      revalidatePath(route);
     }
 
     return NextResponse.json({ revalidated: true, routes: Array.from(routesToRevalidate) });
