@@ -21,6 +21,7 @@ export async function POST(req: Request) {
     }
 
     const routesToRevalidate = new Set<string>();
+    const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || '').replace(/^\/+/, '');
 
     for (const changedPath of changedPaths) {
       if (typeof changedPath !== 'string') continue;
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
           .replace('/rule.mdx', '')
           .replace(/\/+$/, '');
         if (slug) {
-          routesToRevalidate.add(`/${slug}`);
+          routesToRevalidate.add(`/${basePath}/${slug}`);
         }
       }
     }
