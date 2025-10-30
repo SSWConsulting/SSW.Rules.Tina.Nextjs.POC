@@ -80,6 +80,12 @@ export async function POST(request: NextRequest) {
             "- rule exists with URI?",
             exists
           );
+
+          if (!exists) {
+
+        } else {
+          }
+
         } catch (e) {
           console.error("Error fetching category data for", category, e);
         }
