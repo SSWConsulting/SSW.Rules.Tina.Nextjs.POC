@@ -22,7 +22,6 @@ export async function GET() {
     const PAGE_SIZE = 4000; // server-side page size (Tina may cap to 50)
     let after: string | undefined = undefined;
     let hasNextPage = true;
-    let totalCount = 0;
     const allEdges: any[] = [];
 
     // Loop over all pages until exhausted
@@ -34,7 +33,6 @@ export async function GET() {
       const data = (res?.data ?? res) as any;
       const conn = data?.ruleConnection;
       const edges = Array.isArray(conn?.edges) ? conn.edges : [];
-      if (i === 0) totalCount = conn?.totalCount ?? 0;
       allEdges.push(...edges);
 
       hasNextPage = !!conn?.pageInfo?.hasNextPage;
