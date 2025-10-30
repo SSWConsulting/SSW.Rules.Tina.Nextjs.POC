@@ -225,26 +225,3 @@ query paginatedRulesQuery(
     }
   }
 }
-
-query allRulesQuery {
-  ruleConnection {
-    totalCount
-    pageInfo {
-      hasPreviousPage
-      hasNextPage
-      startCursor
-      endCursor
-    }
-    edges {
-      cursor
-      node {
-        id
-        title
-        uri
-        _sys {
-          relativePath
-        }
-      }
-    }
-  }
-}
