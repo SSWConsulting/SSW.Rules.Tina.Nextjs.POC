@@ -53,17 +53,17 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
   }, []);
 
   useEffect(() => {
-    if(filter && filter.length > MIN_SEARCH_LENGTH) {
+    if(filter && filter.length >= MIN_SEARCH_LENGTH) {
       const timer = setTimeout(() => {
         setDebouncedFilter(filter);
       }, 1000);
-      
+
       return () => clearTimeout(timer);
     }
 
     // Clear the rules list when filter is short/empty
     setFilteredRules([]);
-    
+
   }, [filter]);
 
   // Recompute filtered results when query changes
@@ -75,12 +75,28 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
       return;
     }
     const source = Array.isArray(allRules) ? allRules : [];
-    const startsWithMatches = source.filter((r) => (r.uri || "").toLowerCase().startsWith(q));
+
+    // Helper function to check if a rule matches the search query
+    const matchesQuery = (r: Rule) => {
+      const uri = (r.uri || "").toLowerCase();
+      const title = (r.title || "").toLowerCase();
+      return uri.includes(q) || title.includes(q);
+    };
+
+    // Helper function to check if a rule starts with the query
+    const startsWithQuery = (r: Rule) => {
+      const uri = (r.uri || "").toLowerCase();
+      const title = (r.title || "").toLowerCase();
+      return uri.startsWith(q) || title.startsWith(q);
+    };
+
+    // Prioritize matches that start with the query
+    const startsWithMatches = source.filter((r) => startsWithQuery(r));
     const startsWithKeys = new Set(
       startsWithMatches.map((r) => r.id || r._sys?.relativePath || r.uri)
     );
     const includesMatches = source.filter(
-      (r) => (r.uri || "").toLowerCase().includes(q) && !startsWithKeys.has(r.id || r._sys?.relativePath || r.uri)
+      (r) => matchesQuery(r) && !startsWithKeys.has(r.id || r._sys?.relativePath || r.uri)
     );
     setFilteredRules([...startsWithMatches, ...includesMatches]);
   }, [debouncedFilter, allRules]);
