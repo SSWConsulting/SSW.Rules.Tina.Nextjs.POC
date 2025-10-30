@@ -133,23 +133,78 @@ export async function POST(request: NextRequest) {
               } else if (existingRulePaths.includes(rulePath)) {
                 console.log("Rule path already referenced in category; skipping mutation.");
               } else {
-                // 3) Update the category's index with the new reference
+                // 3) Fetch full category doc so we preserve existing fields
+                const CATEGORY_FULL_QUERY = `
+                  query CategoryFull($relativePath: String!) {
+                    category(relativePath: $relativePath) {
+                      ... on CategoryCategory {
+                        title
+                        uri
+                        guid
+                        consulting
+                        experts
+                        redirects
+                        body
+                        created
+                        createdBy
+                        createdByEmail
+                        lastUpdated
+                        lastUpdatedBy
+                        lastUpdatedByEmail
+                        isArchived
+                        archivedreason
+                      }
+                    }
+                  }
+                `;
+
+                const categoryFullRes: any = await tgc.request(CATEGORY_FULL_QUERY, { relativePath });
+                const currentCategory: any = categoryFullRes?.category ?? {};
+
+                // Build new index: keep existing + append new
+                const newIndex = [
+                  ...existingRulePaths.map((p: string) => ({ rule: p })),
+                  { rule: rulePath },
+                ];
+
+                // Only send defined values to avoid clearing fields with nulls
+                const pruneUndefinedAndNull = (obj: Record<string, unknown>) =>
+                  Object.fromEntries(
+                    Object.entries(obj).filter(([, v]) => v !== undefined && v !== null)
+                  );
+
+                const categoryParams = pruneUndefinedAndNull({
+                  title: currentCategory?.title,
+                  uri: currentCategory?.uri,
+                  guid: currentCategory?.guid,
+                  consulting: currentCategory?.consulting,
+                  experts: currentCategory?.experts,
+                  redirects: Array.isArray(currentCategory?.redirects)
+                    ? currentCategory.redirects.filter((r: unknown) => typeof r === "string")
+                    : undefined,
+                  body: currentCategory?.body,
+                  created: currentCategory?.created,
+                  createdBy: currentCategory?.createdBy,
+                  createdByEmail: currentCategory?.createdByEmail,
+                  lastUpdated: currentCategory?.lastUpdated,
+                  lastUpdatedBy: currentCategory?.lastUpdatedBy,
+                  lastUpdatedByEmail: currentCategory?.lastUpdatedByEmail,
+                  isArchived: currentCategory?.isArchived,
+                  archivedreason: currentCategory?.archivedreason,
+                  index: newIndex,
+                });
+
                 const UPDATE_CATEGORY_MUTATION = `
-                  mutation UpdateCategoryIndex($relativePath: String!, $index: [CategoryCategoryIndexMutation]) {
-                    updateCategory(relativePath: $relativePath, params: { category: { index: $index } }) {
+                  mutation UpdateCategoryDoc($relativePath: String!, $category: CategoryCategoryMutation) {
+                    updateCategory(relativePath: $relativePath, params: { category: $category }) {
                       __typename
                     }
                   }
                 `;
 
-                const newIndex = [
-                  ...existingRulePaths.map((p) => ({ rule: p })),
-                  { rule: rulePath },
-                ];
-
                 await tgc.request(UPDATE_CATEGORY_MUTATION, {
                   relativePath,
-                  index: newIndex,
+                  category: categoryParams,
                 });
 
                 console.log("Updated category", relativePath, "with rule", ruleUri);
