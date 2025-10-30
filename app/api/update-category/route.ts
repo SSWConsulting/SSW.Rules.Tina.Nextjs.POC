@@ -1,13 +1,28 @@
 //import { TinaGraphQLClient } from "@/src/utils/tina/tina-graphql-client";
+import client from "@/tina/__generated__/client";
 import { type NextRequest, NextResponse } from "next/server";
 // import { generateMdxFiles } from "./generate-mdx-files";
 // import type { GroupApiData } from "./types";
 
 const isDev = process.env.NODE_ENV === "development";
 
+// Checks whether a rule with the given URI already exists in the provided
+// category query result returned by `categoryWithRulesQuery`.
+function ruleExistsByUriInCategory(result: unknown, targetUri: string): boolean {
+  try {
+    const category: any = (result as any)?.data?.category;
+    const indexItems: any[] | undefined = category?.index;
+    if (!Array.isArray(indexItems)) return false;
+
+    return indexItems.some((item: any) => item?.rule?.uri === targetUri);
+  } catch {
+    return false;
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { categories, rule } = await request.json();
+    const { categories, ruleUri } = await request.json();
     const authHeader = request.headers.get("authorization");
 
     if (!isDev && (!authHeader || !authHeader.startsWith("Bearer "))) {
@@ -20,9 +35,9 @@ export async function POST(request: NextRequest) {
     const token = authHeader?.replace("Bearer ", "");
     // const client = new TinaGraphQLClient(token || "");
     console.log("✌️ category", categories);
-    console.log("✌️rule", rule);
+    console.log("✌️rule", ruleUri);
 
-    if (!Array.isArray(categories) || !rule) {
+    if (!Array.isArray(categories) || !ruleUri) {
       return NextResponse.json(
         { error: "Invalid data format - expected categories array and rule" },
         { status: 400 }
@@ -33,7 +48,42 @@ export async function POST(request: NextRequest) {
     const allSkippedFiles: string[] = [];
     for (const category of categories) {
         console.log("category", category);
-        console.log("rule", rule);
+        console.log("rule", ruleUri);
+
+        // if (typeof category !== "string") {
+        //   console.warn("Skipping non-string category entry:", category);
+        //   continue;
+        // }
+
+        try {
+          const rawPath =
+            typeof category === "string"
+              ? category
+              : typeof category?.category === "string"
+              ? category.category
+              : "";
+
+
+          // Normalize to Tina's expected relativePath: relative to `categories/` and must end with .mdx
+          let relativePath = rawPath
+            .replace(/^content\//, "")
+            .replace(/^categories\//, "");
+          if (!relativePath.endsWith(".mdx")) relativePath = `${relativePath}.mdx`;
+
+          const res = await client.queries.categoryWithRulesQuery({
+            relativePath,
+          });
+          const exists = ruleExistsByUriInCategory(res, ruleUri);
+          console.log(
+            "Category data for",
+            relativePath,
+            "- rule exists with URI?",
+            exists
+          );
+        } catch (e) {
+          console.error("Error fetching category data for", category, e);
+        }
+
     //   if (item._template === "apiTab") {
     //     // Process API groups within this tab
     //     for (const group of item.supermenuGroup || []) {

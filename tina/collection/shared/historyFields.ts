@@ -105,7 +105,7 @@ export const historyBeforeSubmit = async ({
         headers: getBearerAuthHeader(),
         body: JSON.stringify({
           categories: values.categories,
-          rule: values.uri,
+          ruleUri: values.uri,
         }),
       });
     try {
