@@ -32,7 +32,7 @@ export async function POST(req: Request) {
           .replace('/rule.mdx', '')
           .replace(/\/+$/, '');
         if (slug) {
-          routesToRevalidate.add(`/${basePath}/${slug}`);
+          routesToRevalidate.add(basePath ? `/${basePath}/${slug}` : `/${slug}`);
         }
       }
     }
