@@ -18,12 +18,12 @@ interface Rule {
 }
 
 const RULES_PER_PAGE = 25;
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+const MIN_SEARCH_LENGTH = 2;
 
 export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
   const [filter, setFilter] = useState("");
   const [debouncedFilter, setDebouncedFilter] = useState("");
-  const [allRules, setAllRules] = useState<Rule[]>([]);
+  const [rulesList, setRulesList] = useState<Rule[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasNextPage, setHasNextPage] = useState(false);
   const [hasPreviousPage, setHasPreviousPage] = useState(false);
@@ -32,12 +32,14 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [isSearchMode, setIsSearchMode] = useState(false);
+  const [selectedRuleLabel, setSelectedRuleLabel] = useState<string | null>(null);
 
   const selectedRule = useMemo(() => {
     return input.value || null;
   }, [input.value]);
 
   const fetchRules = async (searchFilter = "", after?: string, before?: string, reset = false) => {
+    if(!filter || filter.length == 0) return;
     setLoading(true);
     try {
       const isSearch = searchFilter.trim().length > 0;
@@ -55,8 +57,9 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
         params.set("q", searchFilter.trim());
         params.set("field", "uri");
       }
-  
-      const res = await fetch(`${basePath.replace(/\/+$/, "")}/api/rules/paginated?${params.toString()}`, {
+      
+      // Since we are in Tina admin site, we are at /admin so need to drop down a level back to root
+      const res = await fetch(`../api/rules/paginated?${params.toString()}`, {
         method: "GET",
         cache: "no-store",
       });
@@ -71,7 +74,7 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
         _sys: { relativePath: node?._sys?.relativePath || "" },
       }));
   
-      setAllRules(newRules);
+      setRulesList(newRules);
       if (reset) setCurrentPage(1);
   
       setHasNextPage(!!data?.pageInfo?.hasNextPage);
@@ -86,21 +89,19 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
     }
   };
 
-  // Debounce search filter
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedFilter(filter);
-    }, 500);
+    if(filter && filter.length > MIN_SEARCH_LENGTH) {
+      const timer = setTimeout(() => {
+        setDebouncedFilter(filter);
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
 
-    return () => clearTimeout(timer);
+    // Clear the rules list
+    setRulesList([]);
   }, [filter]);
 
-  // Initial load
-  useEffect(() => {
-    fetchRules();
-  }, []);
-
-  // Refetch when debounced filter changes
   useEffect(() => {
     const isSearch = !!debouncedFilter.trim();
     setIsSearchMode(isSearch);
@@ -110,16 +111,11 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
     fetchRules(debouncedFilter, undefined, undefined, true);
   }, [debouncedFilter]);
 
-  const displayRules = allRules
-
-  const handleRuleSelect = (rule: Rule) => {
+  const handleRuleSelect = (rule) => {
+    setSelectedRuleLabel(rule.uri);
     const rulePath = `public/uploads/rules/${rule._sys.relativePath}`;
     input.onChange(rulePath);
-  };
-
-  const handleClearSelection = () => {
-    input.onChange("");
-  };
+  }
 
   const handleNextPage = () => {
     if (hasNextPage && endCursor) {
@@ -134,21 +130,6 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
     }
   };
 
-  // Find the selected rule details for display
-  const selectedRuleDetails = useMemo(() => {
-    if (!selectedRule) return null;
-    const rel = selectedRule.startsWith('rules/')
-      ? selectedRule.slice('rules/'.length)
-      : selectedRule;
-    return allRules.find(rule => rule._sys.relativePath === rel) || null;
-  }, [selectedRule, allRules]);
-
-  const labelText = selectedRuleDetails 
-    ? selectedRuleDetails.title
-    : selectedRule 
-      ? selectedRule.split('/').at(-1)?.replace('.mdx', '') || "Selected rule"
-      : "Select a rule";
-
   return (
     <div className="relative z-[1000]">
       <input type="hidden" id={input.name} {...input} />
@@ -158,7 +139,7 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
             <PopoverButton
               className="text-sm h-11 px-4 justify-between w-full bg-white border border-gray-200 rounded-full hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors flex items-center"
             >
-              <span>{labelText}</span>
+              <span>{selectedRuleLabel || "Select a rule"}</span>
               <BiChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
             </PopoverButton>
             <div
@@ -193,19 +174,6 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
                             placeholder="Enter rule URI, e.g. 3-steps-to-a-pbi"
                           />
                         </div>
-                        {selectedRule && (
-                          <div className="mt-2 flex justify-between items-center">
-                            <span className="text-xs text-gray-600">
-                              Current: {selectedRuleDetails?.title || "Selected rule"}
-                            </span>
-                            <button
-                              onClick={handleClearSelection}
-                              className="text-xs text-blue-500 hover:text-blue-700"
-                            >
-                              Clear selection
-                            </button>
-                          </div>
-                        )}
                       </div>
 
                       {/* Loading state */}
@@ -216,16 +184,16 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
                       )}
 
                       {/* Empty state */}
-                      {!loading && displayRules.length === 0 && (
+                      {!loading && rulesList.length === 0 && filter.length > 0 && (
                         <div className="p-4 text-center text-gray-400">
-                          {filter ? "No rules found matching your search" : "No rules available"}
+                          No rules found matching your search
                         </div>
                       )}
 
                       {/* Rules list */}
-                      {!loading && displayRules.length > 0 && (
+                      {!loading && rulesList.length > 0 && (
                         <div className="flex-1 overflow-y-auto">
-                          {displayRules.map((rule) => {
+                          {rulesList.map((rule) => {
                             const rulePath = `rules/${rule._sys.relativePath}`;
                             const isSelected = selectedRule === rulePath;
                             
@@ -257,7 +225,7 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
                       )}
 
                       {/* Pagination footer */}
-                      {!loading && displayRules.length > 0 && (
+                      {!loading && rulesList.length > 0 && (
                         <div className="bg-gray-50 p-3 border-t border-gray-100 flex items-center justify-between">
                           <div className="text-xs text-gray-600">
                             Page {currentPage} • {totalCount} results
