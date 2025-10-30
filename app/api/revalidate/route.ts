@@ -1,6 +1,12 @@
 import { NextResponse } from 'next/server';
 import { revalidatePath } from 'next/cache';
 
+const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || '').replace(/^\/+/, '');
+
+const pathsToRevalidate = [
+  `${basePath}/api/rules`
+]
+
 export async function POST(req: Request) {
   try {
     const secret = req.headers.get('x-revalidate-secret');
@@ -20,7 +26,6 @@ export async function POST(req: Request) {
     }
 
     const routesToRevalidate = new Set<string>();
-    const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || '').replace(/^\/+/, '');
 
     for (const changedPath of changedPaths) {
       if (typeof changedPath !== 'string') continue;
@@ -38,6 +43,10 @@ export async function POST(req: Request) {
     }
 
     for (const route of routesToRevalidate) {
+      revalidatePath(route);
+    }
+
+    for (const route of pathsToRevalidate) {
       revalidatePath(route);
     }
 
