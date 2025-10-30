@@ -163,8 +163,8 @@ export async function POST(request: NextRequest) {
 
                 // Build new index: keep existing + append new
                 const newIndex = [
-                  ...existingRulePaths.map((p: string) => ({ rule: p })),
-                  { rule: rulePath },
+                  ...existingRulePaths.map((p: string) => ({ rule: `public/uploads/rules/${p}` })),
+                  { rule: `public/uploads/rules/${rulePath}` },
                 ];
 
                 // Only send defined values to avoid clearing fields with nulls
