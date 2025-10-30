@@ -3,11 +3,10 @@ import { revalidatePath } from 'next/cache';
 
 export async function POST(req: Request) {
   try {
-    //TODO: Add this back once tested
-    // const secret = req.headers.get('x-revalidate-secret');
-    // if (secret !== process.env.TINA_WEBHOOK_REVALIDATE_SECRET) {
-    //   return NextResponse.json({ message: 'Invalid secret' }, { status: 401 });
-    // }
+    const secret = req.headers.get('x-revalidate-secret');
+    if (secret !== process.env.TINA_WEBHOOK_SECRET) {
+      return NextResponse.json({ message: 'Invalid secret' }, { status: 401 });
+    }
 
     const body = await req.json().catch(() => ({}));
     const eventType = body?.type;
