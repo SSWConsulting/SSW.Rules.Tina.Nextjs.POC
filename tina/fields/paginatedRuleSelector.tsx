@@ -114,7 +114,7 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
     setSelectedRuleLabel(rule.uri);
     const rulePath = `public/uploads/rules/${rule._sys.relativePath}`;
     input.onChange(rulePath);
-  }
+  };
 
   
 
