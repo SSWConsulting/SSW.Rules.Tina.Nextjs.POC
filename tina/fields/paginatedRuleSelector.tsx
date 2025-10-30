@@ -7,11 +7,14 @@ import {
   Transition,
   PopoverPanel,
 } from "@headlessui/react";
+import Spinner from "@/components/Spinner";
 
 interface Rule {
   id: string;
   title: string;
   uri: string;
+  created?: string;
+  lastUpdated?: string;
   _sys: {
     relativePath: string;
   };
@@ -25,7 +28,8 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
   const [allRules, setAllRules] = useState<Rule[]>([]);
   const [filteredRules, setFilteredRules] = useState<Rule[]>([]);
   const [loading, setLoading] = useState(false);
-  
+  const [isDebouncing, setIsDebouncing] = useState(false);
+
   const [selectedRuleLabel, setSelectedRuleLabel] = useState<string | null>(null);
 
   const selectedRule = useMemo(() => {
@@ -42,7 +46,6 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const rules = await res.json();
         setAllRules(rules);
-        console.log(rules);
       } catch (e) {
         console.error("Failed to load all rules:", e);
       } finally {
@@ -54,15 +57,21 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
 
   useEffect(() => {
     if(filter && filter.length >= MIN_SEARCH_LENGTH) {
+      setIsDebouncing(true);
       const timer = setTimeout(() => {
         setDebouncedFilter(filter);
+        setIsDebouncing(false);
       }, 1000);
 
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        setIsDebouncing(false);
+      };
     }
 
     // Clear the rules list when filter is short/empty
     setFilteredRules([]);
+    setIsDebouncing(false);
 
   }, [filter]);
 
@@ -161,15 +170,22 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
                         </div>
                       </div>
 
+                      {/* Loading state during debounce */}
+                      {isDebouncing && filter.length >= MIN_SEARCH_LENGTH && (
+                        <div className="p-4 text-center">
+                          <Spinner size="sm" inline className="mx-auto" />
+                        </div>
+                      )}
+
                       {/* Empty state */}
-                      {!loading && filteredRules.length === 0 && filter.length > 0 && (
+                      {!loading && !isDebouncing && filteredRules.length === 0 && filter.length >= MIN_SEARCH_LENGTH && (
                         <div className="p-4 text-center text-gray-400">
                           No rules found matching your search
                         </div>
                       )}
 
                       {/* Rules list */}
-                      {!loading && filteredRules.length > 0 && (
+                      {!loading && !isDebouncing && filteredRules.length > 0 && (
                         <div className="flex-1 overflow-y-auto">
                           {filteredRules.map((rule) => {
                             const selectedRel = selectedRule

@@ -52,8 +52,16 @@ export async function GET() {
       .map((node: any) => ({
         title: node?.title || "",
         uri: node?.uri || "",
+        created: node?.created || "",
+        lastUpdated: node?.lastUpdated || "",
         _sys: { relativePath: node?._sys?.relativePath || "" },
-      }));
+      }))
+      .sort((a, b) => {
+        // Sort by most recent timestamp (lastUpdated or created if no update)
+        const aDate = new Date(a.lastUpdated || a.created || 0).getTime();
+        const bDate = new Date(b.lastUpdated || b.created || 0).getTime();
+        return bDate - aDate; // Descending order (most recent first)
+      });
 
     // Update cache
     cachedItems = items;
