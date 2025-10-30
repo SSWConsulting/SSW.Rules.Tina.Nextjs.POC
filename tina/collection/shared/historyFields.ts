@@ -1,3 +1,4 @@
+import { getBearerAuthHeader } from "@/utils/tina/get-bearer-auth-header";
 import { Form, TinaCMS, TinaField } from "tinacms";
 
 export const historyFields:TinaField[] = [
@@ -98,6 +99,15 @@ export const historyBeforeSubmit = async ({
     let userEmail: string | undefined;
     let userName: string | undefined;
 
+    console.log("historyBeforeSubmit", values);
+    const response = await fetch("/rules-beta/api/update-category", {
+        method: "POST",
+        headers: getBearerAuthHeader(),
+        body: JSON.stringify({
+          categories: values.categories,
+          rule: values.uri,
+        }),
+      });
     try {
         const user = await cms.api.tina?.authProvider?.getUser();
         if (user) {
