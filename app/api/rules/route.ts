@@ -4,7 +4,7 @@ import client from "@/tina/__generated__/client";
 // In-memory cache for aggregated rules (per server instance)
 let cachedItems: any[] | null = null;
 let cacheExpiresAt = 0;
-const CACHE_TTL_MS = 300000; // 5 minutes
+const CACHE_TTL_MS = 60000; // 1 minutes
 
 export async function GET() {
   try {
