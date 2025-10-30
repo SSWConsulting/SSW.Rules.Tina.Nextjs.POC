@@ -58,9 +58,10 @@ export default function UserRulesClientPage({ ruleCount }) {
     return profile.fullName as string;
   };
 
-  const getLastModifiedRules = async (opts?: { append?: boolean; page?: number }) => {
+  const getLastModifiedRules = async (opts?: { append?: boolean; page?: number; cursor?: string }) => {
     const append = !!opts?.append;
     const page = opts?.page ?? 1;
+    const cursor = opts?.cursor || '';
     try {
       // clear previous GitHub errors when starting a fetch
       setGithubError(null);
@@ -68,7 +69,7 @@ export default function UserRulesClientPage({ ruleCount }) {
 
       const params = new URLSearchParams();
       params.set('author', queryStringRulesAuthor);
-      if (append && nextPageCursor) params.set('cursor', nextPageCursor);
+      if (append && cursor) params.set('cursor', cursor);
       params.set('direction', 'after');
 
       const url = `./api/github/rules/prs?${params.toString()}`;
@@ -101,16 +102,23 @@ export default function UserRulesClientPage({ ruleCount }) {
       }
 
       const { endCursor, hasNextPage } = prSearchData.search.pageInfo;
-      setNextPageCursor(endCursor || '');
-      setHasNext(!!hasNextPage);
+      const newCursor = endCursor || '';
+      const hasMore = !!hasNextPage;
+
+      setNextPageCursor(newCursor);
+      setHasNext(hasMore);
 
       if (!append) {
         setCurrentPageLastModified(page);
       }
+
+      // Return pagination info for the calling function
+      return { endCursor: newCursor, hasNextPage: hasMore };
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       console.error('Failed to fetch GitHub data:', err);
       setGithubError(message);
+      return { endCursor: '', hasNextPage: false };
     } finally {
       append ? setLoadingMoreLastModified(false) : setLoadingLastModified(false);
     }
@@ -166,16 +174,17 @@ export default function UserRulesClientPage({ ruleCount }) {
     }
   };
 
-  const getAuthoredRules = async (authorName: string, opts?: { append?: boolean; page?: number }) => {
+  const getAuthoredRules = async (authorName: string, opts?: { append?: boolean; page?: number; cursor?: string | null }) => {
     const append = !!opts?.append;
     const page = opts?.page ?? 1;
+    const cursor = opts?.cursor ?? null;
     try {
       append ? setLoadingMoreAuthored(true) : setLoadingAuthored(true);
 
       const res = await client.queries.rulesByAuthor({
         authorTitle: authorName || '',
         first: FETCH_PAGE_SIZE,
-        after: append ? authoredNextCursor : undefined,
+        after: append ? cursor : undefined,
       });
 
       const edges = res?.data?.ruleConnection?.edges ?? [];
@@ -184,9 +193,11 @@ export default function UserRulesClientPage({ ruleCount }) {
       const pageInfo = res?.data?.ruleConnection?.pageInfo;
       const totalFetched = nodes.length;
       const hasMorePages = !!pageInfo?.hasNextPage;
+      const newCursor = pageInfo?.endCursor ?? null;
+      const hasMore = hasMorePages;
 
-      setAuthoredNextCursor(pageInfo?.endCursor ?? null);
-      setAuthoredHasNext(hasMorePages && totalFetched === FETCH_PAGE_SIZE);
+      setAuthoredNextCursor(newCursor);
+      setAuthoredHasNext(hasMore);
 
       const batch = nodes.map((fullRule: any) => ({
         guid: fullRule.guid,
@@ -206,6 +217,12 @@ export default function UserRulesClientPage({ ruleCount }) {
       if (!append) {
         setCurrentPageAuthored(page);
       }
+
+      // Return pagination info for the calling function
+      return { endCursor: newCursor, hasNextPage: hasMore };
+    } catch (err) {
+      console.error('Failed to fetch authored rules:', err);
+      return { endCursor: null, hasNextPage: false };
     } finally {
       append ? setLoadingMoreAuthored(false) : setLoadingAuthored(false);
     }
@@ -233,10 +250,10 @@ export default function UserRulesClientPage({ ruleCount }) {
 
     try {
       while (hasMore) {
-        await getLastModifiedRules({ append: cursor !== '', page: 1 });
-        // Check if there are more pages after this fetch
-        hasMore = hasNext && nextPageCursor !== '';
-        cursor = nextPageCursor;
+        const result = await getLastModifiedRules({ append: cursor !== '', page: 1, cursor });
+        // Use the returned values directly instead of relying on state updates
+        hasMore = result.hasNextPage && result.endCursor !== '';
+        cursor = result.endCursor;
       }
     } finally {
       setLoadingLastModified(false);
@@ -252,10 +269,10 @@ export default function UserRulesClientPage({ ruleCount }) {
 
     try {
       while (hasMore) {
-        await getAuthoredRules(authorName, { append: cursor !== null, page: 1 });
-        // Check if there are more pages after this fetch
-        hasMore = authoredHasNext && authoredNextCursor !== null;
-        cursor = authoredNextCursor;
+        const result = await getAuthoredRules(authorName, { append: cursor !== null, page: 1, cursor });
+        // Use the returned values directly instead of relying on state updates
+        hasMore = result.hasNextPage && result.endCursor !== null;
+        cursor = result.endCursor;
       }
     } finally {
       setLoadingAuthored(false);
@@ -399,7 +416,10 @@ export default function UserRulesClientPage({ ruleCount }) {
                 <>
                   {authoredRules.length === 0 && loadingAuthored ? (
                     <div className="flex items-center justify-center py-8">
-                      <Spinner size="lg" />
+                      <Spinner
+                        size="lg"
+                        text="Fetching data from GitHub... this might take a minute."
+                      />
                     </div>
                   ) : authoredRules.length === 0 ? (
                     <div className="py-4 text-sm text-gray-500">No rules found.</div>
