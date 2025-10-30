@@ -1,6 +1,7 @@
 //import { TinaGraphQLClient } from "@/src/utils/tina/tina-graphql-client";
 import client from "@/tina/__generated__/client";
 import { type NextRequest, NextResponse } from "next/server";
+import { TinaGraphQLClient } from "@/utils/tina/tina-graphql-client";
 // import { generateMdxFiles } from "./generate-mdx-files";
 // import type { GroupApiData } from "./types";
 
@@ -82,8 +83,79 @@ export async function POST(request: NextRequest) {
           );
 
           if (!exists) {
+            {
+              const tgc = new TinaGraphQLClient(token || "");
 
-        } else {
+              // 1) Fetch existing rule reference paths for this category (need _sys.relativePath)
+              const CATEGORY_RULE_PATHS_QUERY = `
+                query CategoryRulePaths($relativePath: String!) {
+                  category(relativePath: $relativePath) {
+                    ... on CategoryCategory {
+                      index {
+                        rule {
+                          ... on Rule {
+                            uri
+                            _sys { relativePath }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              `;
+
+              const categoryRulePathsRes: any = await tgc.request(
+                CATEGORY_RULE_PATHS_QUERY,
+                { relativePath }
+              );
+
+              const existingRulePaths: string[] = (categoryRulePathsRes?.category?.index || [])
+                .map((i: any) => i?.rule?._sys?.relativePath)
+                .filter((p: any) => typeof p === "string");
+
+              // 2) Resolve the rule's relativePath from its uri
+              const RULE_PATH_BY_URI_QUERY = `
+                query RulePathByUri($uris: [String!]!) {
+                  ruleConnection(filter: { uri: { in: $uris } }) {
+                    edges { node { uri _sys { relativePath } } }
+                  }
+                }
+              `;
+
+              const rulePathRes: any = await tgc.request(RULE_PATH_BY_URI_QUERY, {
+                uris: [ruleUri],
+              });
+
+              const rulePath: string | undefined = rulePathRes?.ruleConnection?.edges?.[0]?.node?._sys?.relativePath;
+
+              if (!rulePath) {
+                console.warn("Could not resolve rule relativePath for uri:", ruleUri);
+              } else if (existingRulePaths.includes(rulePath)) {
+                console.log("Rule path already referenced in category; skipping mutation.");
+              } else {
+                // 3) Update the category's index with the new reference
+                const UPDATE_CATEGORY_MUTATION = `
+                  mutation UpdateCategoryIndex($relativePath: String!, $index: [CategoryCategoryIndexMutation]) {
+                    updateCategory(relativePath: $relativePath, params: { category: { index: $index } }) {
+                      __typename
+                    }
+                  }
+                `;
+
+                const newIndex = [
+                  ...existingRulePaths.map((p) => ({ rule: p })),
+                  { rule: rulePath },
+                ];
+
+                await tgc.request(UPDATE_CATEGORY_MUTATION, {
+                  relativePath,
+                  index: newIndex,
+                });
+
+                console.log("Updated category", relativePath, "with rule", ruleUri);
+              }
+            }
+          } else {
           }
 
         } catch (e) {
