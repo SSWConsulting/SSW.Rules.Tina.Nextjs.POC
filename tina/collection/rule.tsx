@@ -51,6 +51,22 @@ const Rule: Collection = {
       description: "Use a JPG or PNG image that is at least 175 x 175px",
     },
     {
+      name: "categories",
+      label: "Categories",
+      description: "The mapping of the rule to the category",
+      list: true,
+      type: "object",
+      fields: [
+        {
+          type: "reference",
+          name: "category",
+          label: "Related Category",
+          description: "The related category of the rule",
+          collections: ["category"],
+        },
+      ],
+    },
+    {
       type: "string",
       name: "uri",
       label: "Uri",
