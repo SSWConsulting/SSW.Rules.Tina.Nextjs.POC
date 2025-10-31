@@ -66,7 +66,7 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
     if(filter && filter.length > MIN_SEARCH_LENGTH) {
       const timer = setTimeout(() => {
         setDebouncedFilter(filter);
-      }, 1000);
+      }, 500);
       
       return () => clearTimeout(timer);
     }
