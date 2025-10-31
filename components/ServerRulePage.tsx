@@ -167,8 +167,8 @@ export default function ServerRulePage({
           <Card title="Related rules">
             {relatedRules.length > 0 ? (
               <ul className="pl-4">
-                {relatedRules.map((r) => (
-                  <li key={r.uri} className="not-last:mb-2">
+                {relatedRules.map((r, index) => (
+                  <li key={`related-rule-${index}-${r.uri}`} className="not-last:mb-2">
                     <Link
                       href={`/${r.uri}`}
                       className="no-underline">
