@@ -231,12 +231,11 @@ export default function UserRulesClientPage({ ruleCount }) {
   useEffect(() => {
     (async () => {
       if (queryStringRulesAuthor) {
-        setLoadingAuthored(true);
-        const [_, resolvedAuthorName] = await Promise.all([
-          loadAllLastModifiedRules(),
-          resolveAuthor()
-        ]);
+        // Load Authored rules first (user cares more about these)
+        const resolvedAuthorName = await resolveAuthor();
         await loadAllAuthoredRules(resolvedAuthorName as string);
+        // Then load Last Modified rules in background
+        await loadAllLastModifiedRules();
       }
     })();
   }, [queryStringRulesAuthor]);
@@ -250,21 +249,60 @@ export default function UserRulesClientPage({ ruleCount }) {
     let hasMore = true;
     let pageCount = 0;
     const MAX_PAGES = 100; // Safety limit to prevent infinite loops
+    const allRulesFromGithub: any[] = [];
 
     try {
+      // Step 1: Fetch ALL pages from GitHub API (collect paths only)
       while (hasMore && pageCount < MAX_PAGES) {
         pageCount++;
-        const result = await getLastModifiedRules({ append: cursor !== '', page: 1, cursor });
+
+        const params = new URLSearchParams();
+        params.set('author', queryStringRulesAuthor);
+        if (cursor) params.set('cursor', cursor);
+        params.set('direction', 'after');
+
+        const url = `./api/github/rules/prs?${params.toString()}`;
+        const res = await fetch(url);
+
+        if (!res.ok) {
+          throw new Error(`Failed to fetch GitHub PR search: ${res.status} ${res.statusText}`);
+        }
+
+        const prSearchData = await res.json();
+        const resultList = prSearchData.search.nodes;
+
+        const rules = resultList
+          .flatMap((pr: any) => pr.files.nodes)
+          .filter((file: any) => file.path.endsWith('rule.mdx') || file.path.endsWith('rule.md'))
+          .map((file: any) => ({
+            ...file,
+            path: file.path.endsWith('rule.md') ? file.path.slice(0, -3) + '.mdx' : file.path,
+          }));
+
+        allRulesFromGithub.push(...rules);
+
+        const { endCursor, hasNextPage } = prSearchData.search.pageInfo;
+        const newCursor = endCursor || '';
 
         // Stop if cursor hasn't changed (prevents infinite loop)
-        if (result.endCursor === previousCursor && previousCursor !== '') {
+        if (newCursor === previousCursor && previousCursor !== '') {
           break;
         }
 
         previousCursor = cursor;
-        cursor = result.endCursor;
-        hasMore = result.hasNextPage && result.endCursor !== '';
+        cursor = newCursor;
+        hasMore = !!hasNextPage && newCursor !== '';
       }
+
+      // Step 2: Process all rules at once with TinaCMS (ONE call instead of 50+)
+      if (allRulesFromGithub.length > 0) {
+        const uniqueRules = selectLatestRuleFilesByPath(allRulesFromGithub);
+        await updateFilteredItems(uniqueRules, false);
+      }
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      console.error('Failed to fetch GitHub data:', err);
+      setGithubError(message);
     } finally {
       setLoadingLastModified(false);
     }
@@ -418,6 +456,8 @@ export default function UserRulesClientPage({ ruleCount }) {
                         rules={paginatedLastModifiedRules}
                         showFilterControls={false}
                         showPagination={false}
+                        externalCurrentPage={currentPageLastModified}
+                        externalItemsPerPage={itemsPerPageLastModified}
                       />
                       <Pagination
                         currentPage={currentPageLastModified}
@@ -449,6 +489,8 @@ export default function UserRulesClientPage({ ruleCount }) {
                         rules={paginatedAuthoredRules}
                         showFilterControls={false}
                         showPagination={false}
+                        externalCurrentPage={currentPageAuthored}
+                        externalItemsPerPage={itemsPerPageAuthored}
                       />
                       <Pagination
                         currentPage={currentPageAuthored}
