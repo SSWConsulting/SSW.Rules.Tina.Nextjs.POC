@@ -53,7 +53,6 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const rules = await res.json();
         setAllRules(rules);
-        console.log(rules);
       } catch (e) {
         console.error("Failed to load all rules:", e);
       } finally {
