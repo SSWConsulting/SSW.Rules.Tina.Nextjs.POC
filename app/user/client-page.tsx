@@ -246,14 +246,24 @@ export default function UserRulesClientPage({ ruleCount }) {
     setLoadingLastModified(true);
     setLastModifiedRules([]);
     let cursor = '';
+    let previousCursor = '';
     let hasMore = true;
+    let pageCount = 0;
+    const MAX_PAGES = 100; // Safety limit to prevent infinite loops
 
     try {
-      while (hasMore) {
+      while (hasMore && pageCount < MAX_PAGES) {
+        pageCount++;
         const result = await getLastModifiedRules({ append: cursor !== '', page: 1, cursor });
-        // Use the returned values directly instead of relying on state updates
-        hasMore = result.hasNextPage && result.endCursor !== '';
+
+        // Stop if cursor hasn't changed (prevents infinite loop)
+        if (result.endCursor === previousCursor && previousCursor !== '') {
+          break;
+        }
+
+        previousCursor = cursor;
         cursor = result.endCursor;
+        hasMore = result.hasNextPage && result.endCursor !== '';
       }
     } finally {
       setLoadingLastModified(false);
@@ -265,14 +275,24 @@ export default function UserRulesClientPage({ ruleCount }) {
     setLoadingAuthored(true);
     setAuthoredRules([]);
     let cursor: string | null = null;
+    let previousCursor: string | null = null;
     let hasMore = true;
+    let pageCount = 0;
+    const MAX_PAGES = 100; // Safety limit to prevent infinite loops
 
     try {
-      while (hasMore) {
+      while (hasMore && pageCount < MAX_PAGES) {
+        pageCount++;
         const result = await getAuthoredRules(authorName, { append: cursor !== null, page: 1, cursor });
-        // Use the returned values directly instead of relying on state updates
-        hasMore = result.hasNextPage && result.endCursor !== null;
+
+        // Stop if cursor hasn't changed (prevents infinite loop)
+        if (result.endCursor === previousCursor && previousCursor !== null) {
+          break;
+        }
+
+        previousCursor = cursor;
         cursor = result.endCursor;
+        hasMore = result.hasNextPage && result.endCursor !== null;
       }
     } finally {
       setLoadingAuthored(false);
