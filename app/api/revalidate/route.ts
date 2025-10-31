@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache';
 const basePath = (process.env.NEXT_PUBLIC_BASE_PATH || '').replace(/^\/+/, '');
 
 const pathsToRevalidate = [
-  `${basePath}/api/rules`
+  `/${basePath}/api/rules`
 ]
 
 export async function POST(req: Request) {
@@ -42,11 +42,11 @@ export async function POST(req: Request) {
       }
     }
 
-    for (const route of routesToRevalidate) {
-      revalidatePath(route);
+    for (const route of pathsToRevalidate) {
+      routesToRevalidate.add(route);
     }
 
-    for (const route of pathsToRevalidate) {
+    for (const route of routesToRevalidate) {
       revalidatePath(route);
     }
 
