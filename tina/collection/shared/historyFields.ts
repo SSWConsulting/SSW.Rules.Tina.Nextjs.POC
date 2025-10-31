@@ -99,12 +99,11 @@ export const historyBeforeSubmit = async ({
     let userEmail: string | undefined;
     let userName: string | undefined;
 
-    console.log("historyBeforeSubmit", values);
     const response = await fetch("/rules-beta/api/update-category", {
         method: "POST",
         headers: getBearerAuthHeader(),
         body: JSON.stringify({
-          categories: values.categories,
+          categories: values.categories || [],
           ruleUri: values.uri,
         }),
       });

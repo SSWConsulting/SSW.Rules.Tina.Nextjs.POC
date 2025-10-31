@@ -83,6 +83,13 @@ export async function POST(request: NextRequest) {
 
     const token = authHeader?.replace("Bearer ", "");
 
+    if (!Array.isArray(categories) || !ruleUri) {
+        return NextResponse.json(
+          { error: "Invalid data format - expected categories array and rule" },
+          { status: 400 }
+        );
+      }
+
     const currentRule = await client.queries.rulesByUriQuery({
         uris: [ruleUri],
       });
@@ -122,13 +129,6 @@ export async function POST(request: NextRequest) {
       noChange: categoriesNoChange,
       toDelete: categoriesToDelete,
     });
-
-    if (!Array.isArray(categories) || !ruleUri) {
-      return NextResponse.json(
-        { error: "Invalid data format - expected categories array and rule" },
-        { status: 400 }
-      );
-    }
 
     const tgc = new TinaGraphQLClient(token || "");
 
