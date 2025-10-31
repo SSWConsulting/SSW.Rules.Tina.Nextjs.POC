@@ -6,6 +6,7 @@ import { addARuleToTheCategory } from "./add-a-rule-to-the-category";
 
 const isDev = process.env.NODE_ENV === "development";
 
+
 // Checks whether a rule with the given URI already exists in the provided
 // category query result returned by `categoryWithRulesQuery`.
 function ruleExistsByUriInCategory(result: unknown, targetUri: string): boolean {
@@ -34,6 +35,68 @@ function normalizeCategoryPathForComparison(categoryPath: string): string {
   
   // Return with categories/ prefix for consistency
   return `categories/${normalized}`;
+}
+
+async function processCategories(categories: Array<string>, ruleUri: string, tgc: TinaGraphQLClient, action: "add" | "delete" = "add"): Promise<{ allCreatedFiles: string[], allSkippedFiles: string[], allDeletedFiles: string[] }> {
+    
+    const allCreatedFiles: string[] = [];
+    const allSkippedFiles: string[] = [];
+    const allDeletedFiles: string[] = [];
+    for (const category of categories) {
+        try {
+          const rawPath =
+            typeof category === "string"
+              ? category
+              : typeof category === "string"
+              ? category
+              : "";
+
+
+          // Normalize to Tina's expected relativePath: relative to `categories/` and must end with .mdx
+          let relativePath = rawPath
+            .replace(/^content\//, "")
+            .replace(/^categories\//, "");
+          if (!relativePath.endsWith(".mdx")) relativePath = `${relativePath}.mdx`;
+
+          const res = await client.queries.categoryWithRulesQuery({
+            relativePath,
+          });
+          const exists = ruleExistsByUriInCategory(res, ruleUri);
+          console.log(
+            "Category data for",
+            relativePath,
+            "- rule exists with URI?",
+            exists
+          );
+
+          if (!exists) {
+            {
+                if (action === "add") {
+                  const result = await addARuleToTheCategory(category, ruleUri, relativePath, tgc, action);
+                  if (result.success) {
+                    allCreatedFiles.push(relativePath);
+                  } else {
+                    allSkippedFiles.push(relativePath);
+                  }
+                }
+            }
+          } else {
+             if (action === "delete") {
+                console.log("🎗️Deleting rule from category", relativePath, "with rule", ruleUri);
+              const result = await addARuleToTheCategory(category, ruleUri, relativePath, tgc, action);
+              if (result.success) {
+                allDeletedFiles.push(relativePath);
+              } else {
+                allSkippedFiles.push(relativePath);
+              }
+            }
+          }
+
+        } catch (e) {
+          console.error("Error fetching category data for", category, e);
+        }
+    }
+    return { allCreatedFiles, allSkippedFiles, allDeletedFiles };
 }
 
 type CategoryStatus = "add" | "noChange" | "delete";
@@ -164,65 +227,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const allCreatedFiles: string[] = [];
-    const allSkippedFiles: string[] = [];
-    for (const category of categories) {
-        try {
-          const rawPath =
-            typeof category === "string"
-              ? category
-              : typeof category?.category === "string"
-              ? category.category
-              : "";
+    const tgc = new TinaGraphQLClient(token || "");
 
+    const addResult = await processCategories(categoriesToAdd, ruleUri, tgc, "add");
+    const deleteResult = await processCategories(categoriesToDelete, ruleUri, tgc, "delete");
 
-          // Normalize to Tina's expected relativePath: relative to `categories/` and must end with .mdx
-          let relativePath = rawPath
-            .replace(/^content\//, "")
-            .replace(/^categories\//, "");
-          if (!relativePath.endsWith(".mdx")) relativePath = `${relativePath}.mdx`;
-
-          const res = await client.queries.categoryWithRulesQuery({
-            relativePath,
-          });
-          const exists = ruleExistsByUriInCategory(res, ruleUri);
-          console.log(
-            "Category data for",
-            relativePath,
-            "- rule exists with URI?",
-            exists
-          );
-
-          if (!exists) {
-            {
-              const tgc = new TinaGraphQLClient(token || "");
-
-              const result = await addARuleToTheCategory(category, ruleUri, relativePath, tgc);
-              if (result.success) {
-                allCreatedFiles.push(relativePath);
-              } else {
-                allSkippedFiles.push(relativePath);
-              }
-            }
-          } else {
-            const ruleResult = await client.queries.rulesByUriQuery({
-              uris: [ruleUri],
-            });
-            const rule = ruleResult?.data?.ruleConnection?.edges?.[0]?.node;
-
-            console.log(
-              "🚀 Rule already exists in category",
-              relativePath,
-              "- fetched rule:",
-              rule?.uri,
-              rule?.title
-            );
-          }
-
-        } catch (e) {
-          console.error("Error fetching category data for", category, e);
-        }
-    }
+    const allCreatedFiles = [...addResult.allCreatedFiles, ...deleteResult.allCreatedFiles];
+    const allSkippedFiles = [...addResult.allSkippedFiles, ...deleteResult.allSkippedFiles];
+    const allDeletedFiles = [...deleteResult.allDeletedFiles];
 
     return NextResponse.json({
       success: true,
@@ -230,6 +242,7 @@ export async function POST(request: NextRequest) {
       totalFilesCreated: allCreatedFiles.length,
       createdFiles: allCreatedFiles,
       skippedFiles: allSkippedFiles,
+      deletedFiles: allDeletedFiles,
     });
   } catch (error) {
     return NextResponse.json(

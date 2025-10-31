@@ -10,7 +10,8 @@ export const addARuleToTheCategory = async (
   category: string,
   rule_uri: string,
   relativePath: string,
-  tgc: TinaGraphQLClient
+  tgc: TinaGraphQLClient,
+  action: "add" | "delete" = "add"
 ) => {
   try {
     const categoryRulePathsRes: any = await tgc.request(
@@ -33,7 +34,7 @@ export const addARuleToTheCategory = async (
 
     if (!rulePath) {
       console.warn("Could not resolve rule relativePath for uri:", rule_uri);
-    } else if (existingRulePaths.includes(rulePath)) {
+    } else if (existingRulePaths.includes(rulePath) && action === "add") {
       console.log(
         "Rule path already referenced in category; skipping mutation."
       );
@@ -45,13 +46,27 @@ export const addARuleToTheCategory = async (
       });
       const currentCategory: any = categoryFullRes?.category ?? {};
 
+      let newIndex: any[] = [];
+      
+      if (action === "add") {
       // Build new index: keep existing + append new
-      const newIndex = [
+      newIndex = [
         ...existingRulePaths.map((p: string) => ({
           rule: `public/uploads/rules/${p}`,
         })),
         { rule: `public/uploads/rules/${rulePath}` },
       ];
+    } else if (action === "delete") {
+        console.log("Deleting rule from category", relativePath, "with rule", rule_uri);
+        const rulePathWithUploads = `public/uploads/rules/${rulePath}`;
+        console.log("🚀 🎗️ Rule path with uploads", rulePathWithUploads);
+      newIndex = existingRulePaths.filter((p: string) => p !== rulePath).map((p: string) => ({
+        rule: `public/uploads/rules/${p}`,
+      }));
+
+      console.log("🚀 🎗️ New index", newIndex);
+      console.log("🚀 🎗️ Existing rule paths", rulePath);
+    }
 
       // Only send defined values to avoid clearing fields with nulls
       const pruneUndefinedAndNull = (obj: Record<string, unknown>) =>
