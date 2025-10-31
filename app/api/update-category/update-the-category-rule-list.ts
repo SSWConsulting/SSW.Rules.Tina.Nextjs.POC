@@ -6,8 +6,7 @@ import {
   UPDATE_CATEGORY_MUTATION,
 } from "./constants";
 
-export const addARuleToTheCategory = async (
-  category: string,
+export const updateTheCategoryRuleList = async (
   rule_uri: string,
   relativePath: string,
   tgc: TinaGraphQLClient,
