@@ -56,6 +56,12 @@ const Rule: Collection = {
       description: "The mapping of the rule to the category",
       list: true,
       type: "object",
+      ui: {
+        itemProps: (item) => {
+          const categoryTitle = item?.category?.split("/").at(-1)?.replace(".mdx","");
+          return { label: categoryTitle ?? "Unknown Category" }; 
+        },
+      },
       fields: [
         {
           type: "reference",
