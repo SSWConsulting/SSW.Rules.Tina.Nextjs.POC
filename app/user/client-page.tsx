@@ -231,11 +231,12 @@ export default function UserRulesClientPage({ ruleCount }) {
   useEffect(() => {
     (async () => {
       if (queryStringRulesAuthor) {
-        // Load Authored rules first (user cares more about these)
         const resolvedAuthorName = await resolveAuthor();
-        await loadAllAuthoredRules(resolvedAuthorName as string);
-        // Then load Last Modified rules in background
-        await loadAllLastModifiedRules();
+        // Load BOTH in parallel for maximum speed
+        await Promise.all([
+          loadAllAuthoredRules(resolvedAuthorName as string),
+          loadAllLastModifiedRules()
+        ]);
       }
     })();
   }, [queryStringRulesAuthor]);
@@ -297,7 +298,47 @@ export default function UserRulesClientPage({ ruleCount }) {
       // Step 2: Process all rules at once with TinaCMS (ONE call instead of 50+)
       if (allRulesFromGithub.length > 0) {
         const uniqueRules = selectLatestRuleFilesByPath(allRulesFromGithub);
-        await updateFilteredItems(uniqueRules, false);
+        const uris = Array.from(
+          new Set(
+            uniqueRules
+              .map((b) => b.path.replace(/^rules\//, '').replace(/\/rule\.mdx$/, ''))
+              .filter((g): g is string => Boolean(g)),
+          ),
+        );
+
+        const res = await client.queries.rulesByUriQuery({ uris });
+        const edges = res?.data?.ruleConnection?.edges ?? [];
+        const byUri = new Map<string, any>(
+          edges
+            .map((e: any) => e?.node)
+            .filter(Boolean)
+            .map((n: any) => [n.uri, n]),
+        );
+
+        const matchedRules: any[] = uris
+          .map((g) => byUri.get(g))
+          .filter(Boolean)
+          .map((fullRule: any) => ({
+            guid: fullRule.guid,
+            title: fullRule.title,
+            uri: fullRule.uri,
+            body: fullRule.body,
+            lastUpdated: fullRule.lastUpdated,
+            lastUpdatedBy: fullRule.lastUpdatedBy,
+            authors:
+              fullRule.authors
+                ?.map((a: any) => (a && a.title ? { title: a.title } : null))
+                .filter((a: any): a is { title: string } => a !== null) || [],
+          }));
+
+        // Sort by date (most recent first)
+        const sortedRules = matchedRules.sort((a, b) => {
+          const dateA = a.lastUpdated ? new Date(a.lastUpdated).getTime() : 0;
+          const dateB = b.lastUpdated ? new Date(b.lastUpdated).getTime() : 0;
+          return dateB - dateA; // Descending order (newest first)
+        });
+
+        setLastModifiedRules(sortedRules);
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
@@ -308,7 +349,7 @@ export default function UserRulesClientPage({ ruleCount }) {
     }
   };
 
-  // Function to load ALL authored rules (not just one page)
+  // Function to load ALL authored rules (not just one page) - WITH BATCHING
   const loadAllAuthoredRules = async (authorName: string) => {
     setLoadingAuthored(true);
     setAuthoredRules([]);
@@ -317,21 +358,61 @@ export default function UserRulesClientPage({ ruleCount }) {
     let hasMore = true;
     let pageCount = 0;
     const MAX_PAGES = 100; // Safety limit to prevent infinite loops
+    const allRulesFromTina: any[] = [];
 
     try {
+      // Step 1: Fetch ALL pages from TinaCMS API (collect rules)
       while (hasMore && pageCount < MAX_PAGES) {
         pageCount++;
-        const result = await getAuthoredRules(authorName, { append: cursor !== null, page: 1, cursor });
+
+        const res = await client.queries.rulesByAuthor({
+          authorTitle: authorName || '',
+          first: FETCH_PAGE_SIZE,
+          after: cursor || undefined,
+        });
+
+        const edges = res?.data?.ruleConnection?.edges ?? [];
+        const nodes = edges.map((e: any) => e?.node).filter(Boolean);
+
+        const batch = nodes.map((fullRule: any) => ({
+          guid: fullRule.guid,
+          title: fullRule.title,
+          uri: fullRule.uri,
+          body: fullRule.body,
+          authors:
+            fullRule.authors
+              ?.map((a: any) => (a && a.title ? { title: a.title } : null))
+              .filter((a: any): a is { title: string } => a !== null) || [],
+          lastUpdated: fullRule.lastUpdated,
+          lastUpdatedBy: fullRule.lastUpdatedBy
+        }));
+
+        allRulesFromTina.push(...batch);
+
+        const pageInfo = res?.data?.ruleConnection?.pageInfo;
+        const newCursor = pageInfo?.endCursor ?? null;
+        const hasMorePages = !!pageInfo?.hasNextPage;
 
         // Stop if cursor hasn't changed (prevents infinite loop)
-        if (result.endCursor === previousCursor && previousCursor !== null) {
+        if (newCursor === previousCursor && previousCursor !== null) {
           break;
         }
 
         previousCursor = cursor;
-        cursor = result.endCursor;
-        hasMore = result.hasNextPage && result.endCursor !== null;
+        cursor = newCursor;
+        hasMore = hasMorePages && newCursor !== null;
       }
+
+      // Step 2: Sort by date (most recent first) and set all at once
+      const sortedRules = allRulesFromTina.sort((a, b) => {
+        const dateA = a.lastUpdated ? new Date(a.lastUpdated).getTime() : 0;
+        const dateB = b.lastUpdated ? new Date(b.lastUpdated).getTime() : 0;
+        return dateB - dateA; // Descending order (newest first)
+      });
+
+      setAuthoredRules(sortedRules);
+    } catch (err) {
+      console.error('Failed to fetch authored rules:', err);
     } finally {
       setLoadingAuthored(false);
     }
