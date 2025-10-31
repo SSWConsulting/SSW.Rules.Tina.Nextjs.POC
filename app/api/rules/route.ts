@@ -38,6 +38,7 @@ export async function GET() {
       .map((node: any) => ({
         title: node?.title || "",
         uri: node?.uri || "",
+        lastUpdated: node.lastUpdated || "",
         _sys: { relativePath: node?._sys?.relativePath || "" },
       }));
 

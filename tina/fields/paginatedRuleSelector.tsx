@@ -9,9 +9,9 @@ import {
 } from "@headlessui/react";
 
 interface Rule {
-  id: string;
   title: string;
   uri: string;
+  lastUpdated: string;
   _sys: {
     relativePath: string;
   };
@@ -31,6 +31,16 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
   const selectedRule = useMemo(() => {
     return input.value || null;
   }, [input.value]);
+
+  const formatLastUpdated = (value: string) => {
+    const date = new Date(value);
+    if (isNaN(date.getTime())) return value;
+    return date.toLocaleDateString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
 
   // Fetch all rules once on mount (via API)
   useEffect(() => {
@@ -74,15 +84,19 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
       setFilteredRules([]);
       return;
     }
-    const source = Array.isArray(allRules) ? allRules : [];
-    const startsWithMatches = source.filter((r) => (r.uri || "").toLowerCase().startsWith(q));
-    const startsWithKeys = new Set(
-      startsWithMatches.map((r) => r.id || r._sys?.relativePath || r.uri)
-    );
-    const includesMatches = source.filter(
-      (r) => (r.uri || "").toLowerCase().includes(q) && !startsWithKeys.has(r.id || r._sys?.relativePath || r.uri)
-    );
-    setFilteredRules([...startsWithMatches, ...includesMatches]);
+
+    const startsWithMatches = allRules.filter((r) => r.uri.toLowerCase().startsWith(q));
+    const startsWithUris = new Set(startsWithMatches.map((r) => r.uri.toLowerCase()));
+    const includesMatches = allRules.filter((r) => {
+      const uri = r.uri.toLowerCase();
+      return uri.includes(q) && !startsWithUris.has(uri);
+    });
+    const includesSorted = [...includesMatches].sort((a, b) => {
+      const timeA = new Date(a.lastUpdated).getTime() || 0;
+      const timeB = new Date(b.lastUpdated).getTime() || 0;
+      return timeB - timeA;
+    });
+    setFilteredRules([...startsWithMatches, ...includesSorted]);
   }, [debouncedFilter, allRules]);
 
   const handleRuleSelect = (rule) => {
@@ -90,8 +104,6 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
     const rulePath = `public/uploads/rules/${rule._sys.relativePath}`;
     input.onChange(rulePath);
   }
-
-  
 
   if(loading) {
     return <div className="p-4 text-center text-gray-500">
@@ -162,8 +174,7 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
                             const isSelected = selectedRel === rule._sys.relativePath;
                             
                             return (
-                              <button
-                                key={rule.id || rule._sys.relativePath}
+                              <button key={rule.uri}
                                 className={`w-full text-left py-2 px-3 hover:bg-gray-50 border-b border-gray-100 transition-colors block ${
                                   isSelected ? 'bg-blue-50 border-blue-200' : ''
                                 }`}
@@ -177,9 +188,12 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
                                     <div className="font-medium text-gray-900 text-sm leading-5 truncate">
                                       {rule.title}
                                     </div>
+                                    <div className="text-xs text-gray-500 leading-4 truncate">
+                                      {rule.uri}
+                                    </div>
                                   </div>
                                   <div className="text-xs text-gray-500 leading-4 whitespace-nowrap text-right">
-                                    {rule.uri}
+                                    Last updated: {formatLastUpdated(rule.lastUpdated)}
                                   </div>
                                 </div>
                               </button>

@@ -216,29 +216,7 @@ query paginatedRulesQuery(
         id
         title
         uri
-        _sys {
-          relativePath
-        }
-      }
-    }
-  }
-}
-
-query allRulesQuery {
-  ruleConnection {
-    totalCount
-    pageInfo {
-      hasPreviousPage
-      hasNextPage
-      startCursor
-      endCursor
-    }
-    edges {
-      cursor
-      node {
-        id
-        title
-        uri
+        lastUpdated
         _sys {
           relativePath
         }
