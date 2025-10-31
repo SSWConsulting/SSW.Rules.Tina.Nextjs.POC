@@ -4,8 +4,8 @@ import client from "@/tina/__generated__/client";
 import { notFound } from "next/navigation";
 import ruleToCategoryIndex from "@/rule-to-categories.json";
 import categoryTitleIndex from "@/category-uri-title-map.json";
-import ServerCategoryPage from "@/components/ServerCategoryPage";
-import { TinaRuleWrapper } from "./tina-rule-wrapper";
+import ServerCategoryPage from "@/app/[filename]/ServerCategoryPage";
+import { TinaRuleWrapper } from "./TinaRuleWrapper";
 
 // We have a Tina webhook revalidating each page individually on change
 // Leaving this as a fallback in case the above goes wrong

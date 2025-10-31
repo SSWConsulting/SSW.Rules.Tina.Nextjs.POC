@@ -7,6 +7,7 @@ import {
   Transition,
   PopoverPanel,
 } from "@headlessui/react";
+import Spinner from "@/components/Spinner";
 
 interface Rule {
   title: string;
