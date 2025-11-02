@@ -8,27 +8,13 @@ import {
   getRuleCategories,
   ruleExistsByUriInCategory,
 } from "./util";
+import {
+  CategoryProcessingResult,
+  UpdateCategoryRequest,
+  UpdateCategoryResponse,
+} from "./types";
 
 const isDev = process.env.NODE_ENV === "development";
-
-type CategoryProcessingResult = {
-  processed: string[];
-  failed: string[];
-};
-
-type UpdateCategoryRequest = {
-  categories: Array<string | { category?: string }>;
-  ruleUri: string;
-};
-
-type UpdateCategoryResponse = {
-  success: boolean;
-  message: string;
-  URI?: string;
-  AddedCategories: string[];
-  DeletedCategories: string[];
-  NoChangedCategories: string[];
-};
 
 /**
  * Processes a single category for the given action (add or delete).
@@ -110,7 +96,11 @@ async function processCategories(
 /**
  * Validates the authorization header and returns the token if valid.
  */
-function validateAuth(request: NextRequest): { valid: boolean; token?: string; error?: NextResponse } {
+function validateAuth(request: NextRequest): {
+  valid: boolean;
+  token?: string;
+  error?: NextResponse;
+} {
   const authHeader = request.headers.get("authorization");
 
   if (!isDev && (!authHeader || !authHeader.startsWith("Bearer "))) {
@@ -151,7 +141,9 @@ function validateRequestBody(body: unknown): {
     return {
       valid: false,
       error: NextResponse.json(
-        { error: "Invalid data format - expected categories array and ruleUri" },
+        {
+          error: "Invalid data format - expected categories array and ruleUri",
+        },
         { status: 400 }
       ),
     };
@@ -164,7 +156,10 @@ function validateRequestBody(body: unknown): {
  * Extracts categories by status from categorized categories.
  */
 function extractCategoriesByStatus(
-  categorizedCategories: Array<{ category: string; status: "add" | "noChange" | "delete" }>
+  categorizedCategories: Array<{
+    category: string;
+    status: "add" | "noChange" | "delete";
+  }>
 ): {
   toAdd: string[];
   toDelete: string[];
@@ -217,8 +212,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       categories
     );
 
-    const { toAdd, toDelete, noChange } =
-      extractCategoriesByStatus(categorizedCategories);
+    const { toAdd, toDelete, noChange } = extractCategoriesByStatus(
+      categorizedCategories
+    );
 
     // Process categories
     const tgc = new TinaGraphQLClient(token);

@@ -5,82 +5,16 @@ import {
   RULE_PATH_BY_URI_QUERY,
   UPDATE_CATEGORY_MUTATION,
 } from "./constants";
+import {
+  CategoryQueryResponse,
+  RuleConnectionQueryResponse,
+  CategoryFullQueryResponse,
+  CategoryIndexItem,
+  CategoryMutationParams,
+  UpdateResult,
+} from "./types";
 
 const RULES_UPLOAD_PATH = "public/uploads/rules/";
-
-type CategoryRuleIndexItem = {
-  rule: {
-    _sys?: {
-      relativePath?: string;
-    };
-  };
-};
-
-type CategoryQueryResponse = {
-  category?: {
-    index?: CategoryRuleIndexItem[];
-  };
-};
-
-type RuleConnectionQueryResponse = {
-  ruleConnection?: {
-    edges?: Array<{
-      node?: {
-        _sys?: {
-          relativePath?: string;
-        };
-      };
-    }>;
-  };
-};
-
-type CategoryFullQueryResponse = {
-  category?: {
-    title?: string;
-    uri?: string;
-    guid?: string;
-    consulting?: boolean;
-    experts?: string[];
-    redirects?: string[];
-    body?: string;
-    created?: string;
-    createdBy?: string;
-    createdByEmail?: string;
-    lastUpdated?: string;
-    lastUpdatedBy?: string;
-    lastUpdatedByEmail?: string;
-    isArchived?: boolean;
-    archivedreason?: string;
-  };
-};
-
-type CategoryIndexItem = {
-  rule: string;
-};
-
-type CategoryMutationParams = {
-  title?: string;
-  uri?: string;
-  guid?: string;
-  consulting?: boolean;
-  experts?: string[];
-  redirects?: string[];
-  body?: string;
-  created?: string;
-  createdBy?: string;
-  createdByEmail?: string;
-  lastUpdated?: string;
-  lastUpdatedBy?: string;
-  lastUpdatedByEmail?: string;
-  isArchived?: boolean;
-  archivedreason?: string;
-  index?: CategoryIndexItem[];
-};
-
-type UpdateResult = {
-  success: boolean;
-  error?: unknown;
-};
 
 /**
  * Extracts rule relative paths from a category query response.
@@ -102,10 +36,9 @@ async function resolveRulePath(
   tgc: TinaGraphQLClient
 ): Promise<string | null> {
   try {
-    const rulePathResponse = (await tgc.request(
-      RULE_PATH_BY_URI_QUERY,
-      { uris: [ruleUri] }
-    )) as RuleConnectionQueryResponse;
+    const rulePathResponse = (await tgc.request(RULE_PATH_BY_URI_QUERY, {
+      uris: [ruleUri],
+    })) as RuleConnectionQueryResponse;
 
     const rulePath =
       rulePathResponse?.ruleConnection?.edges?.[0]?.node?._sys?.relativePath;
@@ -169,7 +102,9 @@ function pruneUndefinedAndNull<T extends Record<string, unknown>>(
   obj: T
 ): Partial<T> {
   return Object.fromEntries(
-    Object.entries(obj).filter(([, value]) => value !== undefined && value !== null)
+    Object.entries(obj).filter(
+      ([, value]) => value !== undefined && value !== null
+    )
   ) as Partial<T>;
 }
 
@@ -228,9 +163,7 @@ export async function updateTheCategoryRuleList(
     const rulePath = await resolveRulePath(ruleUri, tgc);
 
     if (!rulePath) {
-      console.warn(
-        `Could not resolve rule relativePath for URI: ${ruleUri}`
-      );
+      console.warn(`Could not resolve rule relativePath for URI: ${ruleUri}`);
       return { success: false, error: "Rule path not found" };
     }
 
@@ -269,13 +202,17 @@ export async function updateTheCategoryRuleList(
     });
 
     console.log(
-      `Successfully ${action === "add" ? "added" : "removed"} rule ${ruleUri} from category ${relativePath}`
+      `Successfully ${
+        action === "add" ? "added" : "removed"
+      } rule ${ruleUri} from category ${relativePath}`
     );
 
     return { success: true };
   } catch (error) {
     console.error(
-      `Error ${action === "add" ? "adding" : "removing"} rule ${ruleUri} from category ${relativePath}:`,
+      `Error ${
+        action === "add" ? "adding" : "removing"
+      } rule ${ruleUri} from category ${relativePath}:`,
       error
     );
     return { success: false, error };
