@@ -128,9 +128,7 @@ query rulesByUriQuery($uris: [String!]!) {
         }
         lastUpdated
         lastUpdatedBy
-        redirects {
-          uri
-        }
+        redirects
       }
     }
   }

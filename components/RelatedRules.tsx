@@ -13,7 +13,7 @@ interface RelatedRulesProps {
   initialMapping?: RelatedRule[];
 }
 
-export default function RelatedRules({ relatedUris, initialMapping }: RelatedRulesProps) {
+const RelatedRules = ({ relatedUris, initialMapping }: RelatedRulesProps) => {
   const [rules, setRules] = useState<RelatedRule[]>(initialMapping || []);
   const [resolvedKey, setResolvedKey] = useState<string | null>(null);
   const [confirmedNotFound, setConfirmedNotFound] = useState<string[]>([]);
@@ -69,14 +69,12 @@ export default function RelatedRules({ relatedUris, initialMapping }: RelatedRul
         const matchedUris = new Set(directMatches.map((r) => r.uri));
         const unmatchedUris = requestedUris.filter((u) => !matchedUris.has(u));
 
-        // TODO: Also check redirects for each rule to resolve more inputs
+        // TODO: Check redirects for each rule to resolve more inputs
         setConfirmedNotFound((prev) => {
           const next = new Set(prev);
-          // Remove entries not in current request or now found
           for (const uri of Array.from(next)) {
             if (!requestedUris.includes(uri) || matchedUris.has(uri)) next.delete(uri);
           }
-          // Add newly confirmed not-found
           for (const uri of unmatchedUris) next.add(uri);
           return Array.from(next);
         });
@@ -118,4 +116,4 @@ export default function RelatedRules({ relatedUris, initialMapping }: RelatedRul
   );
 }
 
-
+export default RelatedRules;
