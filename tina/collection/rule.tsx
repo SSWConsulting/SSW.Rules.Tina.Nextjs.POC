@@ -58,8 +58,8 @@ const Rule: Collection = {
       type: "object",
       ui: {
         itemProps: (item) => {
-          const categoryTitle = item?.category?.split("/").at(-1)?.replace(".mdx","");
-          return { label: categoryTitle ?? "Unknown Category" }; 
+      const categoryTitle = item?.category ? `🔗 ${item?.category?.split("/").at(-1)?.replace(".mdx","")}` : "Unselected Category";
+          return { label: categoryTitle }; 
         },
       },
       fields: [
