@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useState, useEffect, useMemo } from "react";
 import { BiChevronDown, BiSearch } from "react-icons/bi";
 import {
@@ -7,7 +8,6 @@ import {
   Transition,
   PopoverPanel,
 } from "@headlessui/react";
-import Spinner from "@/components/Spinner";
 
 interface Rule {
   title: string;
@@ -22,7 +22,6 @@ const MIN_SEARCH_LENGTH = 2;
 
 export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
   const [filter, setFilter] = useState("");
-  const [debouncedFilter, setDebouncedFilter] = useState("");
   const [allRules, setAllRules] = useState<Rule[]>([]);
   const [filteredRules, setFilteredRules] = useState<Rule[]>([]);
   const [loading, setLoading] = useState(false);
@@ -62,42 +61,27 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
     run();
   }, []);
 
-  useEffect(() => {
-    if(filter && filter.length > MIN_SEARCH_LENGTH) {
-      const timer = setTimeout(() => {
-        setDebouncedFilter(filter);
-      }, 500);
-      
-      return () => clearTimeout(timer);
-    }
-
-    // Clear the rules list when filter is short/empty
-    setFilteredRules([]);
-    
-  }, [filter]);
-
   // Recompute filtered results when query changes
   useEffect(() => {
-    const q = debouncedFilter.trim().toLowerCase();
-    const isSearch = q.length > 0;
+    const q = filter.trim().toLowerCase();
+    const isSearch = q.length >= MIN_SEARCH_LENGTH;
     if (!isSearch) {
       setFilteredRules([]);
       return;
     }
 
-    const startsWithMatches = allRules.filter((r) => r.uri.toLowerCase().startsWith(q));
-    const startsWithUris = new Set(startsWithMatches.map((r) => r.uri.toLowerCase()));
     const includesMatches = allRules.filter((r) => {
       const uri = r.uri.toLowerCase();
-      return uri.includes(q) && !startsWithUris.has(uri);
+      const title = r.title.toLowerCase();
+      return uri.includes(q) || title.includes(q);
     });
     const includesSorted = [...includesMatches].sort((a, b) => {
       const timeA = new Date(a.lastUpdated).getTime() || 0;
       const timeB = new Date(b.lastUpdated).getTime() || 0;
       return timeB - timeA;
     });
-    setFilteredRules([...startsWithMatches, ...includesSorted]);
-  }, [debouncedFilter, allRules]);
+    setFilteredRules(includesSorted);
+  }, [filter, allRules]);
 
   const handleRuleSelect = (rule) => {
     setSelectedRuleLabel(rule.uri);
@@ -158,7 +142,7 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
                       </div>
 
                       {/* Empty state */}
-                      {!loading && filteredRules.length === 0 && filter.length > 0 && (
+                      {!loading && filteredRules.length === 0 && filter.length >= MIN_SEARCH_LENGTH && (
                         <div className="p-4 text-center text-gray-400">
                           No rules found matching your search
                         </div>
