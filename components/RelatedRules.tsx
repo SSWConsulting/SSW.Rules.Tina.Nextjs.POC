@@ -85,16 +85,20 @@ const RelatedRules = ({ relatedUris, initialMapping }: RelatedRulesProps) => {
         const nextMatches = addedRedirects.length ? [...directMatches, ...addedRedirects] : directMatches;
         if (!areRuleListsEqual(nextMatches, rules)) setRules(nextMatches);
 
-        // 4) Figure out which requested URIs are fulfilled (directly or via redirect)
-        const fulfilledRequests = new Set<string>();
-        for (const req of requestedUris) {
-          const redirectTarget = redirectMap[req];
-          if (matchedUris.has(req) || (redirectTarget && matchedUris.has(redirectTarget))) {
-            fulfilledRequests.add(req);
+        // 4) Set not found uris if not on admin page
+        if (isAdminPage) {
+          const fulfilledRequests = new Set<string>();
+          for (const req of requestedUris) {
+            const redirectTarget = redirectMap[req];
+            if (matchedUris.has(req) || (redirectTarget && matchedUris.has(redirectTarget))) {
+              fulfilledRequests.add(req);
+            }
           }
+          const finalUnmatched = requestedUris.filter((u) => !fulfilledRequests.has(u));
+          setConfirmedNotFound(finalUnmatched);
+        } else if (confirmedNotFound.length) {
+          setConfirmedNotFound([]);
         }
-        const finalUnmatched = requestedUris.filter((u) => !fulfilledRequests.has(u));
-        setConfirmedNotFound(finalUnmatched);
       } catch (error) {
         console.error(error);
       }
