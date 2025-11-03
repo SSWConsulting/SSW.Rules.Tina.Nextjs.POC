@@ -128,7 +128,6 @@ query rulesByUriQuery($uris: [String!]!) {
         }
         lastUpdated
         lastUpdatedBy
-        redirects
       }
     }
   }
@@ -227,15 +226,15 @@ query paginatedRulesQuery(
 }
 
 query allRulesPaths($first: Float, $after: String) {
-    ruleConnection(first: $first, after: $after) {
-      pageInfo { hasNextPage endCursor }
-      edges {
-        node {
-          __typename
-          ... on Rule {
-            _sys { relativePath filename }
-          }
+  ruleConnection(first: $first, after: $after) {
+    pageInfo { hasNextPage endCursor }
+    edges {
+      node {
+        __typename
+        ... on Rule {
+          _sys { relativePath filename }
         }
       }
     }
   }
+}
