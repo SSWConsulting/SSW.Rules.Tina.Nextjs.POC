@@ -1,19 +1,16 @@
-import { Card } from "@/components/ui/card";
 import { TinaMarkdown } from "tinacms/dist/rich-text";
 import Image from "next/image";
 import Link from "next/link";
-import { Suspense } from "react";
+import { formatDateLong, timeAgo } from "@/lib/dateUtils";
+import { Card } from "@/components/ui/card";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { getMarkdownComponentMapping } from "@/components/tina-markdown/markdown-component-mapping";
-import { formatDateLong, timeAgo } from "@/lib/dateUtils";
 import Discussion from "@/components/Discussion";
-import { IconLink } from "@/components/ui";
-import { RiGithubLine, RiHistoryLine, RiPencilLine } from "react-icons/ri";
-import { ICON_SIZE } from "@/constants";
-import Acknowledgements from "./Acknowledgements";
-import HelpCard from "./HelpCard";
-import Bookmark from "./Bookmark";
-import ChatGPTSummaryButton from "./OpenInChatGptButton";
+import { RiHistoryLine } from "react-icons/ri";
+import Acknowledgements from "@/components/Acknowledgements";
+import HelpCard from "@/components/HelpCard";
+import RelatedRules from "@/components/RelatedRules";
+import RuleActionButtons from "@/components/RuleActionButtons";
 
 export interface ServerRulePageProps {
   rule: any;
@@ -44,7 +41,6 @@ export default function ServerRulePage({
   const created = rule?.created ? formatDateLong(rule.created) : "Unknown";
   const updated = rule?.lastUpdated ? formatDateLong(rule.lastUpdated) : "Unknown";
   const historyTooltip = `Created ${created}\nLast Updated ${updated}`;
-  const relatedRules = relatedRulesMapping || [];
 
   const primaryCategory = ruleCategoriesMapping?.[0];
   const breadcrumbCategories = primaryCategory
@@ -57,7 +53,7 @@ export default function ServerRulePage({
 
       <div className="layout-two-columns">
         <Card dropShadow className="layout-main-section p-6">
-          <div className="flex border-b-2 pb-3">
+          <div className="flex border-b-2">
             {rule?.thumbnail && (
               <div className="w-[175px] h-[175px] relative mr-4">
                 <Image
@@ -73,7 +69,7 @@ export default function ServerRulePage({
                 {rule?.title}
               </h1>
 
-              <div className="flex justify-between">
+              <div className="flex justify-between my-2 flex-col md:flex-row">
                 <p className="mt-4 text-sm font-light">
                   Updated by <b>{rule?.lastUpdatedBy || "Unknown"}</b> {relativeTime}.{" "}
                   <a
@@ -85,28 +81,8 @@ export default function ServerRulePage({
                     See history <RiHistoryLine />
                   </a>
                 </p>
-
-                <div className="flex items-center gap-4 text-2xl">
-                  <Suspense fallback={<span className="opacity-50">...</span>}>
-                    <Bookmark ruleGuid={rule?.guid || ''} />
-                  </Suspense>
-                  <IconLink
-                    href={`/admin#/~/${sanitizedBasePath}/${rule?.uri}`}
-                    title="Edit rule"
-                    tooltipOpaque={true}
-                  >
-                    <RiPencilLine size={ICON_SIZE} />
-                  </IconLink>
-                  <IconLink
-                    href={`https://github.com/SSWConsulting/SSW.Rules.Content/blob/main/rules/${rule?.uri}/rule.md`}
-                    target="_blank"
-                    title="View rule on GitHub"
-                    tooltipOpaque={true}
-                  >
-                    <RiGithubLine size={ICON_SIZE} className="rule-icon" />
-                  </IconLink>
-                  <ChatGPTSummaryButton />
-                </div>
+                <RuleActionButtons rule={rule} 
+                  sanitizedBasePath={sanitizedBasePath} />
               </div>
             </div>
           </div>
@@ -165,21 +141,8 @@ export default function ServerRulePage({
             <Acknowledgements authors={rule.authors} />
           </Card>
           <Card title="Related rules">
-            {relatedRules.length > 0 ? (
-              <ul className="pl-4">
-                {relatedRules.map((r, index) => (
-                  <li key={`related-rule-${index}-${r.uri}`} className="not-last:mb-2">
-                    <Link
-                      href={`/${r.uri}`}
-                      className="no-underline">
-                      {r.title}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <div className="text-sm text-gray-500">No related rules.</div>
-            )}
+            <RelatedRules relatedUris={rule?.related as string[] | undefined} 
+              initialMapping={relatedRulesMapping} />
           </Card>
           <HelpCard />
           <div className="block md:hidden">

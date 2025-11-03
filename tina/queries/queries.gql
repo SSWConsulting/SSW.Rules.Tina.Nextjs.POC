@@ -137,6 +137,7 @@ query rulesByUriQuery($uris: [String!]!) {
             }
           }
         }
+        redirects
       }
     }
   }
@@ -225,6 +226,7 @@ query paginatedRulesQuery(
         id
         title
         uri
+        lastUpdated
         _sys {
           relativePath
         }
