@@ -139,8 +139,7 @@ export default function ServerRulePage({
             <Acknowledgements authors={rule.authors} />
           </Card>
           <Card title="Related rules">
-            <RelatedRules relatedUris={rule?.related as string[] | undefined} 
-              initialMapping={relatedRulesMapping} />
+            <RelatedRules items={relatedRulesMapping} />
           </Card>
           <HelpCard />
           <div className="block md:hidden">

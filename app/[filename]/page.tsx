@@ -272,22 +272,26 @@ export default async function Page({
       };
     }) || [];
 
-  // Build related rules mapping (uri -> title)
   let relatedRulesMapping: { uri: string; title: string }[] = [];
+
   try {
-    const relatedUris = (rule?.data?.rule?.related || []).filter(
-      (u): u is string => typeof u === "string" && u.length > 0
-    );
-    if (relatedUris.length) {
-      const uris = Array.from(new Set(relatedUris));
-      const res = await client.queries.rulesByUriQuery({ uris });
-      const edges = res?.data?.ruleConnection?.edges ?? [];
-      relatedRulesMapping = edges
-        .map((e: any) => e?.node)
-        .filter(Boolean)
-        .map((n: any) => ({ uri: n.uri as string, title: n.title as string }))
-        .sort((a, b) => a.title.localeCompare(b.title));
+    const raw = rule?.data?.rule?.related ?? [];
+  
+    const nodes = raw
+      .map((r: any) => r?.rule)
+      .filter(
+        (n: any): n is { uri: string; title: string } =>
+          n && typeof n === "object" && typeof n.uri === "string" && typeof n.title === "string"
+      );
+  
+    const byUri = new Map<string, { uri: string; title: string }>();
+    for (const n of nodes) {
+      if (!byUri.has(n.uri)) byUri.set(n.uri, { uri: n.uri, title: n.title });
     }
+  
+    relatedRulesMapping = Array.from(byUri.values()).sort((a, b) =>
+      a.title.localeCompare(b.title)
+    );
   } catch (e) {
     console.error("Error loading related rules:", e);
   }
