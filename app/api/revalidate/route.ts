@@ -21,7 +21,7 @@ export async function POST(req: Request) {
 
     const body = await req.json().catch(() => ({}));
     const eventType = body?.type;
-    if (eventType !== TINA_CONTENT_CHANGE_TYPE.Modified || eventType !== TINA_CONTENT_CHANGE_TYPE.Added) {
+    if (eventType !== TINA_CONTENT_CHANGE_TYPE.Modified && eventType !== TINA_CONTENT_CHANGE_TYPE.Added) {
       return NextResponse.json({ revalidated: false, ignored: true, reason: `Unhandled type: ${eventType}` }, { status: 200 });
     }
 
