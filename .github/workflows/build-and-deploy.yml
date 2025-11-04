@@ -47,8 +47,8 @@ jobs:
             AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
             TINA_TOKEN: ${{ secrets.TINA_TOKEN }}
             TINA_SEARCH_TOKEN: ${{ secrets.TINA_SEARCH_TOKEN }}
+            TINA_WEBHOOK_SECRET: ${{ secrets.TINA_WEBHOOK_SECRET }}
             NEXT_PUBLIC_TINA_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}
-            NEXT_PUBLIC_TINA_BRANCH: ${{ secrets.NEXT_PUBLIC_TINA_BRANCH }}
             TOKEN: ${{ secrets.POC_PAT_GILLES }} # TODO: replace that with a GitHub Token for production environement
             NEXT_PUBLIC_ALGOLIA_APP_ID: ${{ secrets.NEXT_PUBLIC_ALGOLIA_APP_ID }}
             NEXT_PUBLIC_ALGOLIA_ADMIN_KEY: ${{ secrets.NEXT_PUBLIC_ALGOLIA_ADMIN_KEY }}
@@ -107,6 +107,7 @@ jobs:
                     --name ${{ secrets.AZURE_WEBAPP_NAME }} \
                     --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
                     --settings \
+                    TINA_WEBHOOK_SECRET=${{ secrets.TINA_WEBHOOK_SECRET }} \
                     AUTH0_DOMAIN=${{ vars.AUTH0_DOMAIN }} \
                     AUTH0_CLIENT_ID=${{ vars.AUTH0_CLIENT_ID }} \
                     AUTH0_CLIENT_SECRET=${{ secrets.AUTH0_CLIENT_SECRET }} \
