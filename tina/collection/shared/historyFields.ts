@@ -99,7 +99,7 @@ export const historyBeforeSubmit = async ({
     let userEmail: string | undefined;
     let userName: string | undefined;
 
-    const response = await fetch("/rules-beta/api/update-category", {
+    await fetch("/rules-beta/api/update-category", {
         method: "POST",
         headers: getBearerAuthHeader(),
         body: JSON.stringify({
