@@ -4,8 +4,6 @@ import { Collection } from "tinacms";
 import { historyBeforeSubmit, historyFields } from "./shared/historyFields";
 import { PaginatedRuleSelectorInput } from "../fields/paginatedRuleSelector";
 
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH?.replace(/^\//, "") || ""
-
 const Rule: Collection = {
   name: "rule",
   label: "Rule",
@@ -46,10 +44,20 @@ const Rule: Collection = {
       searchable: true
     },
     {
-      type: "image",
-      label: "Rule thumbnail",
-      name: "thumbnail",
-      description: "Use a JPG or PNG image that is at least 175 x 175px",
+      type: "string",
+      name: "uri",
+      label: "Uri",
+      description: "The URI of the rule - this defines the slug and references.",
+      required: true,
+      searchable: true,
+      ui: {
+        validate: (value?: string): string | void => {
+          const v = (value ?? "").trim();
+          if (!v) return "URI is required";
+          if (/[A-Z]/.test(v)) return "URI cannot contain uppercase letters";
+          if (/\s/.test(v)) return "URI cannot contain spaces";
+        },
+      },
     },
     {
       name: "categories",
@@ -72,22 +80,6 @@ const Rule: Collection = {
           collections: ["category"],
         },
       ],
-    },
-    {
-      type: "string",
-      name: "uri",
-      label: "Uri",
-      description: "The URI of the rule - this defines the slug and references.",
-      required: true,
-      searchable: true,
-      ui: {
-        validate: (value?: string): string | void => {
-          const v = (value ?? "").trim();
-          if (!v) return "URI is required";
-          if (/[A-Z]/.test(v)) return "URI cannot contain uppercase letters";
-          if (/\s/.test(v)) return "URI cannot contain spaces";
-        },
-      },
     },
     {
       type: "object",
@@ -181,6 +173,12 @@ const Rule: Collection = {
       searchable: false,
       templates: embedTemplates,
       toolbarOverride: ['embed', 'heading', 'link', 'quote', 'ul', 'ol', 'bold', 'italic', 'code', 'codeBlock', 'mermaid', 'table', 'raw']
+    },
+    {
+      type: "image",
+      label: "Rule thumbnail",
+      name: "thumbnail",
+      description: "Use a JPG or PNG image that is at least 175 x 175px",
     },
     ...historyFields
   ],
