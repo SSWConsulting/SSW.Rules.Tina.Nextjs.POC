@@ -62,12 +62,12 @@ const Rule: Collection = {
     {
       name: "categories",
       label: "Categories",
-      description: "The mapping of the rule to the category",
+      description: "Assigns one or more categories to the rule",
       list: true,
       type: "object",
       ui: {
         itemProps: (item) => {
-      const categoryTitle = item?.category ? `🔗 ${item?.category?.split("/").at(-1)?.replace(".mdx","")}` : "Unselected Category";
+          const categoryTitle = item?.category ? `🔗 ${item?.category?.split("/").at(-1)?.replace(".mdx","")}` : "Unselected Category";
           return { label: categoryTitle }; 
         },
       },
