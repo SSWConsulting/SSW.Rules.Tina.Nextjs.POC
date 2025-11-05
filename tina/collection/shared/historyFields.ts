@@ -86,7 +86,7 @@ export const historyBeforeSubmit = async ({ form, cms, values }: { form: Form; c
   let userName: string | undefined;
 
   // Run category update in background without blocking save
-  fetch("/rules-beta/api/update-category", {
+  await fetch("/rules-beta/api/update-category", {
     method: "POST",
     headers: getBearerAuthHeader(),
     body: JSON.stringify({

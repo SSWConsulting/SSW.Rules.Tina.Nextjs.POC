@@ -1,18 +1,9 @@
-import client from "@/tina/__generated__/client";
 import { type NextRequest, NextResponse } from "next/server";
+import client from "@/tina/__generated__/client";
 import { TinaGraphQLClient } from "@/utils/tina/tina-graphql-client";
+import { CategoryProcessingResult, UpdateCategoryRequest, UpdateCategoryResponse } from "./types";
 import { updateTheCategoryRuleList } from "./update-the-category-rule-list";
-import {
-  categorizeCategories,
-  getRelativePathForCategory,
-  getRuleCategories,
-  ruleExistsByUriInCategory,
-} from "./util";
-import {
-  CategoryProcessingResult,
-  UpdateCategoryRequest,
-  UpdateCategoryResponse,
-} from "./types";
+import { categorizeCategories, getRelativePathForCategory, getRuleCategories, ruleExistsByUriInCategory } from "./util";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -20,21 +11,13 @@ const isDev = process.env.NODE_ENV === "development";
  * Processes a single category for the given action (add or delete).
  * Returns whether the operation was successful.
  */
-async function processSingleCategory(
-  category: string,
-  ruleUri: string,
-  tgc: TinaGraphQLClient,
-  action: "add" | "delete"
-): Promise<boolean> {
+async function processSingleCategory(category: string, ruleUri: string, tgc: TinaGraphQLClient, action: "add" | "delete"): Promise<boolean> {
   try {
     const relativePath = getRelativePathForCategory(category);
     const categoryQueryResult = await client.queries.categoryWithRulesQuery({
       relativePath,
     });
-    const ruleAlreadyExists = ruleExistsByUriInCategory(
-      categoryQueryResult,
-      ruleUri
-    );
+    const ruleAlreadyExists = ruleExistsByUriInCategory(categoryQueryResult, ruleUri);
 
     // Validate preconditions for the action
     if (action === "add" && ruleAlreadyExists) {
@@ -45,12 +28,7 @@ async function processSingleCategory(
     }
 
     // Perform the update
-    const result = await updateTheCategoryRuleList(
-      ruleUri,
-      relativePath,
-      tgc,
-      action
-    );
+    const result = await updateTheCategoryRuleList(ruleUri, relativePath, tgc, action);
 
     return result.success;
   } catch (error) {
@@ -63,23 +41,13 @@ async function processSingleCategory(
  * Processes a list of categories for the given action.
  * Separates categories into processed and failed arrays.
  */
-async function processCategories(
-  categories: string[],
-  ruleUri: string,
-  tgc: TinaGraphQLClient,
-  action: "add" | "delete"
-): Promise<CategoryProcessingResult> {
+async function processCategories(categories: string[], ruleUri: string, tgc: TinaGraphQLClient, action: "add" | "delete"): Promise<CategoryProcessingResult> {
   const processed: string[] = [];
   const failed: string[] = [];
 
   await Promise.all(
     categories.map(async (category) => {
-      const success = await processSingleCategory(
-        category,
-        ruleUri,
-        tgc,
-        action
-      );
+      const success = await processSingleCategory(category, ruleUri, tgc, action);
 
       const relativePath = getRelativePathForCategory(category);
       if (success) {
@@ -106,10 +74,7 @@ function validateAuth(request: NextRequest): {
   if (!isDev && (!authHeader || !authHeader.startsWith("Bearer "))) {
     return {
       valid: false,
-      error: NextResponse.json(
-        { error: "Missing Authorization token" },
-        { status: 401 }
-      ),
+      error: NextResponse.json({ error: "Missing Authorization token" }, { status: 401 }),
     };
   }
 
@@ -128,10 +93,7 @@ function validateRequestBody(body: unknown): {
   if (typeof body !== "object" || body === null) {
     return {
       valid: false,
-      error: NextResponse.json(
-        { error: "Invalid request body" },
-        { status: 400 }
-      ),
+      error: NextResponse.json({ error: "Invalid request body" }, { status: 400 }),
     };
   }
 
@@ -166,15 +128,9 @@ function extractCategoriesByStatus(
   noChange: string[];
 } {
   return {
-    toAdd: categorizedCategories
-      .filter((c) => c.status === "add")
-      .map((c) => c.category),
-    toDelete: categorizedCategories
-      .filter((c) => c.status === "delete")
-      .map((c) => c.category),
-    noChange: categorizedCategories
-      .filter((c) => c.status === "noChange")
-      .map((c) => c.category),
+    toAdd: categorizedCategories.filter((c) => c.status === "add").map((c) => c.category),
+    toDelete: categorizedCategories.filter((c) => c.status === "delete").map((c) => c.category),
+    noChange: categorizedCategories.filter((c) => c.status === "noChange").map((c) => c.category),
   };
 }
 
@@ -200,28 +156,31 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const { rule, currentRuleCategories } = await getRuleCategories(ruleUri);
 
     if (!rule) {
-      return NextResponse.json(
-        { error: `Rule not found for URI: ${ruleUri}` },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: `Rule not found for URI: ${ruleUri}` }, { status: 404 });
     }
 
     // Categorize categories to determine actions needed
-    const categorizedCategories = categorizeCategories(
-      currentRuleCategories,
-      categories
-    );
+    const categorizedCategories = categorizeCategories(currentRuleCategories, categories);
 
-    const { toAdd, toDelete, noChange } = extractCategoriesByStatus(
-      categorizedCategories
-    );
+    const { toAdd, toDelete, noChange } = extractCategoriesByStatus(categorizedCategories);
+
+    // Early exit if there's nothing to add or delete
+    if (toAdd.length === 0 && toDelete.length === 0) {
+      const response: UpdateCategoryResponse = {
+        success: true,
+        message: `No changes needed for rule ${rule.title}`,
+        URI: rule.uri,
+        AddedCategories: [],
+        DeletedCategories: [],
+        NoChangedCategories: noChange,
+      };
+
+      return NextResponse.json(response);
+    }
 
     // Process categories
     const tgc = new TinaGraphQLClient(token);
-    const [addResult, deleteResult] = await Promise.all([
-      processCategories(toAdd, ruleUri, tgc, "add"),
-      processCategories(toDelete, ruleUri, tgc, "delete"),
-    ]);
+    const [addResult, deleteResult] = await Promise.all([processCategories(toAdd, ruleUri, tgc, "add"), processCategories(toDelete, ruleUri, tgc, "delete")]);
 
     // Build response
     const response: UpdateCategoryResponse = {
@@ -230,11 +189,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       URI: rule.uri,
       AddedCategories: addResult.processed,
       DeletedCategories: deleteResult.processed,
-      NoChangedCategories: [
-        ...addResult.failed,
-        ...deleteResult.failed,
-        ...noChange,
-      ],
+      NoChangedCategories: [...addResult.failed, ...deleteResult.failed, ...noChange],
     };
 
     return NextResponse.json(response);

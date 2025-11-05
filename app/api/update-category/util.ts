@@ -1,13 +1,9 @@
 import client from "@/tina/__generated__/client";
 
 // Normalizes a category path to a consistent format for comparison
-export function normalizeCategoryPathForComparison(
-  categoryPath: string
-): string {
+export function normalizeCategoryPathForComparison(categoryPath: string): string {
   // Remove leading content/ or categories/ if present
-  let normalized = categoryPath
-    .replace(/^content\//, "")
-    .replace(/^categories\//, "");
+  let normalized = categoryPath.replace(/^content\//, "").replace(/^categories\//, "");
 
   // Ensure it ends with .mdx
   if (!normalized.endsWith(".mdx")) {
@@ -20,10 +16,7 @@ export function normalizeCategoryPathForComparison(
 
 // Checks whether a rule with the given URI already exists in the provided
 // category query result returned by `categoryWithRulesQuery`.
-export function ruleExistsByUriInCategory(
-  result: unknown,
-  targetUri: string
-): boolean {
+export function ruleExistsByUriInCategory(result: unknown, targetUri: string): boolean {
   try {
     const category: any = (result as any)?.data?.category;
     const indexItems: any[] | undefined = category?.index;
@@ -48,18 +41,10 @@ interface CategoryComparison {
  * @param requestedCategories - Array of requested category paths (can be strings or objects)
  * @returns Array of CategoryComparison objects with category path and status
  */
-export function categorizeCategories(
-  currentCategories: string[],
-  requestedCategories: Array<string | { category?: string }>
-): CategoryComparison[] {
+export function categorizeCategories(currentCategories: string[], requestedCategories: Array<string | { category?: string }>): CategoryComparison[] {
   // Normalize requested categories to the same format
   const normalizedRequested = requestedCategories.map((cat) => {
-    const rawPath =
-      typeof cat === "string"
-        ? cat
-        : typeof cat?.category === "string"
-        ? cat.category
-        : "";
+    const rawPath = typeof cat === "string" ? cat : typeof cat?.category === "string" ? cat.category : "";
     return normalizeCategoryPathForComparison(rawPath);
   });
 
@@ -102,10 +87,9 @@ export function categorizeCategories(
   return result;
 }
 
-export async function getRuleCategories(
-  ruleUri: string
-): Promise<{ rule: any; currentRuleCategories: string[] }> {
-  const currentRule = await client.queries.rulesByUriQuery({ uris: [ruleUri] });
+export async function getRuleCategories(ruleUri: string): Promise<{ rule: any; currentRuleCategories: string[] }> {
+  // Use lightweight query that only fetches categories
+  const currentRule = await client.queries.ruleCategoriesByUriQuery({ uris: [ruleUri] });
   const rule = currentRule?.data?.ruleConnection?.edges?.[0]?.node;
 
   if (!rule) {
@@ -115,17 +99,13 @@ export async function getRuleCategories(
 
   // Extract category relative paths from the nested structure: categories[].category._sys.relativePath
   const currentRuleCategories =
-    rule?.categories
-      ?.map((cat: any) => `categories/${cat?.category?._sys?.relativePath}`)
-      .filter((path: string | undefined): path is string => !!path) || [];
+    rule?.categories?.map((cat: any) => `categories/${cat?.category?._sys?.relativePath}`).filter((path: string | undefined): path is string => !!path) || [];
 
   return { rule, currentRuleCategories };
 }
 
 export function getRelativePathForCategory(category: string): string {
-  let relativePath = category
-    .replace(/^content\//, "")
-    .replace(/^categories\//, "");
+  let relativePath = category.replace(/^content\//, "").replace(/^categories\//, "");
   if (!relativePath.endsWith(".mdx")) {
     relativePath = `${relativePath}.mdx`;
   }
