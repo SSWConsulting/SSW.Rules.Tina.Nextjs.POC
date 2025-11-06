@@ -12,7 +12,7 @@ import { TinaRuleWrapper } from "./TinaRuleWrapper";
 // export const revalidate = 360;
 
 // TODO: Remove me once we are sure all pages are statically generated and no more 404's
-export const dynamicParams = false;
+//export const dynamicParams = false;
 
 export const dynamic = 'force-static';
 
