@@ -65,7 +65,64 @@ const getCategoryData = async (filename: string) => {
     };
   } catch (error) {
     console.error("Error fetching category data:", error);
-    return null;
+    // Fallback: build category data without broken rule references
+    try {
+      const categorySlug = filename; // route param matches category filename/slug
+      const title = (categoryTitleIndex as any)?.categories?.[categorySlug] ?? categorySlug;
+
+      // Invert ruleToCategoryIndex to get all rule URIs that include this category
+      const uris: string[] = [];
+      try {
+        for (const [ruleUri, categories] of Object.entries(
+          ruleToCategoryIndex as Record<string, string[]>
+        )) {
+          if (Array.isArray(categories) && categories.includes(categorySlug)) {
+            uris.push(ruleUri);
+          }
+        }
+      } catch (e) {
+        console.warn("Failed to invert rule-to-category index:", e);
+      }
+
+      let rules: any[] = [];
+      if (uris.length > 0) {
+        try {
+          const rulesRes = await client.queries.rulesByUriQuery({ uris });
+          const edges = rulesRes?.data?.ruleConnection?.edges ?? [];
+          rules = edges.map((e: any) => e?.node).filter(Boolean);
+
+          // Warn about any URIs that did not resolve to a rule (likely broken/missing)
+          const fetchedUris = new Set<string>(
+            rules.map((r: any) => String(r?.uri || "")).filter((u: string) => u.length > 0)
+          );
+          const missingUris = uris.filter((u) => !fetchedUris.has(u));
+          if (missingUris.length > 0) {
+            console.error(
+              `Category fallback: missing or broken rule URIs for category '${categorySlug}' (${fullPath}):`,
+              missingUris
+            );
+          }
+        } catch (e) {
+          console.warn("Failed to fetch rules by URIs for fallback:", e);
+        }
+      }
+
+      // Synthesize a minimal category shape compatible with ServerCategoryPage
+      return {
+        data: {
+          category: {
+            title,
+            body: null,
+            index: rules.map((r) => ({ rule: r })),
+          },
+        },
+        query: "fallback-category-with-filtered-rules",
+        variables: { relativePath: `${fullPath}` },
+      };
+    } catch (e) {
+      console.error("Fallback building category data failed:", e);
+      return null;
+    }
   }
 };
 
