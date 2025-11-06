@@ -10,7 +10,7 @@ export async function GET() {
   try {
     const cookieStore = await cookies();
     const branch = cookieStore.get('x-branch')?.value;
-    const PAGE_SIZE = 1000; // server-side page size (Tina may cap to 50)
+    const PAGE_SIZE = 1000; // server-side page size
     let after: string | undefined = undefined;
     let hasNextPage = true;
     const allEdges: any[] = [];
