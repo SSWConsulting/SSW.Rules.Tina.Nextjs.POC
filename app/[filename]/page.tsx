@@ -14,11 +14,6 @@ export const revalidate = 3600;
 // TODO: Remove me once we are sure all pages are statically generated and no more 404's
 export const dynamicParams = false;
 
-// TODO: Remove me once we are sure all pages are statically generated and no more 404's
-// Add this to force static generation - ensure that the getRuleData and getCategoryData 
-// functions are called at build time and have them cached.
-export const dynamic = 'force-static';
-
 const getFullRelativePathFromFilename = async (filename: string): Promise<string | null> => {
   let hasNextPage = true;
   let after: string | null = null;

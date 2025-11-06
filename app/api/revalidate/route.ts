@@ -39,6 +39,7 @@ export async function POST(req: Request) {
         if (slug) {
           // Do not include basePath here; Next.js basePath is handled internally
           routesToRevalidate.add(`/${slug}`);
+          routesToRevalidate.add(`/rules-beta/${slug}`);
         }
       }
     }
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
     }
 
     for (const route of routesToRevalidate) {
-      revalidatePath(route, "page");
+      revalidatePath(route);
     }
 
     return NextResponse.json({ revalidated: true, routes: Array.from(routesToRevalidate) });
