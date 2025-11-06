@@ -1,15 +1,10 @@
 import { NextResponse } from "next/server";
 import client from "@/tina/__generated__/client";
-import { cookies } from "next/headers";
 
-export const revalidate = 0;
-
-export const dynamic = 'force-dynamic';
+export const revalidate = 3600; // 60 minutes
 
 export async function GET() {
   try {
-    const cookieStore = await cookies();
-    const branch = cookieStore.get('x-branch')?.value;
     const PAGE_SIZE = 1000; // server-side page size
     let after: string | undefined = undefined;
     let hasNextPage = true;
@@ -20,11 +15,6 @@ export async function GET() {
       const res: any = await (client as any).queries.paginatedRulesQuery({
         first: PAGE_SIZE,
         after,
-      }, 
-      {
-        fetchOptions: {
-          headers: branch ? { 'x-branch': branch } : {},
-        },
       });
       const data = (res?.data ?? res) as any;
       const conn = data?.ruleConnection;
@@ -53,8 +43,7 @@ export async function GET() {
     return new NextResponse(JSON.stringify(items), { 
       status: 200,
       headers: {
-        "Content-Type": "application/json",
-        "Cache-Control": "no-store",
+        "Content-Type": "application/json"
       },
     });
   } catch (err) {

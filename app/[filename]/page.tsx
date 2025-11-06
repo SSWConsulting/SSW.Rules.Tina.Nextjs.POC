@@ -9,10 +9,7 @@ import { TinaRuleWrapper } from "./TinaRuleWrapper";
 
 // We have a Tina webhook revalidating each page individually on change
 // Leaving this as a fallback in case the above goes wrong
-// export const revalidate = 360;
-
-// TODO: Remove me once we are sure all pages are statically generated and no more 404's
-//export const dynamicParams = false;
+// export const revalidate = 3600;
 
 export const dynamic = 'force-static';
 
