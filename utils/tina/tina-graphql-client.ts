@@ -5,7 +5,7 @@ export class TinaGraphQLClient {
   private headers: Record<string, string>;
 
   constructor(token: string, branch?: string) {
-    const endpoint = getTinaEndpoint();
+    const endpoint = getTinaEndpoint(branch);
     if (!endpoint) throw new Error("TinaCMS endpoint is not configured");
 
     this.endpoint = endpoint;
@@ -19,10 +19,7 @@ export class TinaGraphQLClient {
     }
   }
 
-  async request<T = any>(
-    query: string,
-    variables: Record<string, any>
-  ): Promise<T> {
+  async request<T = any>(query: string, variables: Record<string, any>): Promise<T> {
     try {
       const response = await fetch(this.endpoint, {
         method: "POST",
@@ -33,9 +30,7 @@ export class TinaGraphQLClient {
       const json = await response.json();
 
       if (!response.ok || json.errors) {
-        const errorMsg =
-          json.errors?.map((e: any) => e.message).join(", ") ||
-          `HTTP ${response.status}`;
+        const errorMsg = json.errors?.map((e: any) => e.message).join(", ") || `HTTP ${response.status}`;
         throw new Error(errorMsg);
       }
 
