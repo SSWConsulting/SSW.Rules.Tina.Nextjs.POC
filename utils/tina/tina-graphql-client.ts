@@ -4,7 +4,7 @@ export class TinaGraphQLClient {
   private endpoint: string;
   private headers: Record<string, string>;
 
-  constructor(token: string) {
+  constructor(token: string, branch?: string) {
     const endpoint = getTinaEndpoint();
     if (!endpoint) throw new Error("TinaCMS endpoint is not configured");
 
@@ -13,6 +13,10 @@ export class TinaGraphQLClient {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     };
+
+    if (branch) {
+      this.headers["x-branch"] = branch;
+    }
   }
 
   async request<T = any>(
