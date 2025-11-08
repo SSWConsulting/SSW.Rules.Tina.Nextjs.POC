@@ -64,7 +64,7 @@ const Rule: Collection = {
     {
       name: "categories",
       label: "Categories",
-      description: "IMPORTANT: Make sure you are in your own branch before editing this field",
+      description: "Assigns one or more categories to the rule",
       list: true,
       type: "object",
       ui: {
