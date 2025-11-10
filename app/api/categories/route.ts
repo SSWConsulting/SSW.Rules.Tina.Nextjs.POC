@@ -2,8 +2,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import client from "@/tina/__generated__/client";
 
-// Force dynamic rendering to prevent build-time execution
-export const dynamic = "force-dynamic";
+export const revalidate = 3600 * 12; // 12 hours
 
 export async function GET() {
   try {
