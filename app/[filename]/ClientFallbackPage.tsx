@@ -1,13 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import client from "@/tina/__generated__/client";
-import { Section } from "@/components/layout/section";
 import ServerCategoryPage from "@/app/[filename]/ServerCategoryPage";
-import { TinaRuleWrapper } from "./TinaRuleWrapper";
-import ruleToCategoryIndex from "@/rule-to-categories.json";
-import categoryTitleIndex from "@/category-uri-title-map.json";
 import NotFound from "@/app/not-found";
+import categoryTitleIndex from "@/category-uri-title-map.json";
+import { Section } from "@/components/layout/section";
+import ruleToCategoryIndex from "@/rule-to-categories.json";
+import client from "@/tina/__generated__/client";
+import { TinaRuleWrapper } from "./TinaRuleWrapper";
 
 interface ClientFallbackPageProps {
   filename: string;
@@ -22,7 +22,7 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
   // Helper function to get branch from API
   const getBranchFromAPI = async (): Promise<string | undefined> => {
     try {
-      const branchRes = await fetch("../api/branch", { method: "GET", cache: "no-store" });
+      const branchRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/branch`, { method: "GET", cache: "no-store" });
       if (branchRes.ok) {
         const branchData = await branchRes.json();
         const branch = branchData?.branch || "";
@@ -35,10 +35,7 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
   };
 
   // Helper function to get full relative path from filename
-  const getFullRelativePathFromFilename = async (
-    filename: string,
-    fetchOptions: any
-  ): Promise<string | null> => {
+  const getFullRelativePathFromFilename = async (filename: string, fetchOptions: any): Promise<string | null> => {
     let hasNextPage = true;
     let after: string | null = null;
 
@@ -91,7 +88,7 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
       try {
         // Get branch from API
         const branch = await getBranchFromAPI();
-        
+
         // Prepare fetch options with branch header if available
         const fetchOptions = branch
           ? {
@@ -105,15 +102,12 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
 
         // First, try to find the full relative path for category
         const fullPath = await getFullRelativePathFromFilename(filename, fetchOptions);
-        
+
         // Try category first
         if (fullPath) {
           try {
             const categoryRes = fetchOptions
-              ? await client.queries.categoryWithRulesQuery(
-                  { relativePath: fullPath },
-                  fetchOptions
-                )
+              ? await client.queries.categoryWithRulesQuery({ relativePath: fullPath }, fetchOptions)
               : await client.queries.categoryWithRulesQuery({ relativePath: fullPath }, fetchOptions);
 
             if (categoryRes?.data?.category) {
@@ -142,10 +136,7 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
         // Try rule data
         try {
           const ruleRes = fetchOptions
-            ? await client.queries.ruleData(
-                { relativePath: filename + "/rule.mdx" },
-                fetchOptions
-              )
+            ? await client.queries.ruleData({ relativePath: filename + "/rule.mdx" }, fetchOptions)
             : await client.queries.ruleData({ relativePath: filename + "/rule.mdx" }, fetchOptions);
 
           if (ruleRes?.data?.rule) {
@@ -242,4 +233,3 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
 
   return null;
 }
-
