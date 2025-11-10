@@ -2,8 +2,6 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import client from "@/tina/__generated__/client";
 
-export const revalidate = 3600 * 12; // 12 hours
-
 export async function GET() {
   try {
     const cookieStore = await cookies();
@@ -27,7 +25,15 @@ export async function GET() {
     }
 
     if (!result?.data?.category || result.data.category.__typename !== "CategoryMain") {
-      return NextResponse.json({ categories: [] }, { status: 200 });
+      return NextResponse.json(
+        { categories: [] },
+        {
+          status: 200,
+          headers: {
+            "Cache-Control": "public, s-maxage=43200, stale-while-revalidate=86400", // 12 hours cache, 24 hours stale-while-revalidate
+          },
+        }
+      );
     }
 
     // Transform the data to match what CategorySelector expects
@@ -40,7 +46,15 @@ export async function GET() {
       }));
     });
 
-    return NextResponse.json({ categories: items }, { status: 200 });
+    return NextResponse.json(
+      { categories: items },
+      {
+        status: 200,
+        headers: {
+          "Cache-Control": "public, s-maxage=43200, stale-while-revalidate=86400", // 12 hours cache, 24 hours stale-while-revalidate
+        },
+      }
+    );
   } catch (e) {
     console.error("Failed to fetch categories:", e);
     const errorMessage = e instanceof Error ? e.message : String(e);
@@ -52,7 +66,12 @@ export async function GET() {
         error: "Failed to fetch categories",
         details: process.env.NODE_ENV === "development" ? errorMessage : undefined,
       },
-      { status: 500 }
+      {
+        status: 500,
+        headers: {
+          "Cache-Control": "no-store", // Don't cache errors
+        },
+      }
     );
   }
 }
