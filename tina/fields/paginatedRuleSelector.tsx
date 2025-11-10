@@ -14,6 +14,7 @@ interface Rule {
 }
 
 const MIN_SEARCH_LENGTH = 2;
+const INITIAL_RULES_COUNT = 20;
 
 export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
   const [filter, setFilter] = useState("");
@@ -75,11 +76,39 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
   useEffect(() => {
     const q = filter.trim().toLowerCase();
     const isSearch = q.length >= MIN_SEARCH_LENGTH;
+
     if (!isSearch) {
-      setFilteredRules([]);
+      // Show first 20 rules sorted by lastUpdated when no search query
+      // Ensure selected rule is always included if it exists
+      const selectedRel = selectedRule ? selectedRule.replace(/^public\/uploads\/rules\//, "").replace(/^rules\//, "") : null;
+      const selectedRuleObj = selectedRel ? allRules.find((r) => r._sys.relativePath === selectedRel) : null;
+
+      const sorted = [...allRules].sort((a, b) => {
+        const timeA = new Date(a.lastUpdated).getTime() || 0;
+        const timeB = new Date(b.lastUpdated).getTime() || 0;
+        return timeB - timeA;
+      });
+
+      // If there's a selected rule, ensure it's included
+      if (selectedRuleObj) {
+        const topRules = sorted.slice(0, INITIAL_RULES_COUNT);
+        const isSelectedInTop = topRules.some((r) => r._sys.relativePath === selectedRel);
+
+        if (!isSelectedInTop) {
+          // Remove the last item and add selected rule at the top
+          topRules.pop();
+          setFilteredRules([selectedRuleObj, ...topRules]);
+        } else {
+          // Selected rule is already in top 20, just show top 20
+          setFilteredRules(topRules);
+        }
+      } else {
+        setFilteredRules(sorted.slice(0, INITIAL_RULES_COUNT));
+      }
       return;
     }
 
+    // Filter and sort when searching - show ALL matching results (no limit)
     const includesMatches = allRules.filter((r) => {
       const uri = r.uri.toLowerCase();
       const title = r.title.toLowerCase();
@@ -90,8 +119,9 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
       const timeB = new Date(b.lastUpdated).getTime() || 0;
       return timeB - timeA;
     });
+    // Show all matching results when searching (no limit)
     setFilteredRules(includesSorted);
-  }, [filter, allRules]);
+  }, [filter, allRules, selectedRule]);
 
   const handleRuleSelect = (rule) => {
     setSelectedRuleLabel(rule.uri);
@@ -104,7 +134,7 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
   }
 
   return (
-    <div className="relative z-[1000]">
+    <div className="relative z-1000">
       <input type="hidden" id={input.name} {...input} />
       <Popover>
         {({ open }) => (
@@ -113,7 +143,7 @@ export const PaginatedRuleSelectorInput: React.FC<any> = ({ input }) => {
               <span>{selectedRuleLabel || "Select a rule"}</span>
               <BiChevronDown className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`} />
             </PopoverButton>
-            <div className="absolute inset-x-0 -bottom-2 translate-y-full z-[1000]">
+            <div className="absolute inset-x-0 -bottom-2 translate-y-full z-1000">
               <Transition
                 enter="transition duration-150 ease-out"
                 enterFrom="transform opacity-0 -translate-y-2"
