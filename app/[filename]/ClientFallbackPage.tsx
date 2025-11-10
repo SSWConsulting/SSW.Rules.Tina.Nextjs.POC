@@ -22,7 +22,7 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
   // Helper function to get branch from API
   const getBranchFromAPI = async (): Promise<string | undefined> => {
     try {
-      const branchRes = await fetch("/api/branch", { method: "GET", cache: "no-store" });
+      const branchRes = await fetch("../api/branch", { method: "GET", cache: "no-store" });
       if (branchRes.ok) {
         const branchData = await branchRes.json();
         const branch = branchData?.branch || "";
