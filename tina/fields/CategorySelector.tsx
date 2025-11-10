@@ -1,15 +1,9 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
-import client from "@/tina/__generated__/client";
+import { Popover, PopoverButton, PopoverPanel, Transition } from "@headlessui/react";
+import React, { useEffect, useMemo, useState } from "react";
 import { BiChevronDown, BiSearch } from "react-icons/bi";
-import {
-  Popover,
-  PopoverButton,
-  Transition,
-  PopoverPanel,
-} from "@headlessui/react";
-
+import client from "@/tina/__generated__/client";
 
 interface CategoryItem {
   title: string;
@@ -36,38 +30,47 @@ export const CategorySelectorInput: React.FC<any> = (props) => {
 
   // If creating a new rule, disable the selector
   // When save happens we add the rule to the category, but at this point the rule doesnt yet exist
-  const isCreating = tinaForm.crudType == "create"; 
+  const isCreating = tinaForm.crudType == "create";
   const isDisabled = isCreating || isProtectedBranch === true;
 
-  // Determine current branch via server endpoint (handles Next.js cookies server-side)
+  // Determine current branch and fetch categories
   useEffect(() => {
-    const readBranch = async () => {
-      try {
-        const res = await fetch(`../api/branch`, { method: "GET", cache: "no-store" });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const branch = data?.branch || "";
-        setIsProtectedBranch(!!branch && PROTECTED_BRANCHES.includes(branch));
-      } catch {
-        setIsProtectedBranch(false);
-      }
-    };
-    readBranch();
-  }, []);
-
-  // Fetch all categories once on mount (via API)
-  useEffect(() => {
-    // Only fetch when we definitively know it's not protected and not creating
-    if (isCreating || isProtectedBranch !== false) {
+    // Don't fetch if creating a new rule
+    if (isCreating) {
       setAllCategories([]);
       setFilteredCategories([]);
       return;
     }
+
     const run = async () => {
       setLoading(true);
       try {
+        // First, check branch status
+        let branchProtected = false;
+        try {
+          const branchRes = await fetch(`../api/branch`, { method: "GET", cache: "no-store" });
+          if (branchRes.ok) {
+            const branchData = await branchRes.json();
+            const branch = branchData?.branch || "";
+            branchProtected = !!branch && PROTECTED_BRANCHES.includes(branch);
+          }
+        } catch (branchError) {
+          // If branch check fails, assume not protected and continue
+          console.warn("Failed to check branch status, proceeding with category fetch:", branchError);
+        }
+
+        setIsProtectedBranch(branchProtected);
+
+        // If branch is protected, don't fetch categories
+        if (branchProtected) {
+          setAllCategories([]);
+          setFilteredCategories([]);
+          return;
+        }
+
+        // Fetch categories
         const res = await client.queries.mainCategoryQuery();
-        const categories = (res.data.category) as any;
+        const categories = res.data.category as any;
 
         const items: CategoryItem[] = categories?.index?.flatMap((top: any) => {
           const subcats: any[] = top?.top_category?.index?.map((s: any) => s?.category).filter(Boolean);
@@ -80,17 +83,19 @@ export const CategorySelectorInput: React.FC<any> = (props) => {
         setAllCategories(items);
       } catch (e) {
         console.error("Failed to load categories:", e);
+        // On error, assume not protected so UI isn't blocked
+        setIsProtectedBranch(false);
       } finally {
         setLoading(false);
       }
     };
     run();
-  }, [isCreating, isProtectedBranch]);
+  }, [isCreating]);
 
   useEffect(() => {
     const q = filter.trim().toLowerCase();
     const includesMatches = allCategories.filter((c) => (c.title || "").toLowerCase().includes(q));
-    
+
     // If no query, show all categories; otherwise show matches
     setFilteredCategories(q ? includesMatches : allCategories);
   }, [filter, allCategories]);
@@ -118,7 +123,7 @@ export const CategorySelectorInput: React.FC<any> = (props) => {
               }`}
             >
               <span>{selectedCategoryLabel || "Select a category"}</span>
-              <BiChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+              <BiChevronDown className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`} />
             </PopoverButton>
             <div className="absolute inset-x-0 -bottom-2 translate-y-full z-1000">
               <Transition
@@ -154,24 +159,20 @@ export const CategorySelectorInput: React.FC<any> = (props) => {
                       </div>
 
                       {/* Empty state */}
-                      {!loading && !isDisabled && filteredCategories.length === 0 && (
-                        <div className="p-4 text-center text-gray-400">No categories found</div>
-                      )}
+                      {!loading && !isDisabled && filteredCategories.length === 0 && <div className="p-4 text-center text-gray-400">No categories found</div>}
 
                       {/* Category list */}
                       {!loading && !isDisabled && filteredCategories.length > 0 && (
                         <div className="flex-1 overflow-y-auto">
                           {filteredCategories.map((category) => {
-                            const selectedRel = selectedValue
-                              ? selectedValue.replace(/^public\/uploads\/categories\//, '').replace(/^categories\//, '')
-                              : null;
+                            const selectedRel = selectedValue ? selectedValue.replace(/^public\/uploads\/categories\//, "").replace(/^categories\//, "") : null;
                             const isSelected = selectedRel === category._sys.relativePath;
 
                             return (
                               <button
                                 key={`${category._sys.relativePath}`}
                                 className={`w-full text-left py-2 px-3 hover:bg-gray-50 border-b border-gray-100 transition-colors block ${
-                                  isSelected ? 'bg-blue-50 border-blue-200' : ''
+                                  isSelected ? "bg-blue-50 border-blue-200" : ""
                                 }`}
                                 onClick={() => {
                                   handleCategorySelect(category);
@@ -180,9 +181,7 @@ export const CategorySelectorInput: React.FC<any> = (props) => {
                               >
                                 <div className="flex items-center justify-between w-full gap-3">
                                   <div className="flex-1 min-w-0 overflow-hidden">
-                                    <div className="font-medium text-gray-900 text-sm leading-5 truncate">
-                                      {category.title}
-                                    </div>
+                                    <div className="font-medium text-gray-900 text-sm leading-5 truncate">{category.title}</div>
                                   </div>
                                 </div>
                               </button>
@@ -197,9 +196,7 @@ export const CategorySelectorInput: React.FC<any> = (props) => {
             </div>
             {isDisabled && (
               <div className="mt-1 text-xs text-gray-400">
-                {isCreating
-                  ? "Save the rule to enable category selection."
-                  : "Switch to a non-protected branch to enable category selection."}
+                {isCreating ? "Save the rule to enable category selection." : "Switch to a non-protected branch to enable category selection."}
               </div>
             )}
           </>
@@ -208,5 +205,3 @@ export const CategorySelectorInput: React.FC<any> = (props) => {
     </div>
   );
 };
-
-
