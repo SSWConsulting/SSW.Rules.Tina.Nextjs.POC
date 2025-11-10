@@ -13,10 +13,6 @@ export class TinaGraphQLClient {
       "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     };
-
-    if (branch) {
-      this.headers["x-branch"] = branch;
-    }
   }
 
   async request<T = any>(query: string, variables: Record<string, any>): Promise<T> {
@@ -36,7 +32,6 @@ export class TinaGraphQLClient {
 
       return json.data;
     } catch (err) {
-      // biome-ignore lint/suspicious/noConsole: <explanation>
       console.error("Tina GraphQL request failed:", err);
       throw err;
     }
