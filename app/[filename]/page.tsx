@@ -1,11 +1,11 @@
 import React from "react";
 import { Section } from "@/components/layout/section";
 import client from "@/tina/__generated__/client";
-import { notFound } from "next/navigation";
 import ruleToCategoryIndex from "@/rule-to-categories.json";
 import categoryTitleIndex from "@/category-uri-title-map.json";
 import ServerCategoryPage from "@/app/[filename]/ServerCategoryPage";
 import { TinaRuleWrapper } from "./TinaRuleWrapper";
+import ClientFallbackPage from "./ClientFallbackPage";
 
 // We have a Tina webhook revalidating each page individually on change
 // Leaving this as a fallback in case the above goes wrong
@@ -274,7 +274,9 @@ export default async function Page({
     );
   }
 
-  notFound();
+  // If data is not found statically, try fetching on client side with branch support
+  const sp = (await searchParams) ?? {};
+  return <ClientFallbackPage filename={filename} searchParams={sp} />;
 }
 
 export async function generateMetadata({
