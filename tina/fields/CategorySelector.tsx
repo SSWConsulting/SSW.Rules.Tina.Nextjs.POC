@@ -75,7 +75,7 @@ export const CategorySelectorInput: React.FC<any> = (props) => {
         const items: CategoryItem[] = categories?.index?.flatMap((top: any) => {
           const subcats: any[] = top?.top_category?.index?.map((s: any) => s?.category).filter(Boolean);
           return subcats.map((sub: any) => ({
-            title: `${top?.top_category?.title || ""} | ${sub?.title || ""}`,
+            title: `${top?.top_category?.title || ""} | ${sub?.title?.replace("Rules to Better", "") || ""}`,
             _sys: { relativePath: `${top?.top_category?.uri}/${sub?._sys?.filename}.mdx` },
           }));
         });
