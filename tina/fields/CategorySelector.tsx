@@ -92,6 +92,27 @@ export const CategorySelectorInput: React.FC<any> = (props) => {
     run();
   }, [isCreating]);
 
+  // Initialize selected category label from existing value when categories load
+  useEffect(() => {
+    if (!selectedValue || allCategories.length === 0) {
+      return;
+    }
+
+    // Extract the relative path from the selected value
+    const selectedRel = selectedValue.replace(/^public\/uploads\/categories\//, "").replace(/^categories\//, "");
+
+    // Find the matching category
+    const matchingCategory = allCategories.find((c) => c._sys.relativePath === selectedRel);
+
+    // Only update if we found a match and the label doesn't already match
+    if (matchingCategory && selectedCategoryLabel !== matchingCategory.title) {
+      setSelectedCategoryLabel(matchingCategory.title);
+    } else if (!matchingCategory && selectedCategoryLabel) {
+      // If value exists but no matching category found, clear the label
+      setSelectedCategoryLabel(null);
+    }
+  }, [selectedValue, allCategories, selectedCategoryLabel]);
+
   useEffect(() => {
     const q = filter.trim().toLowerCase();
     const includesMatches = allCategories.filter((c) => (c.title || "").toLowerCase().includes(q));
