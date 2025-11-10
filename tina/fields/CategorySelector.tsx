@@ -142,8 +142,11 @@ export const CategorySelectorInput: React.FC<any> = (props) => {
               className={`text-sm h-11 px-4 justify-between w-full bg-white border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-colors flex items-center ${
                 isDisabled ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-50"
               }`}
+              title={selectedCategoryLabel || undefined}
             >
-              <span>{selectedCategoryLabel || "Select a category"}</span>
+              <span className="truncate" title={selectedCategoryLabel || undefined}>
+                {selectedCategoryLabel || "Select a category"}
+              </span>
               <BiChevronDown className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`} />
             </PopoverButton>
             <div className="absolute inset-x-0 -bottom-2 translate-y-full z-1000">
@@ -199,10 +202,13 @@ export const CategorySelectorInput: React.FC<any> = (props) => {
                                   handleCategorySelect(category);
                                   close();
                                 }}
+                                title={category.title}
                               >
                                 <div className="flex items-center justify-between w-full gap-3">
                                   <div className="flex-1 min-w-0 overflow-hidden">
-                                    <div className="font-medium text-gray-900 text-sm leading-5 truncate">{category.title}</div>
+                                    <div className="font-medium text-gray-900 text-sm leading-5 truncate" title={category.title}>
+                                      {category.title}
+                                    </div>
                                   </div>
                                 </div>
                               </button>
