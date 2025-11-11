@@ -6,7 +6,6 @@ import NotFound from "@/app/not-found";
 import categoryTitleIndex from "@/category-uri-title-map.json";
 import { Section } from "@/components/layout/section";
 import ruleToCategoryIndex from "@/rule-to-categories.json";
-import client from "@/tina/__generated__/client";
 import { TinaRuleWrapper } from "./TinaRuleWrapper";
 
 interface ClientFallbackPageProps {
@@ -19,42 +18,38 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
   const [data, setData] = useState<any>(null);
   const [isNotFound, setIsNotFound] = useState(false);
 
-  // Helper function to get branch from API
-  const getBranchFromAPI = async (): Promise<string | undefined> => {
-    try {
-      const branchRes = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/branch`, { method: "GET", cache: "no-store" });
-      if (branchRes.ok) {
-        const branchData = await branchRes.json();
-        const branch = branchData?.branch || "";
-        return branch || undefined;
-      }
-    } catch (error) {
-      console.error("Error fetching branch from API:", error);
-    }
-    return undefined;
+  // Helper function to get base path for API calls
+  const getBasePath = () => {
+    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || "";
+    // Remove trailing slash if present
+    return basePath.replace(/\/+$/, "");
   };
 
   // Helper function to get full relative path from filename
-  const getFullRelativePathFromFilename = async (filename: string, fetchOptions: any): Promise<string | null> => {
+  const getFullRelativePathFromFilename = async (filename: string): Promise<string | null> => {
     let hasNextPage = true;
     let after: string | null = null;
+    const basePath = getBasePath();
 
     while (hasNextPage) {
       try {
-        const res = fetchOptions
-          ? await client.queries.topCategoryWithIndexQuery(
-              {
-                first: 50,
-                after,
-              },
-              fetchOptions
-            )
-          : await client.queries.topCategoryWithIndexQuery({
-              first: 50,
-              after,
-            });
+        const params = new URLSearchParams({ first: "50" });
+        if (after) {
+          params.set("after", after);
+        }
 
-        const topCategories = res?.data?.categoryConnection?.edges || [];
+        const res = await fetch(`${basePath}/api/tina/top-categories?${params.toString()}`, {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          console.error("Error fetching top categories:", res.status);
+          return null;
+        }
+
+        const result = await res.json();
+        const topCategories = result?.data?.categoryConnection?.edges || [];
 
         for (const edge of topCategories) {
           const node = edge?.node;
@@ -72,8 +67,8 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
           }
         }
 
-        hasNextPage = res?.data?.categoryConnection?.pageInfo?.hasNextPage || false;
-        after = res?.data?.categoryConnection?.pageInfo?.endCursor || null;
+        hasNextPage = result?.data?.categoryConnection?.pageInfo?.hasNextPage || false;
+        after = result?.data?.categoryConnection?.pageInfo?.endCursor || null;
       } catch (error) {
         console.error("Error in getFullRelativePathFromFilename:", error);
         return null;
@@ -86,47 +81,41 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Get branch from API
-        const branch = await getBranchFromAPI();
-
-        // Prepare fetch options with branch header if available
-        const fetchOptions = branch
-          ? {
-              fetchOptions: {
-                headers: {
-                  "x-branch": branch,
-                },
-              },
-            }
-          : undefined;
+        const basePath = getBasePath();
 
         // First, try to find the full relative path for category
-        const fullPath = await getFullRelativePathFromFilename(filename, fetchOptions);
+        const fullPath = await getFullRelativePathFromFilename(filename);
 
         // Try category first
         if (fullPath) {
           try {
-            const categoryRes = fetchOptions
-              ? await client.queries.categoryWithRulesQuery({ relativePath: fullPath }, fetchOptions)
-              : await client.queries.categoryWithRulesQuery({ relativePath: fullPath }, fetchOptions);
+            const params = new URLSearchParams({ relativePath: fullPath });
+            const categoryRes = await fetch(`${basePath}/api/tina/category?${params.toString()}`, {
+              method: "GET",
+              cache: "no-store",
+            });
 
-            if (categoryRes?.data?.category) {
-              const includeArchived = String(searchParams.archived ?? "") === "true";
-              const view = String(searchParams.view ?? "blurb") as "titleOnly" | "blurb" | "all";
-              const page = Math.max(1, parseInt(String(searchParams.page ?? "1"), 10) || 1);
-              const perPage = Math.max(1, Math.min(50, parseInt(String(searchParams.perPage ?? "10"), 10) || 10));
+            if (categoryRes.ok) {
+              const categoryResult = await categoryRes.json();
 
-              setData({
-                type: "category",
-                category: categoryRes.data.category,
-                path: fullPath,
-                includeArchived,
-                view,
-                page,
-                perPage,
-              });
-              setLoading(false);
-              return;
+              if (categoryResult?.data?.category) {
+                const includeArchived = String(searchParams.archived ?? "") === "true";
+                const view = String(searchParams.view ?? "blurb") as "titleOnly" | "blurb" | "all";
+                const page = Math.max(1, parseInt(String(searchParams.page ?? "1"), 10) || 1);
+                const perPage = Math.max(1, Math.min(50, parseInt(String(searchParams.perPage ?? "10"), 10) || 10));
+
+                setData({
+                  type: "category",
+                  category: categoryResult.data.category,
+                  path: fullPath,
+                  includeArchived,
+                  view,
+                  page,
+                  perPage,
+                });
+                setLoading(false);
+                return;
+              }
             }
           } catch (error) {
             console.error("Error fetching category data:", error);
@@ -135,37 +124,43 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
 
         // Try rule data
         try {
-          const ruleRes = fetchOptions
-            ? await client.queries.ruleData({ relativePath: filename + "/rule.mdx" }, fetchOptions)
-            : await client.queries.ruleData({ relativePath: filename + "/rule.mdx" }, fetchOptions);
+          const params = new URLSearchParams({ relativePath: filename + "/rule.mdx" });
+          const ruleRes = await fetch(`${basePath}/api/tina/rule?${params.toString()}`, {
+            method: "GET",
+            cache: "no-store",
+          });
 
-          if (ruleRes?.data?.rule) {
-            const ruleUri = ruleRes.data.rule.uri;
-            const ruleCategories = ruleUri ? (ruleToCategoryIndex as Record<string, string[]>)[ruleUri] : undefined;
+          if (ruleRes.ok) {
+            const ruleResult = await ruleRes.json();
 
-            const ruleCategoriesMapping =
-              ruleCategories?.map((categoryUri: string) => {
-                return {
-                  title: (categoryTitleIndex as any).categories[categoryUri],
-                  uri: categoryUri,
-                };
-              }) || [];
+            if (ruleResult?.data?.rule) {
+              const ruleUri = ruleResult.data.rule.uri;
+              const ruleCategories = ruleUri ? (ruleToCategoryIndex as Record<string, string[]>)[ruleUri] : undefined;
 
-            const sanitizedBasePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/^\/+/, "");
+              const ruleCategoriesMapping =
+                ruleCategories?.map((categoryUri: string) => {
+                  return {
+                    title: (categoryTitleIndex as any).categories[categoryUri],
+                    uri: categoryUri,
+                  };
+                }) || [];
 
-            setData({
-              type: "rule",
-              rule: ruleRes.data.rule,
-              ruleCategoriesMapping,
-              sanitizedBasePath,
-              tinaQueryProps: {
-                data: ruleRes.data,
-                query: ruleRes.query,
-                variables: ruleRes.variables,
-              },
-            });
-            setLoading(false);
-            return;
+              const sanitizedBasePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/^\/+/, "");
+
+              setData({
+                type: "rule",
+                rule: ruleResult.data.rule,
+                ruleCategoriesMapping,
+                sanitizedBasePath,
+                tinaQueryProps: {
+                  data: ruleResult.data,
+                  query: ruleResult.query,
+                  variables: ruleResult.variables,
+                },
+              });
+              setLoading(false);
+              return;
+            }
           }
         } catch (error) {
           console.error("Error fetching rule data:", error);
