@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import client from "@/tina/__generated__/client";
+import { getBranch } from "@/utils/tina/get-branch";
 
 // Helper function to fetch category data (will be wrapped with cache)
 async function fetchCategoryData(relativePath: string, branch?: string) {
@@ -30,8 +30,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "relativePath is required" }, { status: 400 });
     }
 
-    const cookieStore = await cookies();
-    const branch = cookieStore.get("x-branch")?.value || undefined;
+    const branch = await getBranch();
 
     // Create a cached function that fetches category data
     // Cache key includes both relativePath and branch to ensure different branches get different cache entries

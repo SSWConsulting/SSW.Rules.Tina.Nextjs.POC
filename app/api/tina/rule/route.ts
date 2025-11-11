@@ -1,6 +1,6 @@
-import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import client from "@/tina/__generated__/client";
+import { getBranch } from "@/utils/tina/get-branch";
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,8 +11,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "relativePath is required" }, { status: 400 });
     }
 
-    const cookieStore = await cookies();
-    const branch = cookieStore.get("x-branch")?.value || undefined;
+    const branch = await getBranch();
 
     // Fetch rule using the Tina client with branch support
     let result;
@@ -34,10 +33,6 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
     console.error("Error fetching rule from Tina:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch rule", details: error instanceof Error ? error.message : String(error) },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to fetch rule", details: error instanceof Error ? error.message : String(error) }, { status: 500 });
   }
 }
-
