@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import client from "@/tina/__generated__/client";
-import { getBranch } from "@/utils/tina/get-branch";
+import { getFetchOptions } from "@/utils/tina/get-branch";
 
 export async function GET(request: NextRequest) {
   try {
@@ -10,22 +10,11 @@ export async function GET(request: NextRequest) {
     if (!relativePath) {
       return NextResponse.json({ error: "relativePath is required" }, { status: 400 });
     }
-
-    const branch = await getBranch();
-
+    const fetchOptions = await getFetchOptions();
     // Fetch rule using the Tina client with branch support
     let result;
-    if (branch) {
-      result = await client.queries.ruleData(
-        { relativePath },
-        {
-          fetchOptions: {
-            headers: {
-              "x-branch": branch,
-            },
-          },
-        }
-      );
+    if (fetchOptions) {
+      result = await client.queries.ruleData({ relativePath }, fetchOptions);
     } else {
       result = await client.queries.ruleData({ relativePath });
     }

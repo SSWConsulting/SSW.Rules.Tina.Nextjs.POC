@@ -1,5 +1,7 @@
+import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import client from "@/tina/__generated__/client";
+import { getFetchOptions } from "@/utils/tina/get-branch";
 
 export const revalidate = 3600; // 60 minutes
 
@@ -10,12 +12,23 @@ export async function GET() {
     let hasNextPage = true;
     const allEdges: any[] = [];
 
+    // Prepare fetch options with branch header if available
+    const fetchOptions = await getFetchOptions();
+
     // Loop over all pages until exhausted
     for (let i = 0; hasNextPage; i++) {
-      const res: any = await (client as any).queries.paginatedRulesQuery({
-        first: PAGE_SIZE,
-        after,
-      });
+      const res: any = fetchOptions
+        ? await (client as any).queries.paginatedRulesQuery(
+            {
+              first: PAGE_SIZE,
+              after,
+            },
+            fetchOptions
+          )
+        : await (client as any).queries.paginatedRulesQuery({
+            first: PAGE_SIZE,
+            after,
+          });
       const data = (res?.data ?? res) as any;
       const conn = data?.ruleConnection;
       const edges = Array.isArray(conn?.edges) ? conn.edges : [];
@@ -40,10 +53,10 @@ export async function GET() {
         _sys: { relativePath: node?._sys?.relativePath || "" },
       }));
 
-    return new NextResponse(JSON.stringify(items), { 
+    return new NextResponse(JSON.stringify(items), {
       status: 200,
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
       },
     });
   } catch (err) {
