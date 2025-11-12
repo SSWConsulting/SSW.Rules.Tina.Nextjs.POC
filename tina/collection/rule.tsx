@@ -43,7 +43,6 @@ const Rule: Collection = {
       name: "title",
       isTitle: true,
       required: true,
-      searchable: true
     },
     {
       type: "string",
@@ -51,7 +50,6 @@ const Rule: Collection = {
       label: "Uri",
       description: "The URI of the rule - this defines the slug and references.",
       required: true,
-      searchable: true,
       ui: {
         validate: (value?: string): string | void => {
           const v = (value ?? "").trim();
@@ -67,6 +65,7 @@ const Rule: Collection = {
       description: "Assigns one or more categories to the rule",
       list: true,
       type: "object",
+      searchable: false,
       ui: {
         itemProps: (item) => {
           const categoryTitle = item?.category ? `🔗 ${item?.category?.split("/").at(-1)?.replace(".mdx","")}` : "Unselected Category";
@@ -111,6 +110,7 @@ const Rule: Collection = {
           description:
             "The full name of the contributor, as it should appear on the rule.",
           label: "Name",
+          searchable: false,
         },
         {
           type: "string",
@@ -118,6 +118,7 @@ const Rule: Collection = {
             "The SSW People link for the contributor - e.g. https://ssw.com.au/people/bob-northwind",
           name: "url",
           label: "Url",
+          searchable: false,
         },
       ],
     },
@@ -125,6 +126,7 @@ const Rule: Collection = {
       type: "object",
       label: "Related Rules",
       name: "related",
+      searchable: false,
       description:
         "The URIs of rules that should be suggested based on the content of this rule.",
       list: true,

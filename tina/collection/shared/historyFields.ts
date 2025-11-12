@@ -11,6 +11,7 @@ export const historyFields:TinaField[] = [
         ui: {
             component: "hidden",
         },
+        searchable: false,
     },
     {
         type: "string",
@@ -21,6 +22,7 @@ export const historyFields:TinaField[] = [
         ui: {
             component: "hidden",
         },
+        searchable: false,
     },
     {
         type: "string",
@@ -31,6 +33,7 @@ export const historyFields:TinaField[] = [
         ui: {
             component: "hidden",
         },
+        searchable: false,
     },
     {
         type: "datetime",
@@ -41,6 +44,7 @@ export const historyFields:TinaField[] = [
         ui: {
             component: "hidden",
         },
+        searchable: false,
     },
     {
         type: "string",
@@ -51,6 +55,7 @@ export const historyFields:TinaField[] = [
         ui: {
             component: "hidden",
         },
+        searchable: false,
     },
     {
         type: "string",
@@ -61,18 +66,21 @@ export const historyFields:TinaField[] = [
         ui: {
             component: "hidden",
         },
+        searchable: false,
     },
     {
       type: "boolean",
       name: "isArchived",
       label: "Archived",
       description: "Mark this rule as archived.",
+      searchable: false,
     },
     {
       type: "string",
       name: "archivedreason",
       label: "Archived Reason",
       description: "If this rule has been archived, summarise why here. Only required if 'Archived' is checked.",
+      searchable: false,
       ui: {
         validate: (value, allValue) => {
           if (!allValue.archived && value?.length) {
