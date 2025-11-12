@@ -85,8 +85,9 @@ export const historyBeforeSubmit = async ({ form, cms, values }: { form: Form; c
   let userEmail: string | undefined;
   let userName: string | undefined;
 
-  // Update categories - only if categories exist and URI is available
-  if (values.categories && Array.isArray(values.categories) && values.categories.length > 0 && values.uri) {
+  // Update categories - only for update forms (not create, because rule doesn't exist yet)
+  // For create forms, categories will be updated after the rule is created
+  if (form.crudType !== "create" && values.categories && Array.isArray(values.categories) && values.categories.length > 0 && values.uri) {
     try {
       const response = await fetch("/rules-beta/api/update-category", {
         method: "POST",
@@ -97,7 +98,7 @@ export const historyBeforeSubmit = async ({ form, cms, values }: { form: Form; c
         body: JSON.stringify({
           categories: values.categories || [],
           ruleUri: values.uri,
-          formType: form.crudType === "create" ? "create" : "update",
+          formType: "update",
         }),
       });
 
@@ -111,6 +112,45 @@ export const historyBeforeSubmit = async ({ form, cms, values }: { form: Form; c
     } catch (error) {
       console.error("Error updating categories:", error);
       // Don't throw - allow form submission to continue even if category update fails
+    }
+  } else if (form.crudType === "create") {
+    // For create forms, attempt to update categories
+    // Note: This may fail if called before the rule file is created, but we'll try anyway
+    // The API will construct the rule path from URI for new rules
+    if (values.categories && Array.isArray(values.categories) && values.categories.length > 0 && values.uri) {
+      try {
+        console.log(`📝 Create form detected - attempting to update ${values.categories.length} category/categories for rule "${values.uri}"`);
+
+        // Attempt to update categories - this may fail if rule doesn't exist yet
+        // In that case, categories will need to be updated manually after rule creation
+        const response = await fetch("/rules-beta/api/update-category", {
+          method: "POST",
+          headers: {
+            ...getBearerAuthHeader(),
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            categories: values.categories || [],
+            ruleUri: values.uri,
+            formType: "create",
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
+          console.warn(
+            `⚠️ Could not update categories for new rule "${values.uri}" - rule may not exist yet. ` +
+              `Categories will need to be updated after the rule is created. Error:`,
+            errorData
+          );
+        } else {
+          const result = await response.json();
+          console.log(`✅ Categories updated successfully for new rule:`, result);
+        }
+      } catch (error) {
+        console.warn(`⚠️ Error updating categories for new rule "${values.uri}":`, error, `\nCategories will need to be updated after the rule is created.`);
+        // Don't throw - allow form submission to continue
+      }
     }
   }
   try {

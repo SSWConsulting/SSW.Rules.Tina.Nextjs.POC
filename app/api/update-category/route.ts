@@ -70,9 +70,12 @@ async function processSingleCategory(
       skipExistenceCheck // Pass skipExistenceCheck to skip rule path resolution for new rules
     );
 
+    if (!result.success) {
+      console.error(`❌ Failed to process category ${category} (relativePath: ${getRelativePathForCategory(category)}):`, result.error);
+    }
     return result.success;
   } catch (error) {
-    console.error(`Error processing category ${category}:`, error);
+    console.error(`❌ Error processing category ${category}:`, error);
     return false;
   }
 }
@@ -94,6 +97,7 @@ async function processCategories(
 
   await Promise.all(
     categories.map(async (category) => {
+      const relativePath = getRelativePathForCategory(category);
       const success = await processSingleCategory(
         category,
         ruleUri,
@@ -103,11 +107,12 @@ async function processCategories(
         skipExistenceCheck
       );
 
-      const relativePath = getRelativePathForCategory(category);
       if (success) {
         processed.push(relativePath);
+        console.log(`✅ Successfully processed category: ${relativePath}`);
       } else {
         failed.push(relativePath);
+        console.warn(`⏭️ Skipped category: ${relativePath} (action: ${action}, ruleUri: ${ruleUri})`);
       }
     })
   );

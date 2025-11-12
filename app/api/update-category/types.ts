@@ -3,7 +3,8 @@ export type CategoryRuleIndexItem = {
       _sys?: {
         relativePath?: string;
       };
-    };
+      uri?: string;
+    } | string; // Rule can be an object with _sys/uri or a string path
   };
   
   export type CategoryQueryResponse = {
