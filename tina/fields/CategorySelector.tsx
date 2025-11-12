@@ -29,7 +29,7 @@ export const CategorySelectorInput: React.FC<any> = (props) => {
 
   // If creating a new rule, disable the selector
   // When save happens we add the rule to the category, but at this point the rule doesnt yet exist
-  const isCreating = tinaForm.crudType == "create";
+  const isCreating = tinaForm.crudType == "false";
   const isDisabled = isCreating || isProtectedBranch === true;
 
   // Determine current branch and fetch categories

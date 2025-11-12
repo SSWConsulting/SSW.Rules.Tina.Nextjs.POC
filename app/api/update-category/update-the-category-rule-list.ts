@@ -140,13 +140,22 @@ function buildCategoryParams(
 }
 
 /**
+ * Constructs a rule path from its URI (for new rules that don't exist yet).
+ */
+function constructRulePathFromUri(ruleUri: string): string {
+  // Rule paths are constructed as {uri}/rule based on the slugify function
+  return `${ruleUri}/rule`;
+}
+
+/**
  * Updates a category's rule list by adding or deleting a rule.
  */
 export async function updateTheCategoryRuleList(
   ruleUri: string,
   relativePath: string,
   tgc: TinaGraphQLClient,
-  action: "add" | "delete" = "add"
+  action: "add" | "delete" = "add",
+  skipRulePathResolution: boolean = false
 ): Promise<UpdateResult> {
   try {
     // Fetch existing rule paths in the category
@@ -160,27 +169,36 @@ export async function updateTheCategoryRuleList(
     );
 
     // Resolve the rule's relative path from its URI
-    const rulePath = await resolveRulePath(ruleUri, tgc);
+    // For new rules (create form), construct the path from URI instead of querying
+    let rulePath: string | null;
+    if (skipRulePathResolution) {
+      rulePath = constructRulePathFromUri(ruleUri);
+    } else {
+      rulePath = await resolveRulePath(ruleUri, tgc);
+    }
 
     if (!rulePath) {
       console.warn(`Could not resolve rule relativePath for URI: ${ruleUri}`);
       return { success: false, error: "Rule path not found" };
     }
 
-    // Early return if rule already exists and we're trying to add
-    if (existingRulePaths.includes(rulePath) && action === "add") {
-      console.log(
-        `Rule path already referenced in category ${relativePath}; skipping mutation.`
-      );
-      return { success: true };
-    }
+    // Skip existence checks for new rules (create form)
+    if (!skipRulePathResolution) {
+      // Early return if rule already exists and we're trying to add
+      if (existingRulePaths.includes(rulePath) && action === "add") {
+        console.log(
+          `Rule path already referenced in category ${relativePath}; skipping mutation.`
+        );
+        return { success: true };
+      }
 
-    // Early return if rule doesn't exist and we're trying to delete
-    if (!existingRulePaths.includes(rulePath) && action === "delete") {
-      console.log(
-        `Rule path not found in category ${relativePath}; nothing to delete.`
-      );
-      return { success: true };
+      // Early return if rule doesn't exist and we're trying to delete
+      if (!existingRulePaths.includes(rulePath) && action === "delete") {
+        console.log(
+          `Rule path not found in category ${relativePath}; nothing to delete.`
+        );
+        return { success: true };
+      }
     }
 
     // Fetch full category document to preserve existing fields

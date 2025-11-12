@@ -25,35 +25,40 @@ async function processSingleCategory(
   ruleUri: string,
   tgc: TinaGraphQLClient,
   action: "add" | "delete",
-  branch?: string
+  branch?: string,
+  skipExistenceCheck: boolean = false
 ): Promise<boolean> {
   try {
     const relativePath = getRelativePathForCategory(category);
-    const categoryQueryResult = await client.queries.categoryWithRulesQuery(
-      {
-        relativePath,
-      },
-      branch
-        ? {
-            fetchOptions: {
-              headers: {
-                "x-branch": branch,
+    
+    // Skip existence check if formType is "create"
+    if (!skipExistenceCheck) {
+      const categoryQueryResult = await client.queries.categoryWithRulesQuery(
+        {
+          relativePath,
+        },
+        branch
+          ? {
+              fetchOptions: {
+                headers: {
+                  "x-branch": branch,
+                },
               },
-            },
-          }
-        : undefined
-    );
-    const ruleAlreadyExists = ruleExistsByUriInCategory(
-      categoryQueryResult,
-      ruleUri
-    );
+            }
+          : undefined
+      );
+      const ruleAlreadyExists = ruleExistsByUriInCategory(
+        categoryQueryResult,
+        ruleUri
+      );
 
-    // Validate preconditions for the action
-    if (action === "add" && ruleAlreadyExists) {
-      return false; // Rule already exists, no change needed
-    }
-    if (action === "delete" && !ruleAlreadyExists) {
-      return false; // Rule doesn't exist, no change needed
+      // Validate preconditions for the action
+      if (action === "add" && ruleAlreadyExists) {
+        return false; // Rule already exists, no change needed
+      }
+      if (action === "delete" && !ruleAlreadyExists) {
+        return false; // Rule doesn't exist, no change needed
+      }
     }
 
     // Perform the update
@@ -61,7 +66,8 @@ async function processSingleCategory(
       ruleUri,
       relativePath,
       tgc,
-      action
+      action,
+      skipExistenceCheck // Pass skipExistenceCheck to skip rule path resolution for new rules
     );
 
     return result.success;
@@ -80,7 +86,8 @@ async function processCategories(
   ruleUri: string,
   tgc: TinaGraphQLClient,
   action: "add" | "delete",
-  branch?: string
+  branch?: string,
+  skipExistenceCheck: boolean = false
 ): Promise<CategoryProcessingResult> {
   const processed: string[] = [];
   const failed: string[] = [];
@@ -92,7 +99,8 @@ async function processCategories(
         ruleUri,
         tgc,
         action,
-        branch
+        branch,
+        skipExistenceCheck
       );
 
       const relativePath = getRelativePathForCategory(category);
@@ -149,7 +157,7 @@ function validateRequestBody(body: unknown): {
     };
   }
 
-  const { categories, ruleUri } = body as UpdateCategoryRequest;
+  const { categories, ruleUri, formType } = body as UpdateCategoryRequest;
 
   if (!Array.isArray(categories) || !ruleUri) {
     return {
@@ -163,7 +171,7 @@ function validateRequestBody(body: unknown): {
     };
   }
 
-  return { valid: true, data: { categories, ruleUri } };
+  return { valid: true, data: { categories, ruleUri, formType } };
 }
 
 /**
@@ -207,10 +215,50 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       return bodyValidation.error!;
     }
 
-    const { categories, ruleUri } = bodyValidation.data!;
+    const { categories, ruleUri, formType } = bodyValidation.data!;
     const token = authValidation.token || "";
     const activeBranch = request.cookies.get("x-branch")?.value;
+    const isCreateForm = formType === "create";
 
+    // For create forms, skip rule existence check and add all categories directly
+    if (isCreateForm) {
+      const tgc = new TinaGraphQLClient(token, activeBranch);
+      
+      // Normalize categories to extract category paths
+      const normalizedCategories = categories.map((cat) => {
+        const rawPath =
+          typeof cat === "string"
+            ? cat
+            : typeof cat === "object" && cat?.category
+            ? cat.category
+            : "";
+        return rawPath;
+      }).filter(Boolean);
+
+      // Process all categories as "add" operations, skipping existence checks
+      const addResult = await processCategories(
+        normalizedCategories,
+        ruleUri,
+        tgc,
+        "add",
+        activeBranch,
+        true // skipExistenceCheck = true
+      );
+
+      // Build response
+      const response: UpdateCategoryResponse = {
+        success: true,
+        message: `Processed categories for new rule ${ruleUri}`,
+        URI: ruleUri,
+        AddedCategories: addResult.processed,
+        DeletedCategories: [],
+        NoChangedCategories: addResult.failed,
+      };
+
+      return NextResponse.json(response);
+    }
+
+    // For update forms, use existing logic
     // Get current rule and its categories
     const { rule, currentRuleCategories } = await getRuleCategories(
       ruleUri,
