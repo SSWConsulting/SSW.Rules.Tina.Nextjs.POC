@@ -79,6 +79,7 @@ const Rule: Collection = {
           label: "Related Category",
           description: "The related category of the rule",
           collections: ["category"],
+          searchable: false,
           ui: {
             component: wrapFieldsWithMeta((props) => <CategorySelectorInput {...props} />),
           },
@@ -107,12 +108,14 @@ const Rule: Collection = {
           name: "title",
           description: "The full name of the contributor, as it should appear on the rule.",
           label: "Name",
+          searchable: false,
         },
         {
           type: "string",
           description: "The SSW People link for the contributor - e.g. https://ssw.com.au/people/bob-northwind",
           name: "url",
           label: "Url",
+          searchable: false,
         },
       ],
     },
@@ -134,6 +137,7 @@ const Rule: Collection = {
           label: "Rule",
           name: "rule",
           collections: ["rule"],
+          searchable: false,
           ui: {
             component: PaginatedRuleSelectorInput,
           },
