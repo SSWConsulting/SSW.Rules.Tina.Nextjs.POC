@@ -85,44 +85,29 @@ export const historyBeforeSubmit = async ({ form, cms, values }: { form: Form; c
   let userEmail: string | undefined;
   let userName: string | undefined;
 
-  // Update categories - only for update forms (not create, because rule doesn't exist yet)
-  // For create forms, categories will be updated after the rule is created
-  if (form.crudType !== "create" && values.categories && Array.isArray(values.categories) && values.categories.length > 0 && values.uri) {
-    try {
-      const response = await fetch("/rules-beta/api/update-category", {
-        method: "POST",
-        headers: {
-          ...getBearerAuthHeader(),
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          categories: values.categories || [],
-          ruleUri: values.uri,
-          formType: "update",
-        }),
-      });
+  // Update categories for both create and update forms
+  // The API will read the category index from file to preserve existing rules (including non-existent ones)
+  // For create forms, the API constructs the rule path from URI without validation
+  // For update forms, the API uses GraphQL but falls back to file-based index if needed
+  // For update forms, empty categories array (or undefined/null) means remove rule from all categories
+  // For create forms, we only call the API if there are categories to add
+  if (values.uri) {
+    const formType = form.crudType === "create" ? "create" : "update";
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
-        console.error("Failed to update categories:", errorData);
-      } else {
-        const result = await response.json();
-        console.log("Categories updated successfully:", result);
-      }
-    } catch (error) {
-      console.error("Error updating categories:", error);
-      // Don't throw - allow form submission to continue even if category update fails
-    }
-  } else if (form.crudType === "create") {
-    // For create forms, attempt to update categories
-    // Note: This may fail if called before the rule file is created, but we'll try anyway
-    // The API will construct the rule path from URI for new rules
-    if (values.categories && Array.isArray(values.categories) && values.categories.length > 0 && values.uri) {
+    // Normalize categories - ensure it's always an array
+    const categories = Array.isArray(values.categories) ? values.categories : [];
+
+    const shouldCallAPI =
+      formType === "create"
+        ? categories.length > 0 // For create, only call if there are categories to add
+        : true; // For update, always call (even if empty, to remove from all categories)
+
+    if (shouldCallAPI) {
       try {
-        console.log(`📝 Create form detected - attempting to update ${values.categories.length} category/categories for rule "${values.uri}"`);
+        console.log(
+          `📝 ${formType === "create" ? "Create" : "Update"} form detected - attempting to update ${categories.length} category/categories for rule "${values.uri}"`
+        );
 
-        // Attempt to update categories - this may fail if rule doesn't exist yet
-        // In that case, categories will need to be updated manually after rule creation
         const response = await fetch("/rules-beta/api/update-category", {
           method: "POST",
           headers: {
@@ -130,26 +115,22 @@ export const historyBeforeSubmit = async ({ form, cms, values }: { form: Form; c
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            categories: values.categories || [],
+            categories: categories,
             ruleUri: values.uri,
-            formType: "create",
+            formType: formType,
           }),
         });
 
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
-          console.warn(
-            `⚠️ Could not update categories for new rule "${values.uri}" - rule may not exist yet. ` +
-              `Categories will need to be updated after the rule is created. Error:`,
-            errorData
-          );
+          console.error(`Failed to update categories for ${formType} form:`, errorData);
         } else {
           const result = await response.json();
-          console.log(`✅ Categories updated successfully for new rule:`, result);
+          console.log(`✅ Categories updated successfully for ${formType} form:`, result);
         }
       } catch (error) {
-        console.warn(`⚠️ Error updating categories for new rule "${values.uri}":`, error, `\nCategories will need to be updated after the rule is created.`);
-        // Don't throw - allow form submission to continue
+        console.error(`Error updating categories for ${form.crudType} form:`, error);
+        // Don't throw - allow form submission to continue even if category update fails
       }
     }
   }

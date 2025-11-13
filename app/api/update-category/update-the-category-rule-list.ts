@@ -252,15 +252,15 @@ export async function updateTheCategoryRuleList(
     let existingRulePaths: string[] = [];
     let categoryForIndex: CategoryFullQueryResponse["category"] | undefined;
 
+    // Always read the index from file first to preserve existing rules (including non-existent ones)
+    // This is important because GraphQL queries may fail or return empty results if rules don't exist yet
+    console.log(`📖 Reading category index directly from file to preserve existing rules...`);
+    const existingIndexFromFile = await readCategoryIndexFromFile(relativePath);
+
     if (skipRulePathResolution) {
       // For create forms: fetch full category WITHOUT index to avoid validation errors
-      // Then read the index directly from the file to preserve existing rules
       console.log(`🔨 Skipping rule path resolution query for create form - fetching category without index`);
       categoryForIndex = await fetchCategoryFull(relativePath, tgc, true); // skipValidation = true
-
-      // Read the index directly from the file to preserve existing rules (including non-existent ones)
-      console.log(`📖 Reading category index directly from file to preserve existing rules...`);
-      const existingIndexFromFile = await readCategoryIndexFromFile(relativePath);
 
       // Extract paths from the file-based index for comparison purposes
       existingRulePaths = existingIndexFromFile
@@ -282,10 +282,49 @@ export async function updateTheCategoryRuleList(
       // This preserves the exact format of existing rules
       (categoryForIndex as any).index = existingIndexFromFile;
     } else {
-      // For update forms: use the normal query (rules exist, so validation is fine)
-      const categoryRulePathsResponse = (await tgc.request(CATEGORY_RULE_PATHS_QUERY, { relativePath })) as CategoryQueryResponse;
-      existingRulePaths = extractExistingRulePaths(categoryRulePathsResponse);
-      console.log(`📋 Category ${relativePath} currently has ${existingRulePaths.length} rule(s):`, existingRulePaths);
+      // For update forms: try GraphQL query first, but fall back to file if it fails or returns empty
+      try {
+        const categoryRulePathsResponse = (await tgc.request(CATEGORY_RULE_PATHS_QUERY, { relativePath })) as CategoryQueryResponse;
+        const graphqlRulePaths = extractExistingRulePaths(categoryRulePathsResponse);
+
+        // Use file-based index if GraphQL returns fewer rules (likely due to non-existent rules)
+        if (graphqlRulePaths.length < existingIndexFromFile.length) {
+          console.log(
+            `⚠️ GraphQL query returned ${graphqlRulePaths.length} rule(s), but file has ${existingIndexFromFile.length}. Using file-based index to preserve all rules.`
+          );
+          existingRulePaths = existingIndexFromFile
+            .map((item) => {
+              const ruleValue = item.rule;
+              if (typeof ruleValue === "string") {
+                if (ruleValue.startsWith(RULES_UPLOAD_PATH)) {
+                  return ruleValue.replace(RULES_UPLOAD_PATH, "");
+                }
+                return ruleValue;
+              }
+              return null;
+            })
+            .filter((path): path is string => typeof path === "string" && path.length > 0);
+        } else {
+          existingRulePaths = graphqlRulePaths;
+        }
+        console.log(`📋 Category ${relativePath} currently has ${existingRulePaths.length} rule(s):`, existingRulePaths);
+      } catch (error) {
+        // If GraphQL query fails, fall back to file-based index
+        console.warn(`⚠️ GraphQL query failed for category ${relativePath}, using file-based index:`, error);
+        existingRulePaths = existingIndexFromFile
+          .map((item) => {
+            const ruleValue = item.rule;
+            if (typeof ruleValue === "string") {
+              if (ruleValue.startsWith(RULES_UPLOAD_PATH)) {
+                return ruleValue.replace(RULES_UPLOAD_PATH, "");
+              }
+              return ruleValue;
+            }
+            return null;
+          })
+          .filter((path): path is string => typeof path === "string" && path.length > 0);
+        console.log(`📋 Category ${relativePath} has ${existingRulePaths.length} rule(s) from file (fallback):`, existingRulePaths);
+      }
     }
 
     // Resolve the rule's relative path from its URI
@@ -335,13 +374,32 @@ export async function updateTheCategoryRuleList(
       // Reuse the category we already fetched above
       currentCategory = categoryForIndex!;
     } else {
-      currentCategory = await fetchCategoryFull(relativePath, tgc);
+      // For update forms, try to fetch with index, but if it fails or returns empty, use file-based index
+      try {
+        currentCategory = await fetchCategoryFull(relativePath, tgc);
+        // If the GraphQL index is empty but we have rules from file, use file-based index
+        const graphqlIndex = (currentCategory as any)?.index || [];
+        if (graphqlIndex.length === 0 && existingIndexFromFile.length > 0) {
+          console.log(`⚠️ GraphQL returned empty index but file has ${existingIndexFromFile.length} rule(s). Using file-based index.`);
+          (currentCategory as any).index = existingIndexFromFile;
+        }
+      } catch (error) {
+        // If fetching fails, try without index and use file-based index
+        console.warn(`⚠️ Failed to fetch category with index, trying without index and using file-based index:`, error);
+        currentCategory = await fetchCategoryFull(relativePath, tgc, true); // skipValidation = true
+        (currentCategory as any).index = existingIndexFromFile;
+      }
     }
 
     // Get the existing index from the category document to preserve the exact format
     // This is important because some rules in the index might not exist yet (newly added)
     // and we need to preserve their format to avoid validation errors
-    const existingIndex: any[] = (currentCategory as any)?.index || [];
+    // If index is still empty but we have file-based index, use that
+    let existingIndex: any[] = (currentCategory as any)?.index || [];
+    if (existingIndex.length === 0 && existingIndexFromFile.length > 0) {
+      console.log(`📦 Using file-based index (${existingIndexFromFile.length} items) as GraphQL index is empty`);
+      existingIndex = existingIndexFromFile;
+    }
     console.log(
       `📦 Existing index has ${existingIndex.length} item(s), format:`,
       existingIndex.map((item: any) => ({
@@ -447,6 +505,10 @@ export async function updateTheCategoryRuleList(
       // Re-throw to be caught by outer catch
       throw mutationError;
     }
+
+    // Note: After mutation, TinaCMS may trigger re-indexing which can show errors like
+    // "Unable to find collection for file" if the rule file doesn't exist yet.
+    // These are expected and don't affect the mutation success - they're just indexing warnings.
 
     console.log(`✅ Successfully ${action === "add" ? "added" : "removed"} rule ${ruleUri} (path: ${rulePath}) to/from category ${relativePath}`);
 
