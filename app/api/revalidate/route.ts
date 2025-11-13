@@ -36,7 +36,7 @@ export async function POST(req: Request) {
         }
         // If change type is add then we also need to revalidate the /api/rules route
         if (eventType === TINA_CONTENT_CHANGE_TYPE.Added) {
-          routesToRevalidate.add("/rules");
+          routesToRevalidate.add("/api/rules");
         }
       }
 
