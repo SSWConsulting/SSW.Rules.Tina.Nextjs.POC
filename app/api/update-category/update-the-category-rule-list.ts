@@ -43,8 +43,8 @@ function extractExistingRulePaths(categoryResponse: CategoryQueryResponse): stri
         // If _sys.relativePath is not available, try to get URI and construct path
         // This handles cases where the rule reference exists but the file doesn't yet
         if ("uri" in ruleValue && typeof ruleValue.uri === "string") {
-          // Construct path from URI: {uri}/rule
-          return `${ruleValue.uri}/rule`;
+          // Construct path from URI: {uri}/rule.mdx
+          return `${ruleValue.uri}/rule.mdx`;
         }
       }
 
@@ -152,30 +152,65 @@ function buildCategoryParams(currentCategory: CategoryFullQueryResponse["categor
  * Constructs a rule path from its URI (for new rules that don't exist yet).
  */
 function constructRulePathFromUri(ruleUri: string): string {
-  // Rule paths are constructed as {uri}/rule based on the slugify function
-  return `${ruleUri}/rule`;
+  // Rule paths are constructed as {uri}/rule.mdx based on the slugify function
+  return `${ruleUri}/rule.mdx`;
 }
 
 /**
  * Gets existing rule paths for a category using GraphQL only.
+ * Tries multiple strategies to get the rule paths.
  */
 async function getExistingRulePaths(relativePath: string, tgc: TinaGraphQLClient, skipRulePathResolution: boolean): Promise<string[]> {
-  // Try to get rule paths from GraphQL for both create and update forms
+  // First, try the rule paths query (lightweight)
   try {
     const categoryRulePathsResponse = (await tgc.request(CATEGORY_RULE_PATHS_QUERY, { relativePath })) as CategoryQueryResponse;
     const graphqlRulePaths = extractExistingRulePaths(categoryRulePathsResponse);
-    console.log(`📋 Category ${relativePath} currently has ${graphqlRulePaths.length} rule(s):`, graphqlRulePaths);
-    return graphqlRulePaths;
-  } catch (error) {
-    // If GraphQL query fails, log warning and return empty array
-    // This can happen for create forms when rules don't exist yet
-    if (skipRulePathResolution) {
-      console.log(`📋 Category ${relativePath} - create form, GraphQL query failed, assuming empty rule list`);
-    } else {
-      console.warn(`⚠️ GraphQL query failed for category ${relativePath}, assuming empty index:`, error);
+    if (graphqlRulePaths.length > 0) {
+      console.log(`📋 Category ${relativePath} currently has ${graphqlRulePaths.length} rule(s):`, graphqlRulePaths);
+      return graphqlRulePaths;
     }
-    return [];
+  } catch (error) {
+    console.log(`⚠️ Rule paths query failed, trying full category query:`, error);
   }
+
+  // Fall back to full category query to get rule paths
+  try {
+    const categoryFullResponse = (await tgc.request(CATEGORY_FULL_QUERY, { relativePath })) as CategoryFullQueryResponse;
+    const index = (categoryFullResponse?.category as any)?.index || [];
+    if (index.length > 0) {
+      const paths = index
+        .map((item: any) => {
+          const ruleValue = item?.rule;
+          if (ruleValue?._sys?.relativePath) {
+            return ruleValue._sys.relativePath;
+          }
+          if (ruleValue?.uri) {
+            return `${ruleValue.uri}/rule.mdx`;
+          }
+          if (typeof ruleValue === "string") {
+            if (ruleValue.startsWith(RULES_UPLOAD_PATH)) {
+              return ruleValue.replace(RULES_UPLOAD_PATH, "");
+            }
+            return ruleValue;
+          }
+          return null;
+        })
+        .filter((path): path is string => path !== null && path.length > 0);
+      if (paths.length > 0) {
+        console.log(`📋 Category ${relativePath} has ${paths.length} rule(s) from full query:`, paths);
+        return paths;
+      }
+    }
+  } catch (error) {
+    // If both queries fail, log warning and return empty array
+    if (skipRulePathResolution) {
+      console.log(`📋 Category ${relativePath} - create form, all GraphQL queries failed, assuming empty rule list`);
+    } else {
+      console.warn(`⚠️ All GraphQL queries failed for category ${relativePath}, assuming empty index:`, error);
+    }
+  }
+
+  return [];
 }
 
 /**
@@ -241,7 +276,7 @@ async function getExistingIndexFromGraphQL(relativePath: string, tgc: TinaGraphQ
         const ruleValue = item?.rule;
         if (ruleValue?.uri) {
           // Construct path from URI
-          return { rule: `${RULES_UPLOAD_PATH}${ruleValue.uri}/rule` };
+          return { rule: `${RULES_UPLOAD_PATH}${ruleValue.uri}/rule.mdx` };
         }
         return null;
       })
@@ -290,10 +325,23 @@ async function getCategoryWithIndex(
   }
 
   // For update forms: try to fetch with index first
-  const category = await fetchCategoryFull(relativePath, tgc, false);
+  let category = await fetchCategoryFull(relativePath, tgc, false);
 
   if (!category) {
-    throw new Error(`Failed to fetch category ${relativePath} via GraphQL. Cannot proceed without category data.`);
+    // If fetching with index failed, try without index and get index separately
+    console.log(`⚠️ Failed to fetch category with index, trying without index`);
+    category = await fetchCategoryFull(relativePath, tgc, true);
+
+    if (!category) {
+      throw new Error(`Failed to fetch category ${relativePath} via GraphQL. Cannot proceed without category data.`);
+    }
+
+    // Try to get the existing index separately
+    console.log(`📖 Attempting to get existing index separately to preserve existing rules`);
+    const existingIndex = await getExistingIndexFromGraphQL(relativePath, tgc);
+    (category as any).index = existingIndex;
+    console.log(`📦 Preserved ${existingIndex.length} existing rule(s) from separate query`);
+    return category;
   }
 
   const graphqlIndex = (category as any)?.index || [];
@@ -314,8 +362,8 @@ function normalizePathForComparison(path: string | null): string | null {
   }
   // Normalize slashes but keep the structure
   normalized = normalized.replace(/\/+/g, "/");
-  // Remove trailing slashes except if it ends with /rule
-  if (normalized.endsWith("/rule")) {
+  // Remove trailing slashes except if it ends with /rule or /rule.mdx
+  if (normalized.endsWith("/rule.mdx") || normalized.endsWith("/rule")) {
     return normalized;
   }
   return normalized.replace(/\/+$/, "");
@@ -336,7 +384,7 @@ function getPathFromIndexItem(item: any): string | null {
     return ruleValue._sys.relativePath;
   }
   if (ruleValue?.uri) {
-    return `${ruleValue.uri}/rule`;
+    return `${ruleValue.uri}/rule.mdx`;
   }
   return null;
 }
@@ -359,7 +407,7 @@ function getAllPathsFromIndexItem(item: any): string[] {
       paths.push(ruleValue._sys.relativePath);
     }
     if (ruleValue.uri) {
-      paths.push(`${ruleValue.uri}/rule`);
+      paths.push(`${ruleValue.uri}/rule.mdx`);
     }
   }
 
@@ -404,7 +452,7 @@ function shouldDeleteIndexItem(item: any, ruleUri: string, normalizedRulePath: s
     }
 
     // Check if the path contains the URI
-    const constructedPathFromUri = `${ruleUri}/rule`;
+    const constructedPathFromUri = `${ruleUri}/rule.mdx`;
     const normalizedConstructedPath = normalizePathForComparison(constructedPathFromUri);
     if (normalizedConstructedPath && normalizedStringPath === normalizedConstructedPath) {
       return true;
@@ -519,14 +567,27 @@ export async function updateTheCategoryRuleList(
     // Step 5: Get the existing index from the category document
     let existingIndex: any[] = (currentCategory as any)?.index || [];
 
-    // For create forms, if we got existing rule paths but the index is empty,
-    // try to reconstruct the index from the rule paths we got earlier
-    if (skipRulePathResolution && existingIndex.length === 0 && existingRulePaths.length > 0) {
-      console.log(`⚠️ Index is empty but we have ${existingRulePaths.length} existing rule path(s). Reconstructing index.`);
+    // If the index is empty but we have existing rule paths, reconstruct the index
+    // This handles cases where GraphQL queries fail due to indexing delays or validation issues
+    if (existingIndex.length === 0 && existingRulePaths.length > 0) {
+      console.log(`⚠️ Index is empty but we have ${existingRulePaths.length} existing rule path(s). Reconstructing index from paths.`);
       existingIndex = existingRulePaths.map((path) => ({
         rule: `${RULES_UPLOAD_PATH}${path}`,
       }));
       (currentCategory as any).index = existingIndex;
+    } else if (existingIndex.length > 0 && existingRulePaths.length > 0) {
+      // If we have both, make sure all paths from existingRulePaths are in the index
+      // This handles cases where the index might be missing some rules due to GraphQL validation issues
+      const indexPaths = existingIndex.map((item: any) => getPathFromIndexItem(item)).filter((p): p is string => p !== null);
+      const missingPaths = existingRulePaths.filter((path) => !indexPaths.includes(path));
+      if (missingPaths.length > 0) {
+        console.log(`⚠️ Found ${missingPaths.length} rule path(s) missing from index. Adding them.`);
+        const missingIndexItems = missingPaths.map((path) => ({
+          rule: `${RULES_UPLOAD_PATH}${path}`,
+        }));
+        existingIndex = [...existingIndex, ...missingIndexItems];
+        (currentCategory as any).index = existingIndex;
+      }
     }
 
     console.log(
