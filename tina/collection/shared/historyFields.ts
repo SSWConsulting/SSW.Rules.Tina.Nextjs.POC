@@ -120,9 +120,6 @@ export const historyBeforeSubmit = async ({ form, cms, values }: { form: Form; c
         if (!response.ok) {
           const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
           console.error(`Failed to update categories for ${formType} form:`, errorData);
-        } else {
-          const result = await response.json();
-          console.log(`✅ Categories updated successfully for ${formType} form:`, result);
         }
       } catch (error) {
         console.error(`Error updating categories for ${form.crudType} form:`, error);
