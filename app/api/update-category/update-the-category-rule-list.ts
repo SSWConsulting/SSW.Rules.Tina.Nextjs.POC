@@ -12,6 +12,38 @@ import {
 const RULES_UPLOAD_PATH = "public/uploads/rules/";
 
 /**
+ * Extracts a relative path from a rule value (string or object).
+ * This is a helper used by multiple functions to handle different rule value formats.
+ */
+function extractPathFromRuleValue(ruleValue: string | { _sys?: { relativePath?: string }; uri?: string } | undefined): string | null {
+  if (!ruleValue) return null;
+
+  // Handle case where rule is stored as a string
+  if (typeof ruleValue === "string") {
+    if (ruleValue.startsWith(RULES_UPLOAD_PATH)) {
+      return ruleValue.replace(RULES_UPLOAD_PATH, "");
+    }
+    return ruleValue;
+  }
+
+  // Handle case where rule is an object
+  if (typeof ruleValue === "object") {
+    // First, try to get the path from _sys.relativePath (for existing rules)
+    if (ruleValue._sys?.relativePath) {
+      return ruleValue._sys.relativePath;
+    }
+
+    // If _sys.relativePath is not available, construct path from URI
+    // This handles cases where the rule reference exists but the file doesn't yet
+    if (ruleValue.uri && typeof ruleValue.uri === "string") {
+      return `${ruleValue.uri}/rule.mdx`;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Extracts rule relative paths from a category query response.
  * Handles cases where rules don't have _sys.relativePath (e.g., newly added rules that don't exist yet).
  * Falls back to extracting the path from the rule string if _sys.relativePath is not available.
@@ -19,38 +51,7 @@ const RULES_UPLOAD_PATH = "public/uploads/rules/";
 function extractExistingRulePaths(categoryResponse: CategoryQueryResponse): string[] {
   const index = categoryResponse?.category?.index ?? [];
 
-  return index
-    .map((item) => {
-      const ruleValue = item?.rule;
-
-      // Handle case where rule is stored as a string (e.g., "public/uploads/rules/test-v3/rule")
-      if (typeof ruleValue === "string") {
-        // Extract relative path from "public/uploads/rules/{relativePath}"
-        if (ruleValue.startsWith(RULES_UPLOAD_PATH)) {
-          return ruleValue.replace(RULES_UPLOAD_PATH, "");
-        }
-        // If it's already a relative path, return it as is
-        return ruleValue;
-      }
-
-      // Handle case where rule is an object
-      if (ruleValue && typeof ruleValue === "object") {
-        // First, try to get the path from _sys.relativePath (for existing rules)
-        if (ruleValue._sys?.relativePath) {
-          return ruleValue._sys.relativePath;
-        }
-
-        // If _sys.relativePath is not available, try to get URI and construct path
-        // This handles cases where the rule reference exists but the file doesn't yet
-        if ("uri" in ruleValue && typeof ruleValue.uri === "string") {
-          // Construct path from URI: {uri}/rule.mdx
-          return `${ruleValue.uri}/rule.mdx`;
-        }
-      }
-
-      return null;
-    })
-    .filter((path): path is string => typeof path === "string" && path.length > 0);
+  return index.map((item) => extractPathFromRuleValue(item?.rule)).filter((path): path is string => typeof path === "string" && path.length > 0);
 }
 
 /**
@@ -178,24 +179,7 @@ async function getExistingRulePaths(relativePath: string, tgc: TinaGraphQLClient
     const categoryFullResponse = (await tgc.request(CATEGORY_FULL_QUERY, { relativePath })) as CategoryFullQueryResponse;
     const index = (categoryFullResponse?.category as any)?.index || [];
     if (index.length > 0) {
-      const paths = index
-        .map((item: any) => {
-          const ruleValue = item?.rule;
-          if (ruleValue?._sys?.relativePath) {
-            return ruleValue._sys.relativePath;
-          }
-          if (ruleValue?.uri) {
-            return `${ruleValue.uri}/rule.mdx`;
-          }
-          if (typeof ruleValue === "string") {
-            if (ruleValue.startsWith(RULES_UPLOAD_PATH)) {
-              return ruleValue.replace(RULES_UPLOAD_PATH, "");
-            }
-            return ruleValue;
-          }
-          return null;
-        })
-        .filter((path): path is string => path !== null && path.length > 0);
+      const paths = index.map((item: any) => extractPathFromRuleValue(item?.rule)).filter((path): path is string => path !== null && path.length > 0);
       if (paths.length > 0) {
         console.log(`📋 Category ${relativePath} has ${paths.length} rule(s) from full query:`, paths);
         return paths;
@@ -231,6 +215,22 @@ async function getRulePath(ruleUri: string, tgc: TinaGraphQLClient, skipRulePath
 }
 
 /**
+ * Converts a rule value to CategoryIndexItem format for mutations.
+ */
+function convertRuleValueToIndexItem(ruleValue: any): CategoryIndexItem | null {
+  if (typeof ruleValue === "string") {
+    return { rule: ruleValue };
+  }
+  if (ruleValue?._sys?.relativePath) {
+    return { rule: `${RULES_UPLOAD_PATH}${ruleValue._sys.relativePath}` };
+  }
+  if (ruleValue?.uri && typeof ruleValue.uri === "string") {
+    return { rule: `${RULES_UPLOAD_PATH}${ruleValue.uri}/rule` };
+  }
+  return null;
+}
+
+/**
  * Gets the existing index from GraphQL, trying multiple strategies.
  * Returns the index in the format needed for mutations.
  */
@@ -242,22 +242,10 @@ async function getExistingIndexFromGraphQL(relativePath: string, tgc: TinaGraphQ
     })) as CategoryFullQueryResponse;
     const index = (categoryFullResponse?.category as any)?.index || [];
     if (index.length > 0) {
-      // Convert to CategoryIndexItem format
-      return index
-        .map((item: any) => {
-          const ruleValue = item?.rule;
-          if (typeof ruleValue === "string") {
-            return { rule: ruleValue };
-          }
-          if (ruleValue?._sys?.relativePath) {
-            return { rule: `${RULES_UPLOAD_PATH}${ruleValue._sys.relativePath}` };
-          }
-          if (ruleValue?.uri) {
-            return { rule: `${RULES_UPLOAD_PATH}${ruleValue.uri}/rule` };
-          }
-          return null;
-        })
-        .filter((item): item is CategoryIndexItem => item !== null);
+      const convertedIndex = index.map((item: any) => convertRuleValueToIndexItem(item?.rule)).filter((item): item is CategoryIndexItem => item !== null);
+      if (convertedIndex.length > 0) {
+        return convertedIndex;
+      }
     }
   } catch (error) {
     // If that fails, try the rule paths query
@@ -270,17 +258,7 @@ async function getExistingIndexFromGraphQL(relativePath: string, tgc: TinaGraphQ
       relativePath,
     })) as CategoryQueryResponse;
     const index = categoryRulePathsResponse?.category?.index || [];
-    // Convert to CategoryIndexItem format
-    return index
-      .map((item: any) => {
-        const ruleValue = item?.rule;
-        if (ruleValue?.uri) {
-          // Construct path from URI
-          return { rule: `${RULES_UPLOAD_PATH}${ruleValue.uri}/rule.mdx` };
-        }
-        return null;
-      })
-      .filter((item): item is CategoryIndexItem => item !== null);
+    return index.map((item: any) => convertRuleValueToIndexItem(item?.rule)).filter((item): item is CategoryIndexItem => item !== null);
   } catch (error) {
     console.warn(`⚠️ Could not get index from GraphQL for category ${relativePath}:`, error);
     return [];
@@ -296,57 +274,34 @@ async function getCategoryWithIndex(
   tgc: TinaGraphQLClient,
   skipRulePathResolution: boolean
 ): Promise<CategoryFullQueryResponse["category"]> {
-  if (skipRulePathResolution) {
-    // For create forms: try to fetch with index first, fall back to without index if validation fails
+  const isCreateForm = skipRulePathResolution;
+  if (isCreateForm) {
     console.log(`🔨 Create form - trying to fetch category with index first`);
-    let category = await fetchCategoryFull(relativePath, tgc, false);
+  }
 
-    if (!category) {
-      // If fetching with index failed, try without index
-      console.log(`⚠️ Failed to fetch category with index, trying without index`);
-      category = await fetchCategoryFull(relativePath, tgc, true);
+  // Try to fetch with index first
+  let category = await fetchCategoryFull(relativePath, tgc, false);
 
-      if (!category) {
-        throw new Error(`Failed to fetch category ${relativePath} via GraphQL. Cannot proceed without category data.`);
-      }
-
-      // If we had to fetch without index, try to get the existing index separately
-      console.log(`📖 Attempting to get existing index separately to preserve existing rules`);
-      const existingIndex = await getExistingIndexFromGraphQL(relativePath, tgc);
-      (category as any).index = existingIndex;
-      console.log(`📦 Preserved ${existingIndex.length} existing rule(s) from separate query`);
-      return category;
-    }
-
-    // If we got the category with index, use it
+  if (category) {
+    // Successfully fetched with index, use it
     const graphqlIndex = (category as any)?.index || [];
     (category as any).index = graphqlIndex;
     return category;
   }
 
-  // For update forms: try to fetch with index first
-  let category = await fetchCategoryFull(relativePath, tgc, false);
+  // If fetching with index failed, try without index
+  console.log(`⚠️ Failed to fetch category with index, trying without index`);
+  category = await fetchCategoryFull(relativePath, tgc, true);
 
   if (!category) {
-    // If fetching with index failed, try without index and get index separately
-    console.log(`⚠️ Failed to fetch category with index, trying without index`);
-    category = await fetchCategoryFull(relativePath, tgc, true);
-
-    if (!category) {
-      throw new Error(`Failed to fetch category ${relativePath} via GraphQL. Cannot proceed without category data.`);
-    }
-
-    // Try to get the existing index separately
-    console.log(`📖 Attempting to get existing index separately to preserve existing rules`);
-    const existingIndex = await getExistingIndexFromGraphQL(relativePath, tgc);
-    (category as any).index = existingIndex;
-    console.log(`📦 Preserved ${existingIndex.length} existing rule(s) from separate query`);
-    return category;
+    throw new Error(`Failed to fetch category ${relativePath} via GraphQL. Cannot proceed without category data.`);
   }
 
-  const graphqlIndex = (category as any)?.index || [];
-  (category as any).index = graphqlIndex;
-
+  // If we had to fetch without index, get the existing index separately
+  console.log(`📖 Attempting to get existing index separately to preserve existing rules`);
+  const existingIndex = await getExistingIndexFromGraphQL(relativePath, tgc);
+  (category as any).index = existingIndex;
+  console.log(`📦 Preserved ${existingIndex.length} existing rule(s) from separate query`);
   return category;
 }
 
@@ -373,24 +328,12 @@ function normalizePathForComparison(path: string | null): string | null {
  * Extracts path from an index item for comparison.
  */
 function getPathFromIndexItem(item: any): string | null {
-  const ruleValue = item?.rule;
-  if (typeof ruleValue === "string") {
-    if (ruleValue.startsWith(RULES_UPLOAD_PATH)) {
-      return ruleValue.replace(RULES_UPLOAD_PATH, "");
-    }
-    return ruleValue;
-  }
-  if (ruleValue?._sys?.relativePath) {
-    return ruleValue._sys.relativePath;
-  }
-  if (ruleValue?.uri) {
-    return `${ruleValue.uri}/rule.mdx`;
-  }
-  return null;
+  return extractPathFromRuleValue(item?.rule);
 }
 
 /**
  * Gets all possible path representations from an index item.
+ * Returns normalized paths for comparison purposes.
  */
 function getAllPathsFromIndexItem(item: any): string[] {
   const paths: string[] = [];
@@ -406,7 +349,7 @@ function getAllPathsFromIndexItem(item: any): string[] {
     if (ruleValue._sys?.relativePath) {
       paths.push(ruleValue._sys.relativePath);
     }
-    if (ruleValue.uri) {
+    if (ruleValue.uri && typeof ruleValue.uri === "string") {
       paths.push(`${ruleValue.uri}/rule.mdx`);
     }
   }
@@ -430,34 +373,31 @@ function shouldDeleteIndexItem(item: any, ruleUri: string, normalizedRulePath: s
     }
   }
 
-  // If URI didn't match, try to match by path
+  // Try to match by path
   const itemPaths = getAllPathsFromIndexItem(item);
-  if (itemPaths.length > 0) {
-    const pathMatches = itemPaths.some((itemPath) => itemPath === normalizedRulePath);
-    if (pathMatches) {
-      return true;
-    }
+  if (itemPaths.some((itemPath) => itemPath === normalizedRulePath)) {
+    return true;
   }
 
-  // Also check if the path can be derived from URI (for string items)
-  if (ruleValue && typeof ruleValue === "string") {
+  // For string items, check if the path matches or contains the URI
+  if (typeof ruleValue === "string") {
     let cleanPath = ruleValue;
     if (cleanPath.startsWith(RULES_UPLOAD_PATH)) {
       cleanPath = cleanPath.replace(RULES_UPLOAD_PATH, "");
     }
 
     const normalizedStringPath = normalizePathForComparison(cleanPath);
-    if (normalizedStringPath && normalizedStringPath === normalizedRulePath) {
+    if (normalizedStringPath === normalizedRulePath) {
       return true;
     }
 
-    // Check if the path contains the URI
-    const constructedPathFromUri = `${ruleUri}/rule.mdx`;
-    const normalizedConstructedPath = normalizePathForComparison(constructedPathFromUri);
-    if (normalizedConstructedPath && normalizedStringPath === normalizedConstructedPath) {
+    // Check if the path can be constructed from URI
+    const constructedPathFromUri = normalizePathForComparison(`${ruleUri}/rule.mdx`);
+    if (normalizedStringPath === constructedPathFromUri) {
       return true;
     }
 
+    // Fallback: check if path contains the URI
     if (normalizedStringPath?.includes(ruleUri) || cleanPath.includes(ruleUri)) {
       return true;
     }
@@ -544,17 +484,21 @@ export async function updateTheCategoryRuleList(
       return { success: false, error: "Rule path not found" };
     }
 
-    // Step 3: Validate preconditions (skip for create forms)
-    if (!skipRulePathResolution) {
-      if (existingRulePaths.includes(rulePath) && action === "add") {
+    // Step 3: Validate preconditions
+    const isUpdateForm = !skipRulePathResolution;
+    const ruleAlreadyExists = existingRulePaths.includes(rulePath);
+
+    if (isUpdateForm) {
+      // For update forms, check if mutation is needed
+      if (ruleAlreadyExists && action === "add") {
         console.log(`⏭️ Rule path already referenced in category ${relativePath}; skipping mutation.`);
         return { success: true };
       }
-      if (!existingRulePaths.includes(rulePath) && action === "delete") {
+      if (!ruleAlreadyExists && action === "delete") {
         console.log(`⏭️ Rule path not found in category ${relativePath}; nothing to delete.`);
         return { success: true };
       }
-    } else if (existingRulePaths.includes(rulePath) && action === "add") {
+    } else if (ruleAlreadyExists && action === "add") {
       // For create forms, log if rule path already exists (shouldn't happen for new rules)
       console.warn(
         `⚠️ Rule path ${rulePath} already exists in category ${relativePath} for new rule ${ruleUri}. This might indicate a duplicate or the rule was created before.`
@@ -564,10 +508,10 @@ export async function updateTheCategoryRuleList(
     // Step 4: Get the full category document with proper index handling
     const currentCategory = await getCategoryWithIndex(relativePath, tgc, skipRulePathResolution);
 
-    // Step 5: Get the existing index from the category document
+    // Step 5: Get the existing index from the category document and ensure consistency
     let existingIndex: any[] = (currentCategory as any)?.index || [];
 
-    // If the index is empty but we have existing rule paths, reconstruct the index
+    // Reconstruct index if empty but we have existing rule paths
     // This handles cases where GraphQL queries fail due to indexing delays or validation issues
     if (existingIndex.length === 0 && existingRulePaths.length > 0) {
       console.log(`⚠️ Index is empty but we have ${existingRulePaths.length} existing rule path(s). Reconstructing index from paths.`);
@@ -576,7 +520,7 @@ export async function updateTheCategoryRuleList(
       }));
       (currentCategory as any).index = existingIndex;
     } else if (existingIndex.length > 0 && existingRulePaths.length > 0) {
-      // If we have both, make sure all paths from existingRulePaths are in the index
+      // Ensure all paths from existingRulePaths are in the index
       // This handles cases where the index might be missing some rules due to GraphQL validation issues
       const indexPaths = existingIndex.map((item: any) => getPathFromIndexItem(item)).filter((p): p is string => p !== null);
       const missingPaths = existingRulePaths.filter((path) => !indexPaths.includes(path));
@@ -601,14 +545,11 @@ export async function updateTheCategoryRuleList(
     // Step 6: Build new index based on action
     const newIndex = action === "add" ? buildIndexForAddAction(existingIndex, rulePath) : buildIndexForDeleteAction(existingIndex, ruleUri, rulePath);
 
-    // Step 7: Check if the index actually changed (to detect if it was a duplicate)
-    const indexChanged =
-      JSON.stringify(newIndex) !==
-      JSON.stringify(
-        existingRulePaths.map((path) => ({
-          rule: `${RULES_UPLOAD_PATH}${path}`,
-        }))
-      );
+    // Step 7: Check if the index actually changed (to detect duplicates)
+    const expectedIndexForComparison = existingRulePaths.map((path) => ({
+      rule: `${RULES_UPLOAD_PATH}${path}`,
+    }));
+    const indexChanged = JSON.stringify(newIndex) !== JSON.stringify(expectedIndexForComparison);
 
     if (!indexChanged && action === "add") {
       console.warn(`⚠️ Rule ${ruleUri} (path: ${rulePath}) already exists in category ${relativePath}. No mutation needed.`);
