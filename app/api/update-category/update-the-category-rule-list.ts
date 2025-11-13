@@ -409,6 +409,7 @@ export async function updateTheCategoryRuleList(
     );
 
     // Helper function to extract path from an index item for comparison
+    // Returns all possible path representations to ensure we can match regardless of format
     const getPathFromIndexItem = (item: any): string | null => {
       const ruleValue = item?.rule;
       if (typeof ruleValue === "string") {
@@ -424,6 +425,52 @@ export async function updateTheCategoryRuleList(
         return `${ruleValue.uri}/rule`;
       }
       return null;
+    };
+
+    // Helper function to get all possible path representations from an index item
+    // This helps match paths even when they're in different formats
+    const getAllPathsFromIndexItem = (item: any): string[] => {
+      const paths: string[] = [];
+      const ruleValue = item?.rule;
+
+      if (typeof ruleValue === "string") {
+        let path = ruleValue;
+        if (path.startsWith(RULES_UPLOAD_PATH)) {
+          path = path.replace(RULES_UPLOAD_PATH, "");
+        }
+        paths.push(path);
+      } else if (ruleValue && typeof ruleValue === "object") {
+        if (ruleValue._sys?.relativePath) {
+          paths.push(ruleValue._sys.relativePath);
+        }
+        if (ruleValue.uri) {
+          paths.push(`${ruleValue.uri}/rule`);
+        }
+      }
+
+      return paths.map((p) => normalizePathForComparison(p)).filter((p): p is string => p !== null);
+    };
+
+    // Helper function to normalize paths for comparison
+    // Ensures paths are in a consistent format for comparison
+    // Handles different formats like:
+    // - "public/uploads/rules/{path}" -> "{path}"
+    // - "{path}/rule" -> "{path}/rule" (keep /rule suffix)
+    // - "{path}" -> "{path}"
+    const normalizePathForComparison = (path: string | null): string | null => {
+      if (!path) return null;
+      let normalized = path.trim();
+      // Remove RULES_UPLOAD_PATH prefix if present
+      if (normalized.startsWith(RULES_UPLOAD_PATH)) {
+        normalized = normalized.replace(RULES_UPLOAD_PATH, "");
+      }
+      // Normalize slashes but keep the structure
+      normalized = normalized.replace(/\/+/g, "/");
+      // Remove trailing slashes except if it ends with /rule
+      if (normalized.endsWith("/rule")) {
+        return normalized;
+      }
+      return normalized.replace(/\/+$/, "");
     };
 
     // Build new index based on action
@@ -462,14 +509,102 @@ export async function updateTheCategoryRuleList(
       }
     } else {
       // For delete, remove the rule from existing index, preserving format of remaining items
+      // CRITICAL: Match by URI first (most reliable), then by path as fallback
+      // This ensures we delete the rule regardless of how it's stored in the index
+      const normalizedRulePath = normalizePathForComparison(rulePath);
+      console.log(`🗑️ Deleting rule with URI: ${ruleUri}, path: ${rulePath} (normalized: ${normalizedRulePath})`);
+
       newIndex = existingIndex
-        .filter((item: any) => getPathFromIndexItem(item) !== rulePath)
+        .filter((item: any) => {
+          const ruleValue = item?.rule;
+          let shouldDelete = false;
+          let matchReason = "";
+
+          // First, try to match by URI (most reliable identifier)
+          if (ruleValue && typeof ruleValue === "object") {
+            const itemUri = ruleValue.uri;
+            if (itemUri && typeof itemUri === "string" && itemUri === ruleUri) {
+              shouldDelete = true;
+              matchReason = `URI match: ${itemUri}`;
+            }
+          }
+
+          // If URI didn't match, try to match by path
+          if (!shouldDelete) {
+            const itemPaths = getAllPathsFromIndexItem(item);
+
+            if (itemPaths.length > 0) {
+              // Check if any of the item's paths match the rulePath we want to delete
+              const pathMatches = itemPaths.some((itemPath) => itemPath === normalizedRulePath);
+              if (pathMatches) {
+                shouldDelete = true;
+                matchReason = `Path match: [${itemPaths.join(", ")}]`;
+              }
+            }
+          }
+
+          // Also check if the path can be derived from URI (for string items that might contain URI-based paths)
+          if (!shouldDelete && ruleValue && typeof ruleValue === "string") {
+            // Remove the RULES_UPLOAD_PATH prefix if present
+            let cleanPath = ruleValue;
+            if (cleanPath.startsWith(RULES_UPLOAD_PATH)) {
+              cleanPath = cleanPath.replace(RULES_UPLOAD_PATH, "");
+            }
+
+            const normalizedStringPath = normalizePathForComparison(cleanPath);
+
+            // Check if the string path matches the rulePath
+            if (normalizedStringPath && normalizedStringPath === normalizedRulePath) {
+              shouldDelete = true;
+              matchReason = `String path match: ${ruleValue}`;
+            } else if (normalizedStringPath) {
+              // Check if the path contains the URI (e.g., "some-uri/rule" contains "some-uri")
+              const constructedPathFromUri = `${ruleUri}/rule`;
+              const normalizedConstructedPath = normalizePathForComparison(constructedPathFromUri);
+
+              if (normalizedConstructedPath && normalizedStringPath === normalizedConstructedPath) {
+                shouldDelete = true;
+                matchReason = `String path matches URI-derived path: ${ruleValue}`;
+              } else if (normalizedStringPath.includes(ruleUri) || cleanPath.includes(ruleUri)) {
+                // If the path contains the URI anywhere, it's likely a match
+                shouldDelete = true;
+                matchReason = `String path contains URI: ${ruleValue}`;
+              }
+            }
+          }
+
+          if (shouldDelete) {
+            console.log(`✅ Found matching item to delete. Reason: ${matchReason}`);
+          } else {
+            const itemPaths = getAllPathsFromIndexItem(item);
+            const itemUri = ruleValue && typeof ruleValue === "object" ? ruleValue.uri : "N/A";
+            console.log(`➡️ Keeping item. URI: ${itemUri}, paths: [${itemPaths.join(", ")}]`);
+          }
+
+          // Keep the item if it doesn't match
+          return !shouldDelete;
+        })
         .map((item: any) => {
           const ruleValue = item?.rule;
           return {
             rule: typeof ruleValue === "string" ? ruleValue : `${RULES_UPLOAD_PATH}${getPathFromIndexItem(item) || ""}`,
           };
         });
+
+      console.log(`📊 Delete operation: ${existingIndex.length} items before, ${newIndex.length} items after`);
+
+      // If no items were deleted but we expected to delete one, log a warning
+      if (existingIndex.length === newIndex.length) {
+        console.warn(`⚠️ No items were deleted! Expected to delete rule with URI: ${ruleUri}, path: ${rulePath}`);
+        console.warn(
+          `⚠️ Existing index items:`,
+          existingIndex.map((item: any) => ({
+            type: typeof item?.rule,
+            uri: item?.rule && typeof item?.rule === "object" ? item.rule.uri : "N/A",
+            path: getPathFromIndexItem(item),
+          }))
+        );
+      }
     }
 
     // Check if the index actually changed (to detect if it was a duplicate)
