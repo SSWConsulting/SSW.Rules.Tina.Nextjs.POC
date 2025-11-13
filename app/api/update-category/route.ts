@@ -10,7 +10,14 @@ const isDev = process.env.NODE_ENV === "development";
 
 /**
  * Processes a single category for the given action (add or delete).
- * Returns whether the operation was successful.
+ *
+ * @param category - Category path to process
+ * @param ruleUri - URI of the rule to add/delete
+ * @param tgc - Tina GraphQL client instance
+ * @param action - Action to perform: "add" or "delete"
+ * @param branch - Optional branch name
+ * @param skipExistenceCheck - Skip GraphQL existence check (for create forms or when category has non-existent rules)
+ * @returns Whether the operation was successful
  */
 async function processSingleCategory(
   category: string,
@@ -23,20 +30,15 @@ async function processSingleCategory(
   try {
     const relativePath = getRelativePathForCategory(category);
 
-    // Skip existence check if skipExistenceCheck is true (for create forms or when category has non-existent rules)
-    // The existence check uses GraphQL which validates all rules in the category, including non-existent ones
-    // This causes errors when the category index contains references to rules that don't exist yet
+    // Step 1: Validate preconditions (skip if skipExistenceCheck is true)
+    // The existence check uses GraphQL which validates all rules in the category, including non-existent ones.
+    // This causes errors when the category index contains references to rules that don't exist yet.
     if (!skipExistenceCheck) {
       try {
-        const categoryQueryResult = await client.queries.categoryWithRulesQuery(
-          {
-            relativePath,
-          },
-          branch ? await getFetchOptions() : undefined
-        );
+        const categoryQueryResult = await client.queries.categoryWithRulesQuery({ relativePath }, branch ? await getFetchOptions() : undefined);
         const ruleAlreadyExists = ruleExistsByUriInCategory(categoryQueryResult, ruleUri);
 
-        // Validate preconditions for the action
+        // Early return if no change is needed
         if (action === "add" && ruleAlreadyExists) {
           return false; // Rule already exists, no change needed
         }
@@ -44,28 +46,19 @@ async function processSingleCategory(
           return false; // Rule doesn't exist, no change needed
         }
       } catch (error) {
-        // If the GraphQL query fails (e.g., due to non-existent rules in the category),
-        // skip the existence check and proceed with the update
-        // The updateTheCategoryRuleList function will handle reading from file to preserve existing rules
+        // If GraphQL query fails (e.g., due to non-existent rules), skip validation and proceed.
+        // The updateTheCategoryRuleList function will handle reading from file to preserve existing rules.
         console.warn(
           `⚠️ Category existence check failed for ${relativePath} (likely due to non-existent rules in index). Skipping validation and proceeding with update.`,
           error
         );
-        // Continue without existence check - updateTheCategoryRuleList will handle it
       }
     }
 
-    // Perform the update
-    // For update forms, we skip rule path resolution if skipExistenceCheck is true
-    // This is because categories may contain non-existent rules, and we want to avoid GraphQL validation
-    // The function will read from file to preserve existing rules and construct paths from URI when needed
-    const result = await updateTheCategoryRuleList(
-      ruleUri,
-      relativePath,
-      tgc,
-      action,
-      skipExistenceCheck // Pass skipExistenceCheck to skip rule path resolution (for both create and update when category has issues)
-    );
+    // Step 2: Perform the update
+    // skipExistenceCheck is passed to skip rule path resolution when categories may contain non-existent rules.
+    // The function will read from file to preserve existing rules and construct paths from URI when needed.
+    const result = await updateTheCategoryRuleList(ruleUri, relativePath, tgc, action, skipExistenceCheck);
 
     if (!result.success) {
       console.error(`❌ Failed to process category ${category} (relativePath: ${getRelativePathForCategory(category)}):`, result.error);
@@ -79,7 +72,15 @@ async function processSingleCategory(
 
 /**
  * Processes a list of categories for the given action.
- * Separates categories into processed and failed arrays.
+ * Processes all categories in parallel and separates them into processed and failed arrays.
+ *
+ * @param categories - Array of category paths to process
+ * @param ruleUri - URI of the rule to add/delete
+ * @param tgc - Tina GraphQL client instance
+ * @param action - Action to perform: "add" or "delete"
+ * @param branch - Optional branch name
+ * @param skipExistenceCheck - Skip GraphQL existence check
+ * @returns Object with processed and failed category paths
  */
 async function processCategories(
   categories: string[],
@@ -92,6 +93,7 @@ async function processCategories(
   const processed: string[] = [];
   const failed: string[] = [];
 
+  // Process all categories in parallel
   await Promise.all(
     categories.map(async (category) => {
       const relativePath = getRelativePathForCategory(category);
@@ -183,15 +185,26 @@ function extractCategoriesByStatus(
   };
 }
 
+/**
+ * Main POST handler for updating category associations with rules.
+ *
+ * Flow:
+ * 1. Validate authorization
+ * 2. Parse and validate request body
+ * 3. Handle create vs update forms differently
+ *    - Create: Add all categories directly (skip existence checks)
+ *    - Update: Compare current vs requested categories, then add/delete as needed
+ * 4. Return response with processed categories
+ */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
-    // Validate authorization
+    // Step 1: Validate authorization
     const authValidation = validateAuth(request);
     if (!authValidation.valid) {
       return authValidation.error!;
     }
 
-    // Parse and validate request body
+    // Step 2: Parse and validate request body
     const body = await request.json();
     const bodyValidation = validateRequestBody(body);
     if (!bodyValidation.valid) {
@@ -203,74 +216,13 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const activeBranch = request.cookies.get("x-branch")?.value;
     const isCreateForm = formType === "create";
 
-    // For create forms, skip rule existence check and add all categories directly
+    // Step 3: Handle create forms (simpler flow - just add all categories)
     if (isCreateForm) {
-      const tgc = new TinaGraphQLClient(token, activeBranch);
-
-      // Normalize categories to extract category paths
-      const normalizedCategories = categories
-        .map((cat) => {
-          const rawPath = typeof cat === "string" ? cat : typeof cat === "object" && cat?.category ? cat.category : "";
-          return rawPath;
-        })
-        .filter(Boolean);
-
-      // Process all categories as "add" operations, skipping existence checks
-      const addResult = await processCategories(
-        normalizedCategories,
-        ruleUri,
-        tgc,
-        "add",
-        activeBranch,
-        true // skipExistenceCheck = true
-      );
-
-      // Build response
-      const response: UpdateCategoryResponse = {
-        success: true,
-        message: `Processed categories for new rule ${ruleUri}`,
-        URI: ruleUri,
-        AddedCategories: addResult.processed,
-        DeletedCategories: [],
-        NoChangedCategories: addResult.failed,
-      };
-
-      return NextResponse.json(response);
+      return await handleCreateForm(categories, ruleUri, token, activeBranch);
     }
 
-    // For update forms, use existing logic
-    // Get current rule and its categories
-    const { rule, currentRuleCategories } = await getRuleCategories(ruleUri, activeBranch);
-
-    if (!rule) {
-      return NextResponse.json({ error: `Rule not found for URI: ${ruleUri}` }, { status: 404 });
-    }
-
-    // Categorize categories to determine actions needed
-    const categorizedCategories = categorizeCategories(currentRuleCategories, categories);
-
-    const { toAdd, toDelete, noChange } = extractCategoriesByStatus(categorizedCategories);
-
-    // Process categories
-    // Skip existence check for update forms too, because categories may contain non-existent rules
-    // The updateTheCategoryRuleList function will read from file to preserve existing rules
-    const tgc = new TinaGraphQLClient(token, activeBranch);
-    const [addResult, deleteResult] = await Promise.all([
-      processCategories(toAdd, ruleUri, tgc, "add", activeBranch, true), // skipExistenceCheck = true
-      processCategories(toDelete, ruleUri, tgc, "delete", activeBranch, true), // skipExistenceCheck = true
-    ]);
-
-    // Build response
-    const response: UpdateCategoryResponse = {
-      success: true,
-      message: `Processed categories for rule ${rule.title}`,
-      URI: rule.uri,
-      AddedCategories: addResult.processed,
-      DeletedCategories: deleteResult.processed,
-      NoChangedCategories: [...addResult.failed, ...deleteResult.failed, ...noChange],
-    };
-
-    return NextResponse.json(response);
+    // Step 4: Handle update forms (compare current vs requested, then add/delete)
+    return await handleUpdateForm(categories, ruleUri, token, activeBranch);
   } catch (error) {
     console.error("Error processing category update:", error);
     return NextResponse.json(
@@ -281,4 +233,88 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       { status: 500 }
     );
   }
+}
+
+/**
+ * Handles category updates for create forms.
+ * Adds all provided categories directly without existence checks.
+ */
+async function handleCreateForm(
+  categories: Array<string | { category?: string }>,
+  ruleUri: string,
+  token: string,
+  activeBranch?: string
+): Promise<NextResponse> {
+  const tgc = new TinaGraphQLClient(token, activeBranch);
+
+  // Normalize categories to extract category paths
+  const normalizedCategories = categories
+    .map((cat) => {
+      const rawPath = typeof cat === "string" ? cat : typeof cat === "object" && cat?.category ? cat.category : "";
+      return rawPath;
+    })
+    .filter(Boolean);
+
+  // Process all categories as "add" operations, skipping existence checks
+  const addResult = await processCategories(
+    normalizedCategories,
+    ruleUri,
+    tgc,
+    "add",
+    activeBranch,
+    true // skipExistenceCheck = true for create forms
+  );
+
+  const response: UpdateCategoryResponse = {
+    success: true,
+    message: `Processed categories for new rule ${ruleUri}`,
+    URI: ruleUri,
+    AddedCategories: addResult.processed,
+    DeletedCategories: [],
+    NoChangedCategories: addResult.failed,
+  };
+
+  return NextResponse.json(response);
+}
+
+/**
+ * Handles category updates for update forms.
+ * Compares current rule categories with requested categories and processes changes.
+ */
+async function handleUpdateForm(
+  categories: Array<string | { category?: string }>,
+  ruleUri: string,
+  token: string,
+  activeBranch?: string
+): Promise<NextResponse> {
+  // Get current rule and its categories
+  const { rule, currentRuleCategories } = await getRuleCategories(ruleUri, activeBranch);
+
+  if (!rule) {
+    return NextResponse.json({ error: `Rule not found for URI: ${ruleUri}` }, { status: 404 });
+  }
+
+  // Categorize categories to determine what actions are needed
+  const categorizedCategories = categorizeCategories(currentRuleCategories, categories);
+  const { toAdd, toDelete, noChange } = extractCategoriesByStatus(categorizedCategories);
+
+  // Process add and delete operations in parallel
+  // Skip existence check because categories may contain non-existent rules.
+  // The updateTheCategoryRuleList function will read from file to preserve existing rules.
+  const tgc = new TinaGraphQLClient(token, activeBranch);
+  const [addResult, deleteResult] = await Promise.all([
+    processCategories(toAdd, ruleUri, tgc, "add", activeBranch, true), // skipExistenceCheck = true
+    processCategories(toDelete, ruleUri, tgc, "delete", activeBranch, true), // skipExistenceCheck = true
+  ]);
+
+  const response: UpdateCategoryResponse = {
+    success: true,
+    message: `Processed categories for rule ${rule.title}`,
+    URI: rule.uri,
+    AddedCategories: addResult.processed,
+    DeletedCategories: deleteResult.processed,
+    NoChangedCategories: [...addResult.failed, ...deleteResult.failed, ...noChange],
+  };
+
+  return NextResponse.json(response);
 }
