@@ -104,11 +104,7 @@ export const historyBeforeSubmit = async ({ form, cms, values }: { form: Form; c
 
     if (shouldCallAPI) {
       try {
-        console.log(
-          `📝 ${formType === "create" ? "Create" : "Update"} form detected - attempting to update ${categories.length} category/categories for rule "${values.uri}"`
-        );
-
-        const response = await fetch("/rules-beta/api/update-category", {
+        const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/update-category`, {
           method: "POST",
           headers: {
             ...getBearerAuthHeader(),
