@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import client from "@/tina/__generated__/client";
+import { getFetchOptions } from "@/utils/tina/get-branch";
 import { TinaGraphQLClient } from "@/utils/tina/tina-graphql-client";
 import { CategoryProcessingResult, UpdateCategoryRequest, UpdateCategoryResponse } from "./types";
 import { updateTheCategoryRuleList } from "./update-the-category-rule-list";
@@ -31,15 +32,7 @@ async function processSingleCategory(
           {
             relativePath,
           },
-          branch
-            ? {
-                fetchOptions: {
-                  headers: {
-                    "x-branch": branch,
-                  },
-                },
-              }
-            : undefined
+          branch ? await getFetchOptions() : undefined
         );
         const ruleAlreadyExists = ruleExistsByUriInCategory(categoryQueryResult, ruleUri);
 
