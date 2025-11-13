@@ -1,5 +1,8 @@
+import { readFile } from "fs/promises";
+import matter from "gray-matter";
+import { join } from "path";
 import { TinaGraphQLClient } from "@/utils/tina/tina-graphql-client";
-import { CATEGORY_FULL_QUERY, CATEGORY_RULE_PATHS_QUERY, RULE_PATH_BY_URI_QUERY, UPDATE_CATEGORY_MUTATION } from "./constants";
+import { CATEGORY_FULL_QUERY, CATEGORY_FULL_QUERY_NO_INDEX, CATEGORY_RULE_PATHS_QUERY, RULE_PATH_BY_URI_QUERY, UPDATE_CATEGORY_MUTATION } from "./constants";
 import {
   CategoryFullQueryResponse,
   CategoryIndexItem,
@@ -72,14 +75,89 @@ async function resolveRulePath(ruleUri: string, tgc: TinaGraphQLClient): Promise
 }
 
 /**
- * Fetches the full category document to preserve existing fields.
+ * Reads the category file directly from the file system to extract the index
+ * without GraphQL validation. This is used for create forms where rules don't exist yet.
  */
-async function fetchCategoryFull(relativePath: string, tgc: TinaGraphQLClient): Promise<CategoryFullQueryResponse["category"]> {
-  const categoryFullResponse = (await tgc.request(CATEGORY_FULL_QUERY, {
-    relativePath,
-  })) as CategoryFullQueryResponse;
+async function readCategoryIndexFromFile(relativePath: string): Promise<CategoryIndexItem[]> {
+  try {
+    const contentPath = process.env.LOCAL_CONTENT_RELATIVE_PATH;
+    if (!contentPath) {
+      console.warn("⚠️ LOCAL_CONTENT_RELATIVE_PATH not set, cannot read category file directly");
+      return [];
+    }
 
-  return categoryFullResponse?.category ?? {};
+    // Adjust the path since env var is relative to tina config (subfolder) but this API runs from project root
+    const adjustedContentPath = contentPath.replace("../../", "../");
+    const contentRepoPath = join(process.cwd(), adjustedContentPath);
+
+    const categoryFilePath = join(contentRepoPath, "categories", relativePath);
+
+    // Security check: ensure the resolved path is within the content repo
+    if (!categoryFilePath.startsWith(contentRepoPath)) {
+      console.warn(`⚠️ Category path ${categoryFilePath} is outside content repo, skipping file read`);
+      return [];
+    }
+
+    const fileContent = await readFile(categoryFilePath, "utf-8");
+
+    // Parse frontmatter from MDX file using gray-matter
+    const { data: frontmatter } = matter(fileContent);
+
+    if (!frontmatter || !frontmatter.index) {
+      console.warn(`⚠️ No index found in category file ${relativePath}`);
+      return [];
+    }
+
+    // Extract index array from frontmatter
+    const index = Array.isArray(frontmatter.index) ? frontmatter.index : [];
+
+    // Convert index items to CategoryIndexItem format
+    return index
+      .map((item: any) => {
+        // Handle different formats: {rule: "..."} or just "..." string
+        if (typeof item === "string") {
+          return { rule: item };
+        }
+        if (item && typeof item === "object" && item.rule) {
+          return { rule: item.rule };
+        }
+        return null;
+      })
+      .filter((item): item is CategoryIndexItem => item !== null);
+  } catch (error) {
+    console.warn(`⚠️ Could not read category file ${relativePath} directly (file may not exist or be accessible):`, error);
+    return [];
+  }
+}
+
+/**
+ * Fetches the full category document to preserve existing fields.
+ * For create forms, this may fail if the index contains rules that don't exist yet.
+ * In that case, we return an empty category object and handle it gracefully.
+ */
+async function fetchCategoryFull(
+  relativePath: string,
+  tgc: TinaGraphQLClient,
+  skipValidation: boolean = false
+): Promise<CategoryFullQueryResponse["category"]> {
+  try {
+    // For create forms, use query without index to avoid validation errors
+    const query = skipValidation ? CATEGORY_FULL_QUERY_NO_INDEX : CATEGORY_FULL_QUERY;
+    const categoryFullResponse = (await tgc.request(query, {
+      relativePath,
+    })) as CategoryFullQueryResponse;
+
+    return categoryFullResponse?.category ?? {};
+  } catch (error) {
+    // If query fails, return empty category
+    // The caller will handle building the index from scratch
+    if (skipValidation) {
+      console.warn(`⚠️ Failed to fetch category ${relativePath} (likely due to non-existent rules in index). Using empty category.`);
+      return {};
+    }
+    // Re-throw if we're not skipping validation
+    throw error;
+  }
 }
 
 /**
@@ -169,12 +247,46 @@ export async function updateTheCategoryRuleList(
   try {
     console.log(`🔄 Processing category ${relativePath} for rule ${ruleUri} (action: ${action}, skipResolution: ${skipRulePathResolution})`);
 
-    // Fetch existing rule paths in the category
-    const categoryRulePathsResponse = (await tgc.request(CATEGORY_RULE_PATHS_QUERY, { relativePath })) as CategoryQueryResponse;
+    // For create forms, skip the query that tries to resolve rules (which will fail for non-existent rules)
+    // Instead, fetch the full category document directly which includes the index without validation
+    let existingRulePaths: string[] = [];
+    let categoryForIndex: CategoryFullQueryResponse["category"] | undefined;
 
-    const existingRulePaths = extractExistingRulePaths(categoryRulePathsResponse);
+    if (skipRulePathResolution) {
+      // For create forms: fetch full category WITHOUT index to avoid validation errors
+      // Then read the index directly from the file to preserve existing rules
+      console.log(`🔨 Skipping rule path resolution query for create form - fetching category without index`);
+      categoryForIndex = await fetchCategoryFull(relativePath, tgc, true); // skipValidation = true
 
-    console.log(`📋 Category ${relativePath} currently has ${existingRulePaths.length} rule(s):`, existingRulePaths);
+      // Read the index directly from the file to preserve existing rules (including non-existent ones)
+      console.log(`📖 Reading category index directly from file to preserve existing rules...`);
+      const existingIndexFromFile = await readCategoryIndexFromFile(relativePath);
+
+      // Extract paths from the file-based index for comparison purposes
+      existingRulePaths = existingIndexFromFile
+        .map((item) => {
+          const ruleValue = item.rule;
+          if (typeof ruleValue === "string") {
+            if (ruleValue.startsWith(RULES_UPLOAD_PATH)) {
+              return ruleValue.replace(RULES_UPLOAD_PATH, "");
+            }
+            return ruleValue;
+          }
+          return null;
+        })
+        .filter((path): path is string => typeof path === "string" && path.length > 0);
+
+      console.log(`📋 Category ${relativePath} has ${existingRulePaths.length} rule(s) from file (preserved):`, existingRulePaths);
+
+      // Store the existing index from file for later use when building newIndex
+      // This preserves the exact format of existing rules
+      (categoryForIndex as any).index = existingIndexFromFile;
+    } else {
+      // For update forms: use the normal query (rules exist, so validation is fine)
+      const categoryRulePathsResponse = (await tgc.request(CATEGORY_RULE_PATHS_QUERY, { relativePath })) as CategoryQueryResponse;
+      existingRulePaths = extractExistingRulePaths(categoryRulePathsResponse);
+      console.log(`📋 Category ${relativePath} currently has ${existingRulePaths.length} rule(s):`, existingRulePaths);
+    }
 
     // Resolve the rule's relative path from its URI
     // For new rules (create form), NEVER try to resolve the path - just construct it from URI
@@ -217,10 +329,90 @@ export async function updateTheCategoryRuleList(
     }
 
     // Fetch full category document to preserve existing fields
-    const currentCategory = await fetchCategoryFull(relativePath, tgc);
+    // For create forms, we already fetched this above, so reuse it
+    let currentCategory: CategoryFullQueryResponse["category"];
+    if (skipRulePathResolution) {
+      // Reuse the category we already fetched above
+      currentCategory = categoryForIndex!;
+    } else {
+      currentCategory = await fetchCategoryFull(relativePath, tgc);
+    }
+
+    // Get the existing index from the category document to preserve the exact format
+    // This is important because some rules in the index might not exist yet (newly added)
+    // and we need to preserve their format to avoid validation errors
+    const existingIndex: any[] = (currentCategory as any)?.index || [];
+    console.log(
+      `📦 Existing index has ${existingIndex.length} item(s), format:`,
+      existingIndex.map((item: any) => ({
+        ruleType: typeof item?.rule,
+        ruleValue: typeof item?.rule === "string" ? item.rule.substring(0, 50) : "object",
+      }))
+    );
+
+    // Helper function to extract path from an index item for comparison
+    const getPathFromIndexItem = (item: any): string | null => {
+      const ruleValue = item?.rule;
+      if (typeof ruleValue === "string") {
+        if (ruleValue.startsWith(RULES_UPLOAD_PATH)) {
+          return ruleValue.replace(RULES_UPLOAD_PATH, "");
+        }
+        return ruleValue;
+      }
+      if (ruleValue?._sys?.relativePath) {
+        return ruleValue._sys.relativePath;
+      }
+      if (ruleValue?.uri) {
+        return `${ruleValue.uri}/rule`;
+      }
+      return null;
+    };
 
     // Build new index based on action
-    const newIndex = action === "add" ? buildIndexForAdd(existingRulePaths, rulePath) : buildIndexForDelete(existingRulePaths, rulePath);
+    // CRITICAL: Preserve existing index items' exact string format to avoid validation errors
+    // If existing items are stored as strings like "public/uploads/rules/{path}", keep them as strings
+    // This prevents TinaCMS from trying to validate/resolve rules that don't exist yet
+    let newIndex: CategoryIndexItem[];
+
+    if (action === "add") {
+      // Check if rule already exists in the index
+      const ruleExists = existingIndex.some((item) => getPathFromIndexItem(item) === rulePath);
+      if (ruleExists) {
+        console.log(`⚠️ Rule path ${rulePath} already exists in category index, skipping duplicate add`);
+        // Return existing index, preserving exact string format
+        newIndex = existingIndex
+          .map((item: any) => {
+            // Preserve the exact rule value as a string - don't convert or transform it
+            const ruleValue = item?.rule;
+            return {
+              rule: typeof ruleValue === "string" ? ruleValue : `${RULES_UPLOAD_PATH}${getPathFromIndexItem(item) || ""}`,
+            };
+          })
+          .filter((item) => item.rule);
+      } else {
+        // Add new rule to existing index, preserving existing items' exact string format
+        newIndex = [
+          ...existingIndex.map((item: any) => {
+            // Preserve the exact rule value as a string - don't convert or transform it
+            const ruleValue = item?.rule;
+            return {
+              rule: typeof ruleValue === "string" ? ruleValue : `${RULES_UPLOAD_PATH}${getPathFromIndexItem(item) || ""}`,
+            };
+          }),
+          { rule: `${RULES_UPLOAD_PATH}${rulePath}` },
+        ];
+      }
+    } else {
+      // For delete, remove the rule from existing index, preserving format of remaining items
+      newIndex = existingIndex
+        .filter((item: any) => getPathFromIndexItem(item) !== rulePath)
+        .map((item: any) => {
+          const ruleValue = item?.rule;
+          return {
+            rule: typeof ruleValue === "string" ? ruleValue : `${RULES_UPLOAD_PATH}${getPathFromIndexItem(item) || ""}`,
+          };
+        });
+    }
 
     // Check if the index actually changed (to detect if it was a duplicate)
     const indexChanged =

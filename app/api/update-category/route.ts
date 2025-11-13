@@ -1,18 +1,9 @@
-import client from "@/tina/__generated__/client";
 import { type NextRequest, NextResponse } from "next/server";
+import client from "@/tina/__generated__/client";
 import { TinaGraphQLClient } from "@/utils/tina/tina-graphql-client";
+import { CategoryProcessingResult, UpdateCategoryRequest, UpdateCategoryResponse } from "./types";
 import { updateTheCategoryRuleList } from "./update-the-category-rule-list";
-import {
-  categorizeCategories,
-  getRelativePathForCategory,
-  getRuleCategories,
-  ruleExistsByUriInCategory,
-} from "./util";
-import {
-  CategoryProcessingResult,
-  UpdateCategoryRequest,
-  UpdateCategoryResponse,
-} from "./types";
+import { categorizeCategories, getRelativePathForCategory, getRuleCategories, ruleExistsByUriInCategory } from "./util";
 
 const isDev = process.env.NODE_ENV === "development";
 
@@ -30,7 +21,7 @@ async function processSingleCategory(
 ): Promise<boolean> {
   try {
     const relativePath = getRelativePathForCategory(category);
-    
+
     // Skip existence check if formType is "create"
     if (!skipExistenceCheck) {
       const categoryQueryResult = await client.queries.categoryWithRulesQuery(
@@ -47,10 +38,7 @@ async function processSingleCategory(
             }
           : undefined
       );
-      const ruleAlreadyExists = ruleExistsByUriInCategory(
-        categoryQueryResult,
-        ruleUri
-      );
+      const ruleAlreadyExists = ruleExistsByUriInCategory(categoryQueryResult, ruleUri);
 
       // Validate preconditions for the action
       if (action === "add" && ruleAlreadyExists) {
@@ -98,14 +86,7 @@ async function processCategories(
   await Promise.all(
     categories.map(async (category) => {
       const relativePath = getRelativePathForCategory(category);
-      const success = await processSingleCategory(
-        category,
-        ruleUri,
-        tgc,
-        action,
-        branch,
-        skipExistenceCheck
-      );
+      const success = await processSingleCategory(category, ruleUri, tgc, action, branch, skipExistenceCheck);
 
       if (success) {
         processed.push(relativePath);
@@ -133,10 +114,7 @@ function validateAuth(request: NextRequest): {
   if (!isDev && (!authHeader || !authHeader.startsWith("Bearer "))) {
     return {
       valid: false,
-      error: NextResponse.json(
-        { error: "Missing Authorization token" },
-        { status: 401 }
-      ),
+      error: NextResponse.json({ error: "Missing Authorization token" }, { status: 401 }),
     };
   }
 
@@ -155,10 +133,7 @@ function validateRequestBody(body: unknown): {
   if (typeof body !== "object" || body === null) {
     return {
       valid: false,
-      error: NextResponse.json(
-        { error: "Invalid request body" },
-        { status: 400 }
-      ),
+      error: NextResponse.json({ error: "Invalid request body" }, { status: 400 }),
     };
   }
 
@@ -193,15 +168,9 @@ function extractCategoriesByStatus(
   noChange: string[];
 } {
   return {
-    toAdd: categorizedCategories
-      .filter((c) => c.status === "add")
-      .map((c) => c.category),
-    toDelete: categorizedCategories
-      .filter((c) => c.status === "delete")
-      .map((c) => c.category),
-    noChange: categorizedCategories
-      .filter((c) => c.status === "noChange")
-      .map((c) => c.category),
+    toAdd: categorizedCategories.filter((c) => c.status === "add").map((c) => c.category),
+    toDelete: categorizedCategories.filter((c) => c.status === "delete").map((c) => c.category),
+    noChange: categorizedCategories.filter((c) => c.status === "noChange").map((c) => c.category),
   };
 }
 
@@ -228,17 +197,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // For create forms, skip rule existence check and add all categories directly
     if (isCreateForm) {
       const tgc = new TinaGraphQLClient(token, activeBranch);
-      
+
       // Normalize categories to extract category paths
-      const normalizedCategories = categories.map((cat) => {
-        const rawPath =
-          typeof cat === "string"
-            ? cat
-            : typeof cat === "object" && cat?.category
-            ? cat.category
-            : "";
-        return rawPath;
-      }).filter(Boolean);
+      const normalizedCategories = categories
+        .map((cat) => {
+          const rawPath = typeof cat === "string" ? cat : typeof cat === "object" && cat?.category ? cat.category : "";
+          return rawPath;
+        })
+        .filter(Boolean);
 
       // Process all categories as "add" operations, skipping existence checks
       const addResult = await processCategories(
@@ -265,27 +231,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // For update forms, use existing logic
     // Get current rule and its categories
-    const { rule, currentRuleCategories } = await getRuleCategories(
-      ruleUri,
-      activeBranch
-    );
+    const { rule, currentRuleCategories } = await getRuleCategories(ruleUri, activeBranch);
 
     if (!rule) {
-      return NextResponse.json(
-        { error: `Rule not found for URI: ${ruleUri}` },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: `Rule not found for URI: ${ruleUri}` }, { status: 404 });
     }
 
     // Categorize categories to determine actions needed
-    const categorizedCategories = categorizeCategories(
-      currentRuleCategories,
-      categories
-    );
+    const categorizedCategories = categorizeCategories(currentRuleCategories, categories);
 
-    const { toAdd, toDelete, noChange } = extractCategoriesByStatus(
-      categorizedCategories
-    );
+    const { toAdd, toDelete, noChange } = extractCategoriesByStatus(categorizedCategories);
 
     // Process categories
     const tgc = new TinaGraphQLClient(token, activeBranch);
@@ -301,11 +256,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       URI: rule.uri,
       AddedCategories: addResult.processed,
       DeletedCategories: deleteResult.processed,
-      NoChangedCategories: [
-        ...addResult.failed,
-        ...deleteResult.failed,
-        ...noChange,
-      ],
+      NoChangedCategories: [...addResult.failed, ...deleteResult.failed, ...noChange],
     };
 
     return NextResponse.json(response);
