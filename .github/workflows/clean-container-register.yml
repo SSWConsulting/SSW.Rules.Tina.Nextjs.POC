@@ -93,3 +93,35 @@ jobs:
           echo ""
           echo "=== Summary ==="
           echo "Total tagged manifests found: $total_count"
+
+      - name: Remove untagged images and manifests
+        run: |
+          echo "=== Starting deletion of untagged manifests ==="
+          az acr repository list --name ${{ vars.registry_name }} --output tsv | while read repo
+          do
+            echo ""
+            echo "Processing repository: $repo"
+            echo "----------------------------------------"
+            az acr manifest list-metadata \
+              --name $repo \
+              --registry ${{ vars.registry_name }} \
+              --query "[?tags==null].[digest]" \
+              --output tsv | while read digest
+            do
+              if [ -n "$digest" ]; then
+                echo "Deleting untagged manifest $digest in $repo"
+                if az acr repository delete \
+                  --name ${{ vars.registry_name }} \
+                  --repository $repo \
+                  --manifest $digest \
+                  --yes; then
+                  echo "  ✅ Successfully deleted $digest"
+                else
+                  echo "  ⚠️  Failed to delete $digest"
+                fi
+              fi
+            done
+          done
+          echo ""
+          echo "=== Deletion Complete ==="
+          echo "All untagged manifests have been processed."
