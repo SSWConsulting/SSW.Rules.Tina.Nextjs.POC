@@ -24,7 +24,6 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
   // is not found in the actual branch. When a user is not in Tina mode and creates a new rule,
   // it should appear only in Tina mode and should not attempt to load on the live site.
   const isAdminPage = useIsAdminPage();
-  if (!isAdminPage) return notFound();
 
   // Helper function to get base path for API calls
   const getBasePath = () => {
@@ -186,6 +185,11 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
 
     fetchData();
   }, [filename, searchParams]);
+
+  // If this is not an admin page, return a not found response. This is called only when the page
+  // is not found in the actual branch. When a user is not in Tina mode and creates a new rule,
+  // it should appear only in Tina mode and should not attempt to load on the live site.
+  if (!isAdminPage) return notFound();
 
   if (loading) {
     return (
