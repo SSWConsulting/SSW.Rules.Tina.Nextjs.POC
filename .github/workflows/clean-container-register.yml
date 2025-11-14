@@ -4,6 +4,8 @@ on:
   workflow_dispatch:
   schedule:
     - cron: "0 3 * * *"   # Runs daily at 03:00 UTC
+  pull_request:
+    types: [opened, synchronize, reopened]  # Runs on PR push/update
 
 jobs:
   cleanup:
@@ -17,8 +19,42 @@ jobs:
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Remove untagged images and manifests
+      - name: List untagged images and manifests
         run: |
+          echo "=== Listing untagged manifests ==="
+          total_count=0
+          az acr repository list --name ${{ vars.registry_name }} --output tsv | while read repo
+          do
+            echo ""
+            echo "Repository: $repo"
+            echo "----------------------------------------"
+            count=0
+            az acr manifest list-metadata \
+              --name $repo \
+              --registry ${{ vars.registry_name }} \
+              --query "[?tags==null].[digest]" \
+              --output tsv | while read digest
+            do
+              if [ -n "$digest" ]; then
+                echo "  - $digest"
+                count=$((count + 1))
+              fi
+            done
+            if [ $count -eq 0 ]; then
+              echo "  (no untagged manifests)"
+            else
+              echo "  Total untagged in $repo: $count"
+              total_count=$((total_count + count))
+            fi
+          done
+          echo ""
+          echo "=== Summary ==="
+          echo "Total untagged manifests found: $total_count"
+
+      - name: Remove untagged images and manifests
+        if: github.event_name != 'pull_request'
+        run: |
+          echo "=== Starting deletion of untagged manifests ==="
           az acr repository list --name ${{ vars.registry_name }} --output tsv | while read repo
           do
             echo "Checking $repo"
@@ -37,3 +73,8 @@ jobs:
                 --yes
             done
           done
+      - name: Skip deletion (PR mode)
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "=== Skipping deletion - This is a PR push, only listing untagged manifests ==="
+          echo "Deletion is disabled for pull requests for safety."
