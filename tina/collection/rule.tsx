@@ -135,6 +135,7 @@ const Rule: Collection = {
           type: "reference",
           label: "Rule",
           name: "rule",
+          description: "This rule list may not include newly created rules for up to one hour. It is updated based on the main branch after that time.",
           collections: ["rule"],
           ui: {
             component: PaginatedRuleSelectorInput,
