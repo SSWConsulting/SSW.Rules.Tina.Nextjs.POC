@@ -13,11 +13,9 @@ on:
           - production
   schedule:
     - cron: "0 3 * * *"   # Runs daily at 03:00 UTC
-  pull_request:
-    types: [opened, synchronize, reopened]  # Runs on PR push/update
 
 jobs:
-  cleanup:
+  cleanup-images:
     runs-on: ubuntu-latest
     environment: ${{ github.event.inputs.environment || 'staging' }}
     permissions:
