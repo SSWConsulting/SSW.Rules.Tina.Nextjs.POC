@@ -2,6 +2,15 @@ name: Cleanup ACR Untagged Images
 
 on:
   workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to use for secrets'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
   schedule:
     - cron: "0 3 * * *"   # Runs daily at 03:00 UTC
   pull_request:
@@ -10,6 +19,7 @@ on:
 jobs:
   cleanup:
     runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment || 'staging' }}
     permissions:
       id-token: write
       contents: read
@@ -21,7 +31,6 @@ jobs:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
 
       - name: List untagged images and manifests
         run: |
