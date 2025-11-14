@@ -112,8 +112,7 @@ jobs:
                 echo "Deleting untagged manifest $digest in $repo"
                 if az acr repository delete \
                   --name ${{ vars.registry_name }} \
-                  --repository $repo \
-                  --manifest $digest \
+                  --image ${repo}@${digest} \
                   --yes; then
                   echo "  ✅ Successfully deleted $digest"
                 else
