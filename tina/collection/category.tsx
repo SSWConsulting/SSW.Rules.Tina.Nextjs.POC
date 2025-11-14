@@ -4,8 +4,6 @@ import { embedTemplates } from "@/components/embeds";
 import { generateGuid } from "@/utils/guidGenerationUtils";
 import { PaginatedRuleSelectorInput } from "../fields/paginatedRuleSelector";
 import { ReadonlyUriInput } from "../fields/ReadonlyUriInput";
-import { formatRuleListLabel } from "../fields/RuleListLabel";
-import { RuleListWithNote } from "../fields/RuleListWithNote";
 import { historyBeforeSubmit, historyFields } from "./shared/historyFields";
 
 const Category: Collection = {
