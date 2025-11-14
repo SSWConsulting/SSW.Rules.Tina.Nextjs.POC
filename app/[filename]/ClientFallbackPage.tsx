@@ -1,9 +1,11 @@
 "use client";
 
+import { notFound } from "next/navigation";
 import { useEffect, useState } from "react";
 import ServerCategoryPage from "@/app/[filename]/ServerCategoryPage";
 import NotFound from "@/app/not-found";
 import categoryTitleIndex from "@/category-uri-title-map.json";
+import { useIsAdminPage } from "@/components/hooks/useIsAdminPage";
 import { Section } from "@/components/layout/section";
 import ruleToCategoryIndex from "@/rule-to-categories.json";
 import { TinaRuleWrapper } from "./TinaRuleWrapper";
@@ -17,6 +19,12 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [isNotFound, setIsNotFound] = useState(false);
+
+  // If this is not an admin page, return a not found response. This is called only when the page
+  // is not found in the actual branch. When a user is not in Tina mode and creates a new rule,
+  // it should appear only in Tina mode and should not attempt to load on the live site.
+  const isAdminPage = useIsAdminPage();
+  if (!isAdminPage) return notFound();
 
   // Helper function to get base path for API calls
   const getBasePath = () => {
