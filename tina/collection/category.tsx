@@ -208,6 +208,8 @@ const Category: Collection = {
           label: "Rules",
           name: "index",
           list: true,
+          description:
+            "Note: The rules listed here are only used for sorting on the category page. To assign a category, open the specific rule and select the category there. This list updates automatically based on those assignments, but any rule added directly to this list will not update on its own.",
           ui: {
             itemProps: (item) => ({
               label: item.rule?.split("/").at(-2) || "Rule is not selected",
