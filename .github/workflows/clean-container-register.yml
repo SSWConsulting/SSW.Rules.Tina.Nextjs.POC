@@ -50,31 +50,3 @@ jobs:
           echo ""
           echo "=== Summary ==="
           echo "Total untagged manifests found: $total_count"
-
-      - name: Remove untagged images and manifests
-        if: github.event_name != 'pull_request'
-        run: |
-          echo "=== Starting deletion of untagged manifests ==="
-          az acr repository list --name ${{ vars.registry_name }} --output tsv | while read repo
-          do
-            echo "Checking $repo"
-            # Delete untagged manifests
-            az acr manifest list-metadata \
-              --name $repo \
-              --registry ${{ vars.registry_name }} \
-              --query "[?tags==null].[digest]" \
-              --output tsv | while read digest
-            do
-              echo "Deleting untagged manifest $digest in $repo"
-              az acr repository delete \
-                --name ${{ vars.registry_name }} \
-                --repository $repo \
-                --manifest $digest \
-                --yes
-            done
-          done
-      - name: Skip deletion (PR mode)
-        if: github.event_name == 'pull_request'
-        run: |
-          echo "=== Skipping deletion - This is a PR push, only listing untagged manifests ==="
-          echo "Deletion is disabled for pull requests for safety."
