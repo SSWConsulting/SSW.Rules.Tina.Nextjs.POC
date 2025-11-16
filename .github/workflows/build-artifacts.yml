@@ -252,13 +252,11 @@ jobs:
                       org.opencontainers.image.build.version=${{ env.VERSION_DEPLOYED }}
                       org.opencontainers.image.build.commit=${{ env.COMMIT_HASH }}
                       org.opencontainers.image.build.cache=disabled
-
-            - name: Check disk usage before cleanup
+                      
+            - name: Check runner home usage
               run: |
-                echo "Disk usage before cleanup:"
-                df -h
-                echo "Docker disk usage before cleanup:"
-                docker system df
+                echo "Home directory usage:"
+                du -h -d 3 /home/runner
 
             - name: Cleanup Docker
               id: cleanup
