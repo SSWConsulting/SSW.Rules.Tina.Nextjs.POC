@@ -220,6 +220,15 @@ jobs:
             - name: Login to ACR
               run: az acr login --name ${{ vars.registry_name }}
 
+            - name: Check disk usage before Docker build
+              run: |
+                echo "=== Disk usage BEFORE docker build ==="
+                df -h
+                echo
+                echo "=== Workspace size (top level) ==="
+                du -sh . ./* | sort -h || true
+
+
             # ────────────────────────────── DOCKER BUILD (NO CACHE) ──────────────
             - name: Set up Docker Buildx (no cache)
               uses: docker/setup-buildx-action@v3
