@@ -86,6 +86,22 @@ jobs:
             deployment_url: ${{ env.DEPLOYMENT_URL }}
         steps:
             # ────────────────────────────── BUILD INFO ─────────────────────────────
+            - name: Free disk space on GitHub runner (unused SDKs)
+              run: |
+                echo "=== Disk usage BEFORE SDK cleanup ==="
+                df -h
+
+                echo
+                echo "=== Removing preinstalled SDKs not used in this pipeline ==="
+                sudo rm -rf /usr/share/dotnet || true
+                sudo rm -rf /usr/local/lib/android || true
+                sudo rm -rf /opt/ghc || true
+                sudo rm -rf /opt/hostedtoolcache/CodeQL || true
+
+                echo
+                echo "=== Disk usage AFTER SDK cleanup ==="
+                df -h
+
             - name: Generate build information
               id: build_info
               run: |
