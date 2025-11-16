@@ -253,6 +253,26 @@ jobs:
                       org.opencontainers.image.build.commit=${{ env.COMMIT_HASH }}
                       org.opencontainers.image.build.cache=disabled
 
+            - name: Check disk usage before cleanup
+              run: |
+                echo "Disk usage before cleanup:"
+                df -h
+                echo "Docker disk usage before cleanup:"
+                docker system df
+
+            - name: Cleanup Docker
+              id: cleanup
+              run: |
+                docker system prune -af
+                echo "Docker system pruned"
+
+            - name: Check disk usage after cleanup
+              run: |
+                echo "Disk usage after cleanup:"
+                df -h
+                echo "Docker disk usage after cleanup:"
+                docker system df
+
             - name: Create Dockerfile (no cache optimizations)
               run: |
                   cat > Dockerfile <<'EOF'
