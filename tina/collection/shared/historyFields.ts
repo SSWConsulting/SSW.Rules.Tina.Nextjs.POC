@@ -1,5 +1,6 @@
 import { Form, TinaCMS, TinaField } from "tinacms";
 import { getBearerAuthHeader } from "@/utils/tina/get-bearer-auth-header";
+import { ConditionalHiddenField } from "../../fields/ConditionalHiddenField";
 
 export const historyFields: TinaField[] = [
   {
@@ -77,6 +78,7 @@ export const historyFields: TinaField[] = [
           return "Please provide a reason when archiving this rule.";
         }
       },
+      component: ConditionalHiddenField,
     },
   },
 ];

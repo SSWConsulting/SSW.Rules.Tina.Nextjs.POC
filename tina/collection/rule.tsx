@@ -3,6 +3,7 @@ import { Collection, wrapFieldsWithMeta } from "tinacms";
 import { embedTemplates } from "@/components/embeds";
 import { generateGuid } from "@/utils/guidGenerationUtils";
 import { CategorySelectorInput } from "../fields/CategorySelector";
+import { ConditionalHiddenField } from "../fields/ConditionalHiddenField";
 import { PaginatedRuleSelectorInput } from "../fields/paginatedRuleSelector";
 import { ReadonlyUriInput } from "../fields/ReadonlyUriInput";
 import { historyBeforeSubmit, historyFields } from "./shared/historyFields";
@@ -109,6 +110,9 @@ const Rule: Collection = {
           name: "title",
           description: "The full name of the contributor, as it should appear on the rule.",
           label: "Name",
+          ui: {
+            component: ConditionalHiddenField,
+          },
         },
         {
           type: "string",
@@ -150,6 +154,9 @@ const Rule: Collection = {
       description: "Other URIs which will redirect to this rule.",
       list: true,
       searchable: false,
+      ui: {
+        component: ConditionalHiddenField,
+      },
     },
     {
       type: "string",
@@ -166,6 +173,9 @@ const Rule: Collection = {
       label: "SEO Description",
       description: "A summary of the page content, used for SEO purposes. This can be generated automatically with AI.",
       searchable: false,
+      ui: {
+        component: ConditionalHiddenField,
+      },
     },
     {
       type: "rich-text",
