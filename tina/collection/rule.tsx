@@ -181,6 +181,9 @@ const Rule: Collection = {
       label: "Rule thumbnail",
       name: "thumbnail",
       description: "Use a JPG or PNG image that is at least 175 x 175px",
+      uploadDir: (file) => {
+        return `rules/${file.uri || ""}`;
+      },
     },
     ...historyFields,
   ],
