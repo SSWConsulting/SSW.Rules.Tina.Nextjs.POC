@@ -8,15 +8,16 @@ import ChatGPTSummaryButton from "@/components/OpenInChatGptButton";
 import { IconLink } from "@/components/ui";
 import { ICON_SIZE } from "@/constants";
 import { Rule } from "@/types/rule";
+import { getSanitizedBasePath } from "@/lib/withBasePath";
 
 interface RuleActionButtonsProps {
   rule: Rule;
-  sanitizedBasePath: string;
   showBookmark?: boolean;
   showOpenInChatGpt?: boolean;
 }
 
-export default function RuleActionButtons({ rule, sanitizedBasePath, showBookmark = true, showOpenInChatGpt = true }: RuleActionButtonsProps) {
+export default function RuleActionButtons({ rule, showBookmark = true, showOpenInChatGpt = true }: RuleActionButtonsProps) {
+  const sanitizedBasePath = getSanitizedBasePath();
   const { isAdmin: isAdminPage } = useIsAdminPage();
 
   if (isAdminPage) return null;

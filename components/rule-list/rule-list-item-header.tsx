@@ -13,9 +13,6 @@ export interface RuleListItemHeaderProps {
 const RuleListItemHeader: React.FC<RuleListItemHeaderProps> = ({ rule, index }) => {
   const linkRef = useRef<HTMLAnchorElement>(null);
 
-  // Remove any extra slashes from the base path
-  const sanitizedBasePath = (process.env.NEXT_PUBLIC_BASE_PATH || "").replace(/^\/+/, "");
-
   return (
     <section className="my-1.5">
       <div className="flex items-center flex-col justify-between sm:flex-row">
@@ -35,7 +32,7 @@ const RuleListItemHeader: React.FC<RuleListItemHeaderProps> = ({ rule, index }) 
           )}
         </div>
 
-        <RuleActionButtons rule={rule} sanitizedBasePath={sanitizedBasePath} showOpenInChatGpt={false} />
+        <RuleActionButtons rule={rule} showOpenInChatGpt={false} />
       </div>
     </section>
   );

@@ -64,7 +64,7 @@ export default function ServerRulePage({ serverRulePageProps, tinaProps }: Serve
                     See history <RiHistoryLine />
                   </a>
                 </p>
-                <RuleActionButtons rule={rule} sanitizedBasePath={sanitizedBasePath} />
+                <RuleActionButtons rule={rule} />
               </div>
             </div>
           </div>
