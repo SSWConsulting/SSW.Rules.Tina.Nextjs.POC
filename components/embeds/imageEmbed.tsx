@@ -60,6 +60,10 @@ export const imageEmbedTemplate: Template = withFigureEmbedTemplateFields({
       label: "Src",
       type: "image",
       required: true,
+      // @ts-expect-error tinacms types are wrong
+      uploadDir: (file) => {
+        return `rules/${file.uri || ""}`;
+      },
     },
     { name: "alt", label: "Alt", type: "string" },
     {
