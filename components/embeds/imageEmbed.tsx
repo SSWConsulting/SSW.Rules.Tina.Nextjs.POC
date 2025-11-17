@@ -60,9 +60,6 @@ export const imageEmbedTemplate: Template = withFigureEmbedTemplateFields({
       label: "Src",
       type: "image",
       required: true,
-      uploadDir: (file) => {
-        return `rules/${file.uri || ""}`;
-      },
     },
     { name: "alt", label: "Alt", type: "string" },
     {
