@@ -8,5 +8,5 @@ export interface Rule {
   isBookmarked?: boolean;
   lastUpdated: string;
   lastUpdatedBy: string;
-  isArchived: boolean;
+  isArchived?: boolean;
 }
