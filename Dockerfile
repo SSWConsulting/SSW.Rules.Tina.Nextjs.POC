@@ -98,4 +98,3 @@ FROM base AS deps
   USER nextjs
   EXPOSE 3000
   CMD ["node", "server.js"]
-  EOF
