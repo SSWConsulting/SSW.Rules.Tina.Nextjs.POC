@@ -7,7 +7,6 @@ import RuleActionButtons from "../RuleActionButtons";
 
 export interface RuleListItemHeaderProps {
   rule: Rule;
-  showBookmark?: boolean;
   index: number;
 }
 
