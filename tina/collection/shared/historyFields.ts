@@ -62,6 +62,9 @@ export const historyFields: TinaField[] = [
     name: "isArchived",
     label: "Archived",
     description: "Mark this rule as archived.",
+    ui: {
+      component: ConditionalHiddenField,
+    },
   },
   {
     type: "string",

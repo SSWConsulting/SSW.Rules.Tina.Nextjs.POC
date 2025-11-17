@@ -4,15 +4,14 @@ import React, { useEffect, useRef } from "react";
 import { wrapFieldsWithMeta } from "tinacms";
 
 /**
- * Conditionally hides string and rich-text fields (and their labels) on create mode,
+ * Conditionally hides string, rich-text, and boolean fields (and their labels) on create mode,
  * except for 'title' and 'uri' fields.
  *
  * This component hides the field and its label when:
  * - crudType is "create"
- * - field type is "string" or "rich-text"
+ * - field type is "string", "rich-text", or "boolean"
  * - field name is not "title" or "uri"
  *
- * For rich-text fields that should be visible, it renders Tina's default rich-text editor.
  * Uses a combination of returning null and CSS to ensure both field and label are hidden.
  */
 export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
@@ -23,8 +22,8 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
   const isRootLevelTitle = field.name === "title" && field.isTitle === true;
   const isRootLevelUri = field.name === "uri" && !input.name.includes("."); // Root level fields don't have dots in their path
 
-  // Check if we should hide this field (supports both string and rich-text types)
-  const shouldHide = tinaForm?.crudType === "create" && (field.type === "string" || field.type === "rich-text") && !isRootLevelTitle && !isRootLevelUri;
+  // Check if we should hide this field (supports string, rich-text, and boolean types)
+  const shouldHide = tinaForm?.crudType === "create" && (field.type === "string" || field.type === "rich-text" || field.type === "boolean") && !isRootLevelTitle && !isRootLevelUri;
 
   // Hide the entire field wrapper (including label) using CSS
   useEffect(() => {
@@ -49,6 +48,36 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
   // Return null to hide the field input itself
   if (shouldHide) {
     return <div ref={containerRef} style={{ display: "none" }} />;
+  }
+
+  // For boolean fields, render a toggle button
+  if (field.type === "boolean") {
+    const isChecked = input.value || false;
+    return (
+      <div ref={containerRef} className="flex items-center">
+        <button
+          type="button"
+          id={input.name}
+          onClick={() => input.onChange(!isChecked)}
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+            isChecked ? "bg-blue-600" : "bg-gray-300"
+          }`}
+          role="switch"
+          aria-checked={isChecked}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+              isChecked ? "translate-x-6" : "translate-x-1"
+            }`}
+          />
+        </button>
+        {field.label && (
+          <label htmlFor={input.name} className="ml-3 text-sm text-gray-700 cursor-pointer" onClick={() => input.onChange(!isChecked)}>
+            {field.label}
+          </label>
+        )}
+      </div>
+    );
   }
 
   // For string fields, render the default string input
