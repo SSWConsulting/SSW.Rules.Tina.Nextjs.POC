@@ -228,7 +228,6 @@ jobs:
                   env.BUILDKIT_STEP_LOG_MAX_SIZE=10485760
                   env.BUILDKIT_STEP_LOG_MAX_SPEED=10485760
                   network=host
-                  # Limit buildx cache to prevent disk exhaustion
                   max-parallelism=1
 
             - name: Log no-cache build strategy
