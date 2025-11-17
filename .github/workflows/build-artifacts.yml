@@ -227,6 +227,9 @@ jobs:
                 driver-opts: |
                   env.BUILDKIT_STEP_LOG_MAX_SIZE=10485760
                   env.BUILDKIT_STEP_LOG_MAX_SPEED=10485760
+                  network=host
+                  # Limit buildx cache to prevent disk exhaustion
+                  max-parallelism=1
 
             - name: Log no-cache build strategy
               run: |
@@ -253,35 +256,83 @@ jobs:
                       org.opencontainers.image.build.commit=${{ env.COMMIT_HASH }}
                       org.opencontainers.image.build.cache=disabled
 
-            - name: Check runner home usage
+            - name: Check initial disk usage
               run: |
-                echo "Home directory usage:"
-                du -h -d 3 /home/runner
+                echo "=== Initial Disk Usage ==="
+                df -h
+                echo ""
+                echo "=== Docker Disk Usage ==="
+                docker system df || true
+                echo ""
+                echo "=== Home directory usage ==="
+                du -h -d 2 /home/runner 2>/dev/null | head -20 || true
 
-            - name: Cleanup Docker
-              id: cleanup
+            - name: Aggressive disk space cleanup (pre-build)
               run: |
-                docker system prune -af
-                echo "Docker system pruned"
+                echo "=== Starting aggressive disk cleanup ==="
+                
+                # Clean Docker completely
+                echo "Cleaning Docker system..."
+                docker system prune -af --volumes || true
+                docker builder prune -af || true
+                
+                # Clean buildx cache
+                echo "Cleaning Docker buildx cache..."
+                docker buildx prune -af || true
+                
+                # Remove unused Docker resources
+                echo "Removing unused Docker resources..."
+                docker container prune -f || true
+                docker image prune -af || true
+                docker volume prune -f || true
+                docker network prune -f || true
+                
+                # Clean GitHub Actions runner cache
+                echo "Cleaning runner cache..."
+                sudo rm -rf /home/runner/.cache/* || true
+                
+                # Aggressively clean diagnostic logs (this is where the error occurs)
+                echo "Cleaning runner diagnostic logs (critical for disk space)..."
+                sudo rm -rf /home/runner/actions-runner/cached/_diag/* || true
+                sudo find /home/runner/actions-runner/cached/_diag -type f -delete 2>/dev/null || true
+                sudo mkdir -p /home/runner/actions-runner/cached/_diag || true
+                
+                # Remove large unused system packages
+                echo "Removing unused system packages..."
+                sudo rm -rf /usr/share/dotnet || true
+                sudo rm -rf /usr/local/lib/android || true
+                sudo rm -rf /opt/ghc || true
+                sudo rm -rf /opt/hostedtoolcache/CodeQL || true
+                sudo rm -rf /usr/local/share/boost || true
+                sudo rm -rf "$AGENT_TOOLSDIRECTORY" || true
+                
+                # Clean apt cache
+                echo "Cleaning apt cache..."
+                sudo apt-get clean || true
+                sudo rm -rf /var/lib/apt/lists/* || true
+                
+                # Clean temporary files
+                echo "Cleaning temporary files..."
+                sudo rm -rf /tmp/* || true
+                sudo rm -rf /var/tmp/* || true
+                
+                echo "=== Cleanup completed ==="
 
             - name: Check disk usage after cleanup
               run: |
-                echo "Disk usage after cleanup:"
+                echo "=== Disk Usage After Cleanup ==="
                 df -h
-                echo "Docker disk usage after cleanup:"
-                docker system df
+                echo ""
+                echo "=== Docker Disk Usage After Cleanup ==="
+                docker system df || true
+                echo ""
+                AVAILABLE=$(df -h / | awk 'NR==2 {print $4}')
+                echo "Available disk space: $AVAILABLE"
 
             - name: Record build start time
               run: |
                   echo "BUILD_START_TIME=$(date +%s)" >> $GITHUB_ENV
                   echo "Starting fresh build at $(date)"
-
-            - name: Free up disk space
-              run: |
-                docker system prune -af
-                sudo rm -rf /usr/share/dotnet
-                sudo rm -rf /usr/local/lib/android
-                sudo rm -rf /opt/ghc
 
             - name: Build & push image (NO CACHE)
               id: build
@@ -317,6 +368,35 @@ jobs:
                         NEXT_PUBLIC_BASE_PATH=${{ vars.NEXT_PUBLIC_BASE_PATH }}
                   # CACHE COMPLETELY DISABLED
                   no-cache: true
+                  # Clean up intermediate containers after build
+                  pull: true
+
+            - name: Post-build cleanup
+              if: always()
+              run: |
+                echo "=== Post-build cleanup ==="
+                
+                # Clean Docker buildx cache immediately after build
+                echo "Cleaning Docker buildx cache..."
+                docker buildx prune -af || true
+                
+                # Remove intermediate build containers and images
+                echo "Removing intermediate Docker resources..."
+                docker system prune -af --volumes || true
+                docker builder prune -af || true
+                
+                # Clean runner diagnostic logs that may have grown large
+                echo "Cleaning runner diagnostic logs..."
+                sudo find /home/runner/actions-runner/cached/_diag -name "*.log" -type f -size +100M -delete || true
+                sudo find /home/runner/actions-runner/cached/_diag -name "*.log" -type f -mtime +0 -delete || true
+                
+                # Final disk usage check
+                echo ""
+                echo "=== Final Disk Usage ==="
+                df -h
+                echo ""
+                AVAILABLE=$(df -h / | awk 'NR==2 {print $4}')
+                echo "Available disk space: $AVAILABLE"
 
             - name: Record build completion and analyze performance
               run: |
