@@ -12,18 +12,22 @@ import { Rule } from "@/types/rule";
 interface RuleActionButtonsProps {
   rule: Rule;
   sanitizedBasePath: string;
+  showBookmark?: boolean;
+  showOpenInChatGpt?: boolean;
 }
 
-export default function RuleActionButtons({ rule, sanitizedBasePath }: RuleActionButtonsProps) {
+export default function RuleActionButtons({ rule, sanitizedBasePath, showBookmark = true, showOpenInChatGpt = true }: RuleActionButtonsProps) {
   const { isAdmin: isAdminPage } = useIsAdminPage();
 
   if (isAdminPage) return null;
 
   return (
     <div className="flex items-center gap-4 text-2xl">
-      <Suspense fallback={<span className="opacity-50">...</span>}>
-        <Bookmark ruleGuid={rule.guid} />
-      </Suspense>
+      {showBookmark && (
+        <Suspense fallback={<span className="opacity-50">...</span>}>
+          <Bookmark ruleGuid={rule.guid} />
+        </Suspense>
+      )}
       <IconLink href={`/admin#/~/${sanitizedBasePath}/${rule.uri}`} title="Edit rule" tooltipOpaque={true}>
         <RiPencilLine size={ICON_SIZE} />
       </IconLink>
@@ -35,7 +39,7 @@ export default function RuleActionButtons({ rule, sanitizedBasePath }: RuleActio
       >
         <RiGithubLine size={ICON_SIZE} className="rule-icon" />
       </IconLink>
-      <ChatGPTSummaryButton />
+      {showOpenInChatGpt && <ChatGPTSummaryButton />}
     </div>
   );
 }
