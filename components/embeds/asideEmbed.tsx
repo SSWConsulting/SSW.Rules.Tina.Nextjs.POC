@@ -73,8 +73,15 @@ const variantConfig: Record<AsideVariant, VariantConfig> = {
 };
 
 export function AsideEmbed(props: any) {
-  const { data } = props;
-  const variant: AsideVariant = data.variant || "info";
+  // Handle both cases: props.data (from asideEmbedComponent) or props directly (from IntroEmbed)
+  const data = props.data || props;
+
+  // Safety check: if data is undefined or null, return null
+  if (!data) {
+    return null;
+  }
+
+  const variant: AsideVariant = data?.variant || "info";
   const config = variantConfig[variant];
 
   return (
