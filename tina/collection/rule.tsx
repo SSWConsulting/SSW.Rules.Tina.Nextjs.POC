@@ -171,7 +171,8 @@ const Rule: Collection = {
       type: "string",
       name: "seoDescription",
       label: "SEO Description",
-      description: "A summary of the page content, used for SEO purposes. This can be generated automatically with AI - See https://www.ssw.com.au/rules/html-meta-tags/#rectifying-the-missing-meta-tags-issue",
+      description:
+        "A summary of the page content, used for SEO purposes. This can be generated automatically with AI - See https://www.ssw.com.au/rules/html-meta-tags/#rectifying-the-missing-meta-tags-issue",
       searchable: false,
       ui: {
         component: ConditionalHiddenField,
@@ -185,6 +186,9 @@ const Rule: Collection = {
       searchable: false,
       templates: embedTemplates,
       toolbarOverride: ["embed", "heading", "link", "quote", "ul", "ol", "bold", "italic", "code", "codeBlock", "mermaid", "table", "raw"],
+      ui: {
+        component: ConditionalHiddenField,
+      },
     },
     {
       type: "image",
