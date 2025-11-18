@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { wrapFieldsWithMeta, ImageField } from "tinacms";
+import { GroupListFieldPlugin, ImageField, ListField, MdxFieldPluginExtendible, wrapFieldsWithMeta } from "tinacms";
 
 /**
  * Conditionally hides string, rich-text, boolean, and image fields (and their labels) on create mode,
@@ -23,7 +23,11 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
   const isRootLevelUri = field.name === "uri" && !input.name.includes("."); // Root level fields don't have dots in their path
 
   // Check if we should hide this field (supports string, rich-text, boolean, and image types)
-  const shouldHide = tinaForm?.crudType === "create" && (field.type === "string" || field.type === "rich-text" || field.type === "boolean" || field.type === "image") && !isRootLevelTitle && !isRootLevelUri;
+  const shouldHide =
+    tinaForm?.crudType === "create" &&
+    (field.type === "string" || field.type === "rich-text" || field.type === "boolean" || field.type === "image") &&
+    !isRootLevelTitle &&
+    !isRootLevelUri;
 
   // Hide the entire field wrapper (including label) using CSS
   useEffect(() => {
@@ -43,10 +47,10 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
         }
       }
     }
-    
-    // For image fields, hide the outer label added by wrapFieldsWithMeta
-    // since ImageField already has its own label
-    if (field.type === "image" && !shouldHide && containerRef.current) {
+
+    // For image and rich-text fields, hide the outer label added by wrapFieldsWithMeta
+    // since ImageField and MdxFieldPluginExtendible.Component already have their own labels
+    if ((field.type === "image" || field.type === "rich-text") && !shouldHide && containerRef.current) {
       // Find the field wrapper that contains both the outer label and our component
       let element: HTMLElement | null = containerRef.current;
       // Traverse up to find the field wrapper
@@ -54,15 +58,11 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
         element = element.parentElement;
         if (element) {
           // Look for labels that are direct children (these are usually from wrapFieldsWithMeta)
-          // ImageField's label will be nested deeper inside
-          const directChildLabels = Array.from(element.children).filter(
-            (child) => child.tagName === "LABEL" || child.querySelector("label")
-          );
+          // ImageField's and MdxFieldPluginExtendible's labels will be nested deeper inside
+          const directChildLabels = Array.from(element.children).filter((child) => child.tagName === "LABEL" || child.querySelector("label"));
           if (directChildLabels.length > 0) {
             // Hide the direct child label (outer label from wrapFieldsWithMeta)
-            const labelToHide = directChildLabels[0].tagName === "LABEL" 
-              ? directChildLabels[0] 
-              : directChildLabels[0].querySelector("label");
+            const labelToHide = directChildLabels[0].tagName === "LABEL" ? directChildLabels[0] : directChildLabels[0].querySelector("label");
             if (labelToHide) {
               (labelToHide as HTMLElement).style.display = "none";
             }
@@ -104,11 +104,7 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
           role="switch"
           aria-checked={isChecked}
         >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-              isChecked ? "translate-x-6" : "translate-x-1"
-            }`}
-          />
+          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isChecked ? "translate-x-6" : "translate-x-1"}`} />
         </button>
         {field.label && (
           <label htmlFor={input.name} className="ml-3 text-sm text-gray-700 cursor-pointer" onClick={() => input.onChange(!isChecked)}>
@@ -128,6 +124,19 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
     return (
       <div ref={containerRef}>
         <ImageField {...props} />
+      </div>
+    );
+  }
+
+  // For rich-text fields, use Tina's MdxFieldPluginExtendible component
+  // Note: MdxFieldPluginExtendible.Component is already wrapped with wrapFieldsWithMeta, which adds a label
+  // Since our component is also wrapped, we get double labels.
+  // We use CSS to hide the outer label (added by our wrapFieldsWithMeta)
+  if (field.type === "rich-text") {
+    // Wrap MdxFieldPluginExtendible.Component in a div with ref so we can find and hide the outer label
+    return (
+      <div ref={containerRef}>
+        <MdxFieldPluginExtendible.Component {...props} />
       </div>
     );
   }
