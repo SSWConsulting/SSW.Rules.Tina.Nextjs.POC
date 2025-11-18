@@ -93,11 +93,7 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
   }
 
   // For boolean fields, use Tina's ToggleFieldPlugin component
-  // Note: ToggleFieldPlugin is already wrapped with wrapFieldsWithMeta, which adds a label
-  // Since our component is also wrapped, we get double labels.
-  // We use CSS to hide the outer label (added by our wrapFieldsWithMeta)
   if (field.type === "boolean") {
-    // Wrap ToggleFieldPlugin.Component in a div with ref so we can find and hide the outer label
     return (
       <div ref={containerRef}>
         <ToggleFieldPlugin.Component {...props} />
@@ -105,10 +101,6 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
     );
   }
 
-  // For image fields, use Tina's default ImageField component
-  // Note: ImageField is already wrapped with wrapFieldsWithMeta, which adds a label
-  // Since our component is also wrapped, we get double labels.
-  // We use CSS to hide the outer label (added by our wrapFieldsWithMeta)
   if (field.type === "image") {
     // Wrap ImageField in a div with ref so we can find and hide the outer label
     return (
@@ -118,10 +110,6 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
     );
   }
 
-  // For rich-text fields, use Tina's MdxFieldPluginExtendible component
-  // Note: MdxFieldPluginExtendible.Component is already wrapped with wrapFieldsWithMeta, which adds a label
-  // Since our component is also wrapped, we get double labels.
-  // We use CSS to hide the outer label (added by our wrapFieldsWithMeta)
   if (field.type === "rich-text") {
     // Wrap MdxFieldPluginExtendible.Component in a div with ref so we can find and hide the outer label
     return (
@@ -131,10 +119,6 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
     );
   }
 
-  // For list fields, use Tina's ListFieldPlugin component
-  // Note: ListFieldPlugin is already wrapped with wrapFieldsWithMeta, which adds a label
-  // Since our component is also wrapped, we get double labels.
-  // We use CSS to hide the outer label (added by our wrapFieldsWithMeta)
   if (isListField) {
     // Wrap ListFieldPlugin in a div with ref so we can find and hide the outer label
     return (
