@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { wrapFieldsWithMeta } from "tinacms";
+import { wrapFieldsWithMeta, ImageField } from "tinacms";
 
 /**
- * Conditionally hides string, rich-text, and boolean fields (and their labels) on create mode,
+ * Conditionally hides string, rich-text, boolean, and image fields (and their labels) on create mode,
  * except for 'title' and 'uri' fields.
  *
  * This component hides the field and its label when:
  * - crudType is "create"
- * - field type is "string", "rich-text", or "boolean"
+ * - field type is "string", "rich-text", "boolean", or "image"
  * - field name is not "title" or "uri"
  *
  * Uses a combination of returning null and CSS to ensure both field and label are hidden.
@@ -22,8 +22,8 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
   const isRootLevelTitle = field.name === "title" && field.isTitle === true;
   const isRootLevelUri = field.name === "uri" && !input.name.includes("."); // Root level fields don't have dots in their path
 
-  // Check if we should hide this field (supports string, rich-text, and boolean types)
-  const shouldHide = tinaForm?.crudType === "create" && (field.type === "string" || field.type === "rich-text" || field.type === "boolean") && !isRootLevelTitle && !isRootLevelUri;
+  // Check if we should hide this field (supports string, rich-text, boolean, and image types)
+  const shouldHide = tinaForm?.crudType === "create" && (field.type === "string" || field.type === "rich-text" || field.type === "boolean" || field.type === "image") && !isRootLevelTitle && !isRootLevelUri;
 
   // Hide the entire field wrapper (including label) using CSS
   useEffect(() => {
@@ -43,7 +43,46 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
         }
       }
     }
-  }, [shouldHide]);
+    
+    // For image fields, hide the outer label added by wrapFieldsWithMeta
+    // since ImageField already has its own label
+    if (field.type === "image" && !shouldHide && containerRef.current) {
+      // Find the field wrapper that contains both the outer label and our component
+      let element: HTMLElement | null = containerRef.current;
+      // Traverse up to find the field wrapper
+      for (let i = 0; i < 6 && element; i++) {
+        element = element.parentElement;
+        if (element) {
+          // Look for labels that are direct children (these are usually from wrapFieldsWithMeta)
+          // ImageField's label will be nested deeper inside
+          const directChildLabels = Array.from(element.children).filter(
+            (child) => child.tagName === "LABEL" || child.querySelector("label")
+          );
+          if (directChildLabels.length > 0) {
+            // Hide the direct child label (outer label from wrapFieldsWithMeta)
+            const labelToHide = directChildLabels[0].tagName === "LABEL" 
+              ? directChildLabels[0] 
+              : directChildLabels[0].querySelector("label");
+            if (labelToHide) {
+              (labelToHide as HTMLElement).style.display = "none";
+            }
+            break;
+          }
+          // Alternative: Look for label elements and hide the one that's not inside our containerRef
+          const allLabels = element.querySelectorAll("label");
+          if (allLabels.length > 0) {
+            // Find the label that's not a descendant of our containerRef
+            for (const label of Array.from(allLabels)) {
+              if (!containerRef.current?.contains(label)) {
+                (label as HTMLElement).style.display = "none";
+                break;
+              }
+            }
+          }
+        }
+      }
+    }
+  }, [shouldHide, field.type]);
 
   // Return null to hide the field input itself
   if (shouldHide) {
@@ -76,6 +115,19 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
             {field.label}
           </label>
         )}
+      </div>
+    );
+  }
+
+  // For image fields, use Tina's default ImageField component
+  // Note: ImageField is already wrapped with wrapFieldsWithMeta, which adds a label
+  // Since our component is also wrapped, we get double labels.
+  // We use CSS to hide the outer label (added by our wrapFieldsWithMeta)
+  if (field.type === "image") {
+    // Wrap ImageField in a div with ref so we can find and hide the outer label
+    return (
+      <div ref={containerRef}>
+        <ImageField {...props} />
       </div>
     );
   }

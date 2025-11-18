@@ -195,6 +195,9 @@ const Rule: Collection = {
       uploadDir: (file) => {
         return `rules/${file.uri || ""}`;
       },
+      ui: {
+        component: ConditionalHiddenField,
+      },
     },
     ...historyFields,
   ],
