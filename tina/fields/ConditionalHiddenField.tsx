@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { GroupListFieldPlugin, ImageField, MdxFieldPluginExtendible, wrapFieldsWithMeta } from "tinacms";
+import { GroupListFieldPlugin, ImageField, MdxFieldPluginExtendible, ToggleFieldPlugin, wrapFieldsWithMeta } from "tinacms";
 
 /**
  * Conditionally hides string, rich-text, boolean, image, and list fields (and their labels) on create mode,
@@ -51,9 +51,9 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
       }
     }
 
-    // For image, rich-text, and list fields, hide the outer label added by wrapFieldsWithMeta
-    // since ImageField, MdxFieldPluginExtendible.Component, and ListFieldPlugin already have their own labels
-    if ((field.type === "image" || field.type === "rich-text" || isListField) && !shouldHide && containerRef.current) {
+    // For image, rich-text, boolean, and list fields, hide the outer label added by wrapFieldsWithMeta
+    // since ImageField, MdxFieldPluginExtendible.Component, ToggleFieldPlugin, and GroupListFieldPlugin already have their own labels
+    if ((field.type === "image" || field.type === "rich-text" || field.type === "boolean" || isListField) && !shouldHide && containerRef.current) {
       // Find the field wrapper that contains both the outer label and our component
       let element: HTMLElement | null = containerRef.current;
       // Traverse up to find the field wrapper
@@ -61,7 +61,7 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
         element = element.parentElement;
         if (element) {
           // Look for labels that are direct children (these are usually from wrapFieldsWithMeta)
-          // ImageField's, MdxFieldPluginExtendible's, and ListFieldPlugin's labels will be nested deeper inside
+          // ImageField's, MdxFieldPluginExtendible's, ToggleFieldPlugin's, and GroupListFieldPlugin's labels will be nested deeper inside
           const directChildLabels = Array.from(element.children).filter((child) => child.tagName === "LABEL" || child.querySelector("label"));
           if (directChildLabels.length > 0) {
             // Hide the direct child label (outer label from wrapFieldsWithMeta)
@@ -92,28 +92,15 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
     return <div ref={containerRef} style={{ display: "none" }} />;
   }
 
-  // For boolean fields, render a toggle button
+  // For boolean fields, use Tina's ToggleFieldPlugin component
+  // Note: ToggleFieldPlugin is already wrapped with wrapFieldsWithMeta, which adds a label
+  // Since our component is also wrapped, we get double labels.
+  // We use CSS to hide the outer label (added by our wrapFieldsWithMeta)
   if (field.type === "boolean") {
-    const isChecked = input.value || false;
+    // Wrap ToggleFieldPlugin.Component in a div with ref so we can find and hide the outer label
     return (
-      <div ref={containerRef} className="flex items-center">
-        <button
-          type="button"
-          id={input.name}
-          onClick={() => input.onChange(!isChecked)}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
-            isChecked ? "bg-blue-600" : "bg-gray-300"
-          }`}
-          role="switch"
-          aria-checked={isChecked}
-        >
-          <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${isChecked ? "translate-x-6" : "translate-x-1"}`} />
-        </button>
-        {field.label && (
-          <label htmlFor={input.name} className="ml-3 text-sm text-gray-700 cursor-pointer" onClick={() => input.onChange(!isChecked)}>
-            {field.label}
-          </label>
-        )}
+      <div ref={containerRef}>
+        <ToggleFieldPlugin.Component {...props} />
       </div>
     );
   }
