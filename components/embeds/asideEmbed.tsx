@@ -2,7 +2,6 @@ import { CodeXml, Info, TriangleAlert } from "lucide-react";
 import React from "react";
 import { FaLightbulb } from "react-icons/fa6";
 import { Template } from "tinacms";
-import { tinaField } from "tinacms/dist/react";
 import { TinaMarkdown } from "tinacms/dist/rich-text";
 import MarkdownComponentMapping from "../tina-markdown/markdown-component-mapping";
 import { ComponentWithFigure, withFigureEmbedTemplateFields } from "./componentWithFigure";
@@ -84,7 +83,7 @@ export function AsideEmbed(props: any) {
         <div className="flex items-start">
           {config.icon}
           <div className={`${config.textClass ?? ""}`}>
-            <div data-tina-field={tinaField(props, "body")}>
+            <div>
               <TinaMarkdown content={data.body} components={MarkdownComponentMapping} />
             </div>
           </div>
