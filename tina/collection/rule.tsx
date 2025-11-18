@@ -103,6 +103,7 @@ const Rule: Collection = {
           title: "Bob Northwind",
           url: "https://ssw.com.au/people/bob-northwind",
         },
+        component: ConditionalHiddenField,
       },
       fields: [
         {

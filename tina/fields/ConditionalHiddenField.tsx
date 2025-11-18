@@ -1,15 +1,15 @@
 "use client";
 
 import React, { useEffect, useRef } from "react";
-import { GroupListFieldPlugin, ImageField, ListField, MdxFieldPluginExtendible, wrapFieldsWithMeta } from "tinacms";
+import { GroupListFieldPlugin, ImageField, MdxFieldPluginExtendible, wrapFieldsWithMeta } from "tinacms";
 
 /**
- * Conditionally hides string, rich-text, boolean, and image fields (and their labels) on create mode,
+ * Conditionally hides string, rich-text, boolean, image, and list fields (and their labels) on create mode,
  * except for 'title' and 'uri' fields.
  *
  * This component hides the field and its label when:
  * - crudType is "create"
- * - field type is "string", "rich-text", "boolean", or "image"
+ * - field type is "string", "rich-text", "boolean", "image", or has list: true
  * - field name is not "title" or "uri"
  *
  * Uses a combination of returning null and CSS to ensure both field and label are hidden.
@@ -22,10 +22,13 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
   const isRootLevelTitle = field.name === "title" && field.isTitle === true;
   const isRootLevelUri = field.name === "uri" && !input.name.includes("."); // Root level fields don't have dots in their path
 
-  // Check if we should hide this field (supports string, rich-text, boolean, and image types)
+  // Check if this is a list field
+  const isListField = field.list === true;
+
+  // Check if we should hide this field (supports string, rich-text, boolean, image, and list types)
   const shouldHide =
     tinaForm?.crudType === "create" &&
-    (field.type === "string" || field.type === "rich-text" || field.type === "boolean" || field.type === "image") &&
+    (field.type === "string" || field.type === "rich-text" || field.type === "boolean" || field.type === "image" || isListField) &&
     !isRootLevelTitle &&
     !isRootLevelUri;
 
@@ -48,9 +51,9 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
       }
     }
 
-    // For image and rich-text fields, hide the outer label added by wrapFieldsWithMeta
-    // since ImageField and MdxFieldPluginExtendible.Component already have their own labels
-    if ((field.type === "image" || field.type === "rich-text") && !shouldHide && containerRef.current) {
+    // For image, rich-text, and list fields, hide the outer label added by wrapFieldsWithMeta
+    // since ImageField, MdxFieldPluginExtendible.Component, and ListFieldPlugin already have their own labels
+    if ((field.type === "image" || field.type === "rich-text" || isListField) && !shouldHide && containerRef.current) {
       // Find the field wrapper that contains both the outer label and our component
       let element: HTMLElement | null = containerRef.current;
       // Traverse up to find the field wrapper
@@ -58,7 +61,7 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
         element = element.parentElement;
         if (element) {
           // Look for labels that are direct children (these are usually from wrapFieldsWithMeta)
-          // ImageField's and MdxFieldPluginExtendible's labels will be nested deeper inside
+          // ImageField's, MdxFieldPluginExtendible's, and ListFieldPlugin's labels will be nested deeper inside
           const directChildLabels = Array.from(element.children).filter((child) => child.tagName === "LABEL" || child.querySelector("label"));
           if (directChildLabels.length > 0) {
             // Hide the direct child label (outer label from wrapFieldsWithMeta)
@@ -82,7 +85,7 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
         }
       }
     }
-  }, [shouldHide, field.type]);
+  }, [shouldHide, field.type, isListField]);
 
   // Return null to hide the field input itself
   if (shouldHide) {
@@ -137,6 +140,19 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
     return (
       <div ref={containerRef}>
         <MdxFieldPluginExtendible.Component {...props} />
+      </div>
+    );
+  }
+
+  // For list fields, use Tina's ListFieldPlugin component
+  // Note: ListFieldPlugin is already wrapped with wrapFieldsWithMeta, which adds a label
+  // Since our component is also wrapped, we get double labels.
+  // We use CSS to hide the outer label (added by our wrapFieldsWithMeta)
+  if (isListField) {
+    // Wrap ListFieldPlugin in a div with ref so we can find and hide the outer label
+    return (
+      <div ref={containerRef}>
+        <GroupListFieldPlugin.Component {...props} />
       </div>
     );
   }
