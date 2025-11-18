@@ -2,16 +2,6 @@ name: Build Pull request
 on:
   pull_request:
     types: [opened, synchronize, reopened]
-env:
-  NEXT_PUBLIC_TINA_CLIENT_ID: ${{ secrets.NEXT_PUBLIC_TINA_CLIENT_ID }}
-  TINA_TOKEN: ${{ secrets.TINA_TOKEN }}
-  TINA_SEARCH_TOKEN: ${{ secrets.TINA_SEARCH_TOKEN }}
-  NEXT_PUBLIC_TINA_BRANCH: tina-migration-main-content # TODO - Change to main when production is ready
-  TOKEN: ${{ secrets.POC_PAT_GILLES }}
-  NEXT_PUBLIC_ALGOLIA_APP_ID: ${{ secrets.NEXT_PUBLIC_ALGOLIA_APP_ID }}
-  NEXT_PUBLIC_ALGOLIA_ADMIN_KEY: ${{ secrets.NEXT_PUBLIC_ALGOLIA_ADMIN_KEY }}
-  NEXT_PUBLIC_ALGOLIA_INDEX_NAME: ${{ secrets.NEXT_PUBLIC_ALGOLIA_INDEX_NAME }}
-  NEXT_PUBLIC_ALGOLIA_API_KEY: ${{ secrets.NEXT_PUBLIC_ALGOLIA_API_KEY }}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,8 +17,8 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: SSWConsulting/SSW.Rules.Content
-          ref: ${{ env.NEXT_PUBLIC_TINA_BRANCH }}
-          token: ${{ env.TOKEN }}
+          ref: ${{ vars.NEXT_PUBLIC_TINA_BRANCH }}
+          token: ${{ secrets.GH_API_PAT }}
           path: content-temp
           fetch-depth: 0
           lfs: true
