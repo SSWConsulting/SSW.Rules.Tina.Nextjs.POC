@@ -74,6 +74,7 @@ const Rule: Collection = {
           const categoryTitle = item?.category ? `🔗 ${item?.category?.split("/").at(-1)?.replace(".mdx", "")}` : "Unselected Category";
           return { label: categoryTitle };
         },
+        component: ConditionalHiddenField,
       },
       fields: [
         {
@@ -134,6 +135,7 @@ const Rule: Collection = {
         itemProps: (item) => ({
           label: item.rule?.split("/").at(-2) || "Rule is not selected",
         }),
+        component: ConditionalHiddenField,
       },
       fields: [
         {
