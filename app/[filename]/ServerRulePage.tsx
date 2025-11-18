@@ -11,6 +11,7 @@ import RuleActionButtons from "@/components/RuleActionButtons";
 import { getMarkdownComponentMapping } from "@/components/tina-markdown/markdown-component-mapping";
 import { Card } from "@/components/ui/card";
 import { formatDateLong, timeAgo } from "@/lib/dateUtils";
+import { tinaField } from "tinacms/dist/react";
 
 export interface ServerRulePageProps {
   rule: any;
@@ -50,7 +51,9 @@ export default function ServerRulePage({ serverRulePageProps, tinaProps }: Serve
               </div>
             )}
             <div className="flex flex-col flex-1 justify-between">
-              <h1 className="text-ssw-red text-4xl leading-[1.2] my-0 b-4 font-semibold">{rule?.title}</h1>
+              <h1 className="text-ssw-red text-4xl leading-[1.2] my-0 b-4 font-semibold" data-tina-field={tinaField(rule, "title")}>
+                {rule?.title}
+              </h1>
 
               <div className="flex justify-between my-2 flex-col md:flex-row">
                 <p className="mt-4 text-sm font-light">
@@ -96,7 +99,7 @@ export default function ServerRulePage({ serverRulePageProps, tinaProps }: Serve
             </div>
           )}
 
-          <div className="mt-8">
+          <div className="mt-8" data-tina-field={tinaField(rule, "body")}>
             <TinaMarkdown content={rule?.body} components={getMarkdownComponentMapping(true)} />
           </div>
 
