@@ -84,7 +84,6 @@
     "next-sitemap": "^4.2.3"
   },
   "packageManager": "pnpm@10.10.0",
-  "type": "module",
   "pnpm": {
     "onlyBuiltDependencies": [
       "better-sqlite3"
