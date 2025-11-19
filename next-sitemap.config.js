@@ -8,6 +8,17 @@ module.exports = {
   generateRobotsTxt: true,
   output: "standalone",
   outDir: "public/",
+  transform: async (config, path) => {
+     if (path.includes("/api") || path.includes("/icon.ico")) {
+      return null;
+    }
+    return {
+      loc: path,
+      changefreq: config.changefreq,
+      priority: config.priority,
+      lastmod: config.lastmod || new Date().toISOString(),
+    };
+  },
   robotsTxtOptions: {
     policies: [
       {
