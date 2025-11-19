@@ -1,6 +1,6 @@
 /** @type {import('next-sitemap').IConfig} */
 module.exports = {
-  siteUrl: `${process.env.NEXT_PUBLIC_SITE_URL}${process.env.NEXT_PUBLIC_BASE_PATH}` || `https://ssw.com.au${process.env.NEXT_PUBLIC_BASE_PATH}`,
+  siteUrl: `${process.env.NEXT_PUBLIC_SITE_URL || "https://www.ssw.com.au"}${process.env.NEXT_PUBLIC_BASE_PATH}`,
   changefreq: "daily",
   priority: 0.7,
   sitemapBaseFileName: "sitemap-index",
