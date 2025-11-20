@@ -1,5 +1,6 @@
 import { Section } from "@/components/layout/section";
 import { fetchLatestRules, fetchRuleCount } from "@/lib/services/rules";
+import { siteUrl } from "@/site-config";
 import LatestRuleClientPage from "./client-page";
 
 export const revalidate = 300;
@@ -23,5 +24,8 @@ export default async function LatestRulePage() {
 export async function generateMetadata() {
   return {
     title: "Latest Rules | SSW.Rules",
+    alternates: {
+      canonical: `${siteUrl}/latest-rules/`,
+    },
   };
 }
