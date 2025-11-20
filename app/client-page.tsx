@@ -40,7 +40,7 @@ export default function HomeClientPage(props: HomeClientPageProps) {
         <div className="layout-main-section">
           <div className="h-[7rem]">
             <SearchBar/>
-            <h2 className="m-0 mb-4 text-ssw-red font-bold">Categories</h2>
+            <h1 className="m-0 mb-4 text-ssw-red font-bold">Categories</h1>
           </div>
 
           {topCategories
