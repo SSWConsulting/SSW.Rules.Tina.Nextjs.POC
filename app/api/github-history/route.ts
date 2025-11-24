@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import type { GitHubCommit } from "@/components/last-updated-by/types";
 import { fetchGitHub, findLatestNonExcludedCommit, findRenameHistory } from "./util";
 
-export const CACHE_TTL = 3600; // 1 hour in seconds
-
 const GITHUB_ACTIVE_BRANCH = process.env.NEXT_PUBLIC_TINA_BRANCH || "main";
 
 // Commits to exclude from being shown as the latestCommit

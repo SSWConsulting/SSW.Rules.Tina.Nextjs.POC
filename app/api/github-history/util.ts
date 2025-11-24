@@ -1,6 +1,8 @@
 import { GitHubCommit } from "@/components/last-updated-by/types";
-import { CACHE_TTL, EXCLUDED_AUTHORS, EXCLUDED_COMMIT_SHAS } from "./route";
+import { EXCLUDED_AUTHORS, EXCLUDED_COMMIT_SHAS } from "./route";
 import { CommitDetails } from "./types";
+
+const CACHE_TTL = 3600; // 1 hour in seconds
 
 export async function fetchGitHub<T>(url: string, headers: Record<string, string>): Promise<T> {
   const response = await fetch(url, {
