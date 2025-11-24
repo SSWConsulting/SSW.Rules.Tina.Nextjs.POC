@@ -9,6 +9,7 @@ const GITHUB_ACTIVE_BRANCH = process.env.NEXT_PUBLIC_TINA_BRANCH || "main";
 
 // Commits to exclude from being shown as the latestCommit
 // These commits will be skipped, and the next non-excluded commit will be shown instead
+//TODO: after going live, hide the commits that were part of the migration.
 export const EXCLUDED_COMMIT_SHAS: string[] = [
   // Add commit SHAs here that should be skipped
   // Example: "abc123def456...",
@@ -16,6 +17,7 @@ export const EXCLUDED_COMMIT_SHAS: string[] = [
 
 // Authors to exclude from being shown as the latestCommit
 // Commits by these authors (by GitHub login, name, or email) will be skipped
+//TODO: Add the tinaBot author to the excluded authors.
 export const EXCLUDED_AUTHORS: string[] = [
   // Add author identifiers here (GitHub login, name, or email)
   // Example: "github-actions[bot]", "John Doe", "john@example.com",
