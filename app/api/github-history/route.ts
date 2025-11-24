@@ -1,13 +1,12 @@
 import { NextResponse } from "next/server";
 import type { GitHubCommit } from "../../../components/last-updated-by/types";
 
-const CACHE_TTL = 60; // 1 minute in seconds
+const CACHE_TTL = 3600; // 1 hour in seconds
 export const revalidate = CACHE_TTL;
 
 const GITHUB_ACTIVE_BRANCH = process.env.NEXT_PUBLIC_TINA_BRANCH || "main";
 
 async function fetchGitHub<T>(url: string, headers: Record<string, string>): Promise<T> {
-  console.log("🚀 ~ fetchGitHub ~ url:", url);
   const response = await fetch(url, {
     headers,
     next: { revalidate: CACHE_TTL },
@@ -54,9 +53,6 @@ export async function GET(request: Request) {
       fetchGitHub<GitHubCommit[]>(`${baseUrl}?${params}`, headers),
       path ? fetchGitHub<GitHubCommit[]>(`${baseUrl}?sha=${GITHUB_ACTIVE_BRANCH}&path=${path}&per_page=100`, headers).catch(() => []) : Promise.resolve([]),
     ]);
-
-    console.log("latestCommits", latestCommits);
-    console.log("allCommits", allCommits);
 
     if (!latestCommits.length) {
       return NextResponse.json({ error: "No commits found" }, { status: 400 });

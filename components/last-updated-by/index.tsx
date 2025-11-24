@@ -85,7 +85,7 @@ export default function GitHubMetadata({ owner = "tinacms", repo = "tina.io", pa
             target="_blank"
             title={tooltipContent}
             rel="noopener noreferrer"
-            className="text-black hover:text-orange-600 underline flex flex-row items-center gap-1.5"
+            className="text-black hover:text-orange-600 underline flex flex-row items-center gap-1.5 mb-2 md:mb-0"
           >
             See history
             <FaHistory className="w-3 h-3" />
