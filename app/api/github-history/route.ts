@@ -1,27 +1,11 @@
 import { NextResponse } from "next/server";
-import type { GitHubCommit } from "../../../components/last-updated-by/types";
+import type { GitHubCommit } from "@/components/last-updated-by/types";
+import { fetchGitHub, findRenameHistory } from "./util";
 
-const CACHE_TTL = 3600; // 1 hour in seconds
+export const CACHE_TTL = 3600; // 1 hour in seconds
 export const revalidate = CACHE_TTL;
 
 const GITHUB_ACTIVE_BRANCH = process.env.NEXT_PUBLIC_TINA_BRANCH || "main";
-
-async function fetchGitHub<T>(url: string, headers: Record<string, string>): Promise<T> {
-  const response = await fetch(url, {
-    headers,
-    next: { revalidate: CACHE_TTL },
-  });
-
-  if (response.status === 403 && response.headers.get("X-RateLimit-Remaining") === "0") {
-    throw new Error("GitHub API rate limit exceeded");
-  }
-
-  if (!response.ok) {
-    throw new Error(`GitHub API error: ${response.status}`);
-  }
-
-  return response.json() as Promise<T>;
-}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -49,25 +33,38 @@ export async function GET(request: Request) {
   }
 
   try {
-    const [latestCommits, allCommits] = await Promise.all([
-      fetchGitHub<GitHubCommit[]>(`${baseUrl}?${params}`, headers),
-      path ? fetchGitHub<GitHubCommit[]>(`${baseUrl}?sha=${GITHUB_ACTIVE_BRANCH}&path=${path}&per_page=100`, headers).catch(() => []) : Promise.resolve([]),
-    ]);
+    if (path) {
+      // Fetch complete history including renames
+      const { commits: allCommitsWithHistory } = await findRenameHistory(owner, repo, path, GITHUB_ACTIVE_BRANCH, headers);
 
-    if (!latestCommits.length) {
-      return NextResponse.json({ error: "No commits found" }, { status: 400 });
+      if (!allCommitsWithHistory.length) {
+        return NextResponse.json({ error: "No commits found" }, { status: 400 });
+      }
+
+      const latestCommit = allCommitsWithHistory[0];
+      const firstCommit = allCommitsWithHistory[allCommitsWithHistory.length - 1];
+
+      return NextResponse.json({
+        latestCommit,
+        firstCommit,
+        historyUrl: `https://github.com/${owner}/${repo}/commits/${GITHUB_ACTIVE_BRANCH}/${path}`,
+      });
+    } else {
+      // No path specified, just get latest commit for the branch
+      const latestCommits = await fetchGitHub<GitHubCommit[]>(`${baseUrl}?${params}`, headers);
+
+      if (!latestCommits.length) {
+        return NextResponse.json({ error: "No commits found" }, { status: 400 });
+      }
+
+      const latestCommit = latestCommits[0];
+
+      return NextResponse.json({
+        latestCommit,
+        firstCommit: null,
+        historyUrl: `https://github.com/${owner}/${repo}/commits/${GITHUB_ACTIVE_BRANCH}`,
+      });
     }
-
-    const latestCommit = latestCommits[0];
-    const firstCommit = allCommits.length ? allCommits.at(-1)! : null;
-
-    return NextResponse.json({
-      latestCommit,
-      firstCommit,
-      historyUrl: path
-        ? `https://github.com/${owner}/${repo}/commits/${GITHUB_ACTIVE_BRANCH}/${path}`
-        : `https://github.com/${owner}/${repo}/commits/${GITHUB_ACTIVE_BRANCH}`,
-    });
   } catch (error) {
     console.error("Error fetching GitHub metadata:", error);
     return NextResponse.json({ error: "Failed to fetch GitHub metadata" }, { status: 500 });
