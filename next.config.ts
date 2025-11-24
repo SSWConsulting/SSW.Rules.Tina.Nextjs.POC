@@ -118,10 +118,12 @@ const nextConfig: NextConfig = {
       return [];
     }
 
-    // Escape special characters that have meaning in path-to-regexp
-    // These characters need to be escaped: ( ) + * ? [ ] { } |
-    const escapePathSegment = (path: string): string => {
-      return path.replace(/[()+*?[\]{}|]/g, "\\$&");
+    const encodePathSegment = (segment: string): string => {
+      const encoded = encodeURIComponent(segment);
+
+      // Escape special characters that have meaning in path-to-regexp
+      // These characters need to be escaped: ( ) + * ? [ ] { } |
+      return encoded.replace(/[()+*?[\]{}|]/g, "\\$&");
     };
 
     // Transform the redirect mapping object into Next.js redirect format
@@ -129,7 +131,7 @@ const nextConfig: NextConfig = {
     // Note: Next.js automatically prepends basePath to source and destination,
     // so we don't need to include it here
     return Object.entries(redirectMapping).map(([source, destination]) => ({
-      source: `/${escapePathSegment(source)}`,
+      source: `/${encodePathSegment(source)}`,
       destination: `/${destination}`,
       permanent: true, // 308 permanent redirect
     }));
