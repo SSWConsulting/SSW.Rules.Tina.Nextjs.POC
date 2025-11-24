@@ -35,7 +35,7 @@ export async function GET(request: Request) {
       const { commits: allCommitsWithHistory } = await findRenameHistory(owner, repo, path, GITHUB_ACTIVE_BRANCH, headers);
 
       if (!allCommitsWithHistory.length) {
-        return NextResponse.json({ error: "No commits found" }, { status: 400 });
+        return NextResponse.json({ error: "No commits found", branch: GITHUB_ACTIVE_BRANCH }, { status: 400 });
       }
 
       const latestCommit = findLatestNonExcludedCommit(allCommitsWithHistory);
