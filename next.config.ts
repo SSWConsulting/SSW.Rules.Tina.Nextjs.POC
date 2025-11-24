@@ -130,11 +130,19 @@ const nextConfig: NextConfig = {
     // redirectMapping is { "old-uri": "new-uri", ... }
     // Note: Next.js automatically prepends basePath to source and destination,
     // so we don't need to include it here
-    return Object.entries(redirectMapping).map(([source, destination]) => ({
-      source: `/${encodePathSegment(source)}`,
-      destination: `/${destination}`,
-      permanent: true, // 308 permanent redirect
-    }));
+    return Object.entries(redirectMapping)
+      .map(([source, destination]) => {
+        if (source.toLowerCase() === destination) {
+          return null;
+        }
+
+        return {
+          source: `/${encodePathSegment(source)}`,
+          destination: `/${destination}`,
+          permanent: true, // 308 permanent redirect
+        };
+      })
+      .filter((item): item is { source: string; destination: string; permanent: boolean } => item !== null);
   },
 };
 
