@@ -1,11 +1,25 @@
 import { NextResponse } from "next/server";
 import type { GitHubCommit } from "@/components/last-updated-by/types";
-import { fetchGitHub, findRenameHistory } from "./util";
+import { fetchGitHub, findLatestNonExcludedCommit, findRenameHistory } from "./util";
 
 export const CACHE_TTL = 3600; // 1 hour in seconds
 export const revalidate = CACHE_TTL;
 
 const GITHUB_ACTIVE_BRANCH = process.env.NEXT_PUBLIC_TINA_BRANCH || "main";
+
+// Commits to exclude from being shown as the latestCommit
+// These commits will be skipped, and the next non-excluded commit will be shown instead
+export const EXCLUDED_COMMIT_SHAS: string[] = [
+  // Add commit SHAs here that should be skipped
+  // Example: "abc123def456...",
+];
+
+// Authors to exclude from being shown as the latestCommit
+// Commits by these authors (by GitHub login, name, or email) will be skipped
+export const EXCLUDED_AUTHORS: string[] = [
+  // Add author identifiers here (GitHub login, name, or email)
+  // Example: "github-actions[bot]", "John Doe", "john@example.com",
+];
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -41,8 +55,12 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: "No commits found" }, { status: 400 });
       }
 
-      const latestCommit = allCommitsWithHistory[0];
+      const latestCommit = findLatestNonExcludedCommit(allCommitsWithHistory);
       const firstCommit = allCommitsWithHistory[allCommitsWithHistory.length - 1];
+
+      if (!latestCommit) {
+        return NextResponse.json({ error: "No valid commits found" }, { status: 400 });
+      }
 
       return NextResponse.json({
         latestCommit,
@@ -57,7 +75,11 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: "No commits found" }, { status: 400 });
       }
 
-      const latestCommit = latestCommits[0];
+      const latestCommit = findLatestNonExcludedCommit(latestCommits);
+
+      if (!latestCommit) {
+        return NextResponse.json({ error: "No valid commits found" }, { status: 400 });
+      }
 
       return NextResponse.json({
         latestCommit,

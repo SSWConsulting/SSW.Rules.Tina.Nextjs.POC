@@ -1,5 +1,5 @@
 import { GitHubCommit } from "@/components/last-updated-by/types";
-import { CACHE_TTL } from "./route";
+import { CACHE_TTL, EXCLUDED_AUTHORS, EXCLUDED_COMMIT_SHAS } from "./route";
 import { CommitDetails } from "./types";
 
 export async function fetchGitHub<T>(url: string, headers: Record<string, string>): Promise<T> {
@@ -121,4 +121,51 @@ export async function findRenameHistory(
 
   // No renames found, return the commits we have
   return { commits, originalPath: path };
+}
+
+/**
+ * Checks if a commit should be excluded based on SHA or author
+ * @param commit The commit to check
+ * @returns true if the commit should be excluded
+ */
+export function isCommitExcluded(commit: GitHubCommit): boolean {
+  // Check if commit SHA is excluded
+  if (EXCLUDED_COMMIT_SHAS.includes(commit.sha)) {
+    return true;
+  }
+
+  // Check if author is excluded (by login, name, or email)
+  const authorLogin = commit.author?.login?.toLowerCase();
+  const authorName = commit.commit.author.name?.toLowerCase();
+  const authorEmail = commit.commit.author.email?.toLowerCase();
+
+  for (const excludedAuthor of EXCLUDED_AUTHORS) {
+    const excludedLower = excludedAuthor.toLowerCase();
+    if (authorLogin === excludedLower || authorName === excludedLower || authorEmail === excludedLower) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Finds the first commit that is not in the exclusion list
+ * @param commits Array of commits (newest first)
+ * @returns The first non-excluded commit, or the first commit if all are excluded
+ */
+export function findLatestNonExcludedCommit(commits: GitHubCommit[]): GitHubCommit | null {
+  if (commits.length === 0) {
+    return null;
+  }
+
+  // Find the first commit that is not excluded
+  for (const commit of commits) {
+    if (!isCommitExcluded(commit)) {
+      return commit;
+    }
+  }
+
+  // If all commits are excluded, return the first one anyway
+  return commits[0];
 }
