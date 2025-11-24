@@ -1,7 +1,7 @@
 "use client";
 
 import { getAccessToken } from "@auth0/nextjs-auth0";
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { RiBookmarkFill, RiBookmarkLine } from "react-icons/ri";
 import { ICON_SIZE } from "@/constants";
@@ -24,12 +24,9 @@ export default function Bookmark({ ruleGuid, isBookmarked, defaultIsBookmarked =
   const controlled = useMemo(() => typeof isBookmarked === "boolean", [isBookmarked]);
 
   const { user } = useAuth();
+  const router = useRouter();
   const pathname = usePathname() ?? "/";
   const query = useSearchParams()?.toString();
-  const loginHref = useMemo(() => {
-    const current = query ? `${pathname}?${query}` : pathname;
-    return `/api/auth/login?returnTo=${encodeURIComponent(current)}`;
-  }, [pathname, query]);
 
   const [bookmarked, setBookmarked] = useState<boolean>(controlled ? (isBookmarked as boolean) : defaultIsBookmarked);
   const [initialLoading, setInitialLoading] = useState<boolean>(!controlled);
@@ -112,6 +109,12 @@ export default function Bookmark({ ruleGuid, isBookmarked, defaultIsBookmarked =
     }
   };
 
+  const handleLoginRedirect = () => {
+    const current = query ? `${pathname}?${query}` : pathname;
+    setIsRedirecting(true);
+    router.push(`/auth/login?returnTo=${encodeURIComponent(current)}`);
+  };
+
   const disabled = isLoading || initialLoading;
 
   return (
@@ -143,14 +146,14 @@ export default function Bookmark({ ruleGuid, isBookmarked, defaultIsBookmarked =
             <button onClick={() => setShowLoginModal(false)} className="px-4 py-2 rounded border border-gray-300 cursor-pointer hover:bg-gray-50">
               Cancel
             </button>
-            <a
-              href={loginHref}
-              onClick={() => setIsRedirecting(true)}
-              className="px-4 py-2 content-center rounded bg-ssw-red text-white cursor-pointer hover:bg-ssw-red/90"
+            <button
+              onClick={handleLoginRedirect}
+              disabled={isRedirecting}
               aria-busy={isRedirecting}
+              className="px-4 py-2 rounded bg-ssw-red text-white cursor-pointer hover:bg-ssw-red/90"
             >
               {isRedirecting ? <Spinner size="sm" inline /> : "Sign in"}
-            </a>
+            </button>
           </div>
         </div>
       </Popup>
