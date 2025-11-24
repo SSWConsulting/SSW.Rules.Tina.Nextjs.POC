@@ -4,7 +4,7 @@ import type { GitHubCommit } from "../../../components/last-updated-by/types";
 const CACHE_TTL = 60; // 1 minute in seconds
 export const revalidate = CACHE_TTL;
 
-const GITHUB_ACTIVE_BRANCH = "tina-migration-main-content-v2";
+const GITHUB_ACTIVE_BRANCH = process.env.NEXT_PUBLIC_TINA_BRANCH || "main";
 
 async function fetchGitHub<T>(url: string, headers: Record<string, string>): Promise<T> {
   console.log("🚀 ~ fetchGitHub ~ url:", url);
