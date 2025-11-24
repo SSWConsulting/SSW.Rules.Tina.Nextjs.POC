@@ -1,8 +1,23 @@
 import { GitHubCommit } from "@/components/last-updated-by/types";
-import { EXCLUDED_AUTHORS, EXCLUDED_COMMIT_SHAS } from "./route";
 import { CommitDetails } from "./types";
 
 const CACHE_TTL = 3600; // 1 hour in seconds
+
+// Commits to exclude from being shown as the latestCommit
+// These commits will be skipped, and the next non-excluded commit will be shown instead
+//TODO: after going live, hide the commits that were part of the migration.
+export const EXCLUDED_COMMIT_SHAS: string[] = [
+  // Add commit SHAs here that should be skipped
+  // Example: "abc123def456...",
+];
+
+// Authors to exclude from being shown as the latestCommit
+// Commits by these authors (by GitHub login, name, or email) will be skipped
+//TODO: Add the tinaBot author to the excluded authors.
+export const EXCLUDED_AUTHORS: string[] = [
+  // Add author identifiers here (GitHub login, name, or email)
+  // Example: "github-actions[bot]", "John Doe", "john@example.com",
+];
 
 export async function fetchGitHub<T>(url: string, headers: Record<string, string>): Promise<T> {
   const response = await fetch(url, {
