@@ -14,10 +14,16 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing owner or repo parameters" }, { status: 400 });
   }
 
+  const githubToken = process.env.GITHUB_API_PAT || process.env.NEXT_PUBLIC_GITHUB_API_PAT;
+
+  if (!githubToken) {
+    return NextResponse.json({ error: "GitHub API token is not configured" }, { status: 500 });
+  }
+
   const headers: Record<string, string> = {
     Accept: "application/vnd.github.v3+json",
     "User-Agent": "Rules.V3",
-    Authorization: `Bearer ${process.env.NEXT_PUBLIC_GITHUB_API_PAT}`,
+    Authorization: `Bearer ${githubToken}`,
   };
 
   const baseUrl = `https://api.github.com/repos/${owner}/${repo}/commits`;
