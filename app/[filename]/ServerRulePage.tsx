@@ -57,7 +57,7 @@ export default function ServerRulePage({ serverRulePageProps, tinaProps }: Serve
               </h1>
 
               <div className="flex justify-between my-2 flex-col md:flex-row">
-                <GitHubMetadata owner="SSWConsulting" repo="SSW.Rules.Content" path={rule?.id} />
+                <GitHubMetadata owner="SSWConsulting" repo="SSW.Rules.Content" path={rule?.id} className="mt-2" />
                 <RuleActionButtons rule={rule} />
               </div>
             </div>
