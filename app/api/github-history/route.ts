@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { GitHubCommit } from "@/components/last-updated-by/types";
-import { fetchGitHub, findLatestNonExcludedCommit, findRenameHistory, getAlternateAuthorName } from "./util";
+import { fetchGitHub, findCompleteFileHistory, findLatestNonExcludedCommit, getAlternateAuthorName } from "./util";
 
 const GITHUB_ACTIVE_BRANCH = process.env.NEXT_PUBLIC_TINA_BRANCH || "main";
 
@@ -37,14 +37,16 @@ export async function GET(request: Request) {
 
   try {
     if (path) {
-      // Fetch complete history including renames
-      const { commits: allCommitsWithHistory } = await findRenameHistory(owner, repo, path, GITHUB_ACTIVE_BRANCH, headers);
+      // Fetch complete file history including migrated paths and renames
+      const { commits: allCommitsWithHistory } = await findCompleteFileHistory(owner, repo, path, GITHUB_ACTIVE_BRANCH, headers);
 
       if (!allCommitsWithHistory.length) {
         return NextResponse.json({ error: "No commits found", branch: GITHUB_ACTIVE_BRANCH }, { status: 400 });
       }
 
+      // Find the latest non-excluded commit (newest first)
       const latestCommit = findLatestNonExcludedCommit(allCommitsWithHistory);
+      // Find the first commit (oldest, last in array since it's newest-first)
       const firstCommit = allCommitsWithHistory[allCommitsWithHistory.length - 1];
 
       if (!latestCommit) {
