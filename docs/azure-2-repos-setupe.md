@@ -9,8 +9,8 @@ This guide covers the essentials for setting up a **two-repository architecture*
 
 ### Connection Mechanism
 
-**Local**: Uses `LOCAL_CONTENT_PATH` environment variable to point to content repo  
-**Azure**: GitHub Actions checks out both repos, embeds content in Docker image
+**Local**: TinaCMS reads content directly from your local system. Uses `LOCAL_CONTENT_PATH` environment variable to point to your local content repo  
+**Azure**: In the following documentation, the content repo is copied into a Docker image using GitHub Actions
 
 ---
 
@@ -22,92 +22,23 @@ This guide covers the essentials for setting up a **two-repository architecture*
 - Access to Azure Portal ([portal.azure.com](https://portal.azure.com))
 - GitHub account with repository access
 
-### Step 1: Create Resource Group
+### Step 1: Set Up Azure Resources
 
-1. **Navigate to Azure Portal**: https://portal.azure.com
-2. **Search for "Resource groups"** in the top search bar
-3. **Click "+ Create"**
-4. **Fill in the details:**
-   - **Subscription**: Select your subscription
-   - **Resource group name**: `my-website-rg`
-   - **Region**: `East US` (or your preferred region)
-5. **Click "Review + create"**
-6. **Click "Create"**
+Create the following resources in the [Azure Portal](https://portal.azure.com):
 
----
-
-### Step 2: Create Azure Container Registry (ACR)
-
-1. **Search for "Container registries"** in the top search bar
-2. **Click "+ Create"**
-3. **Fill in the Basics tab:**
-   - **Subscription**: Select your subscription
-   - **Resource group**: Select `my-website-rg`
-   - **Registry name**: `mywebsiteacr` (must be globally unique)
-   - **Location**: Same as resource group (e.g., `East US`)
-   - **SKU**: `Basic` (for development) or `Standard` (for production)
-4. **Click "Review + create"**
-5. **Click "Create"**
-6. **Wait for deployment** to complete (~1-2 minutes)
-
-**After creation:**
-1. **Navigate to the Container Registry** you just created
-2. **Go to "Settings" → "Access keys"** in the left menu
-3. **Enable "Admin user"** toggle
-4. **Copy the following values** (you'll need them later):
-   - **Login server**: `mywebsiteacr.azurecr.io`
-   - **Username**: `mywebsiteacr`
-   - **Password**: (copy one of the passwords shown)
+1. **Resource Group** - Create a resource group to organize your resources (e.g., `my-website-rg`)
+2. **Azure Container Registry (ACR)** - Create a container registry with a globally unique name (e.g., `mywebsiteacr`)
+   - Enable **Admin user** in Settings → Access keys
+   - Save the login server, username, and password for later
+3. **App Service Plan** - Create a Linux-based plan with your preferred pricing tier (Basic B1 or Standard S1)
+4. **Web App for Containers** - Create an App Service configured to:
+   - Use **Container** as the publish method
+   - Connect to your Azure Container Registry
+   - Use Linux as the OS
 
 ---
 
-### Step 3: Create App Service Plan
-
-1. **Search for "App Service plans"** in the top search bar
-2. **Click "+ Create"**
-3. **Fill in the Basics tab:**
-   - **Subscription**: Select your subscription
-   - **Resource group**: Select `my-website-rg`
-   - **Name**: `my-website-plan`
-   - **Operating System**: `Linux`
-   - **Region**: Same as resource group (e.g., `East US`)
-4. **Pricing tier:**
-   - **Click "Explore pricing plans"**
-   - **Select "Basic B1"** (for development)
-   - Or **"Standard S1"** (for production)
-   - **Click "Select"**
-5. **Click "Review + create"**
-6. **Click "Create"**
----
-
-### Step 4: Create Web App for Containers
-
-1. **Search for "App Services"** in the top search bar
-2. **Click "+ Create"**
-3. **Fill in the Basics tab:**
-   - **Subscription**: Select your subscription
-   - **Resource group**: Select `my-website-rg`
-   - **Name**: `my-website-app` (this will be your URL: my-website-app.azurewebsites.net)
-   - **Publish**: `Container`
-   - **Operating System**: `Linux`
-   - **Region**: Same as resource group (e.g., `East US`)
-   - **App Service Plan**: Select `my-website-plan`
-
-4. **Go to "Container" tab:**
-   - **Image Source**: `Azure Container Registry`
-   - **Registry**: Select `mywebsiteacr`
-   - **Image**: Leave as `nginx` for now (we'll update after first build)
-   - **Tag**: `latest`
-
-5. **Click "Review + create"**
-6. **Click "Create"**
-7. **Wait for deployment** to complete (~2-3 minutes)
-
-![Web App Container](https://learn.microsoft.com/en-us/azure/app-service/media/quickstart-custom-container/configure-custom-container-vs.png)
-
----
-
-### Step 5: Create Service Principal for GitHub Actions
+### Step 2: Create Service Principal for GitHub Actions
 
 1. **Click on the Cloud Shell icon** (>_) in the top right of Azure Portal
 2. **Select "Bash"** when prompted
@@ -147,7 +78,7 @@ az ad sp create-for-rbac \
 
 ---
 
-### Step 6: Configure GitHub Repository Secrets
+### Step 3: Configure GitHub Repository Secrets
 
 1. **Navigate to your website repository on GitHub**
 2. **Go to "Settings" → "Secrets and variables" → "Actions"**
@@ -169,20 +100,43 @@ az ad sp create-for-rbac \
 
 | Secret Name | Value | Where to Find |
 |------------|-------|---------------|
-| `CONTENT_REPO_TOKEN` | GitHub Personal Access Token | See instructions below |
+| `GH_APP_ID` | GitHub App ID | See instructions below |
+| `GH_APP_PRIVATE_KEY` | GitHub App private key (.pem file contents) | See instructions below |
 
-#### How to create GitHub Personal Access Token:
+#### How to create GitHub App token:
 
-1. **Go to GitHub Settings** → [Developer settings](https://github.com/settings/tokens) → Personal access tokens → Tokens (classic)
-2. **Click "Generate new token (classic)"**
-3. **Configure the token:**
-   - **Note**: `Content Repository Access for CI/CD`
-   - **Expiration**: `90 days` (or your preference)
-   - **Select scopes**:
-     - ✅ `repo` (Full control of private repositories)
-4. **Click "Generate token"**
-5. **Copy the token immediately** (you won't see it again)
-6. **Add to GitHub secrets** as `CONTENT_REPO_TOKEN`
+1. **Navigate to GitHub Settings** → [Developer settings](https://github.com/settings/apps) → GitHub Apps
+2. **Click "New GitHub App"**
+3. **Configure the GitHub App:**
+   - **GitHub App name**: `Content Repository Access for CI/CD` (must be globally unique)
+   - **Homepage URL**: `https://github.com/your-org/my-website` (your website repo URL)
+   - **Webhook**: Uncheck "Active" (not needed for this use case)
+
+4. **Set Repository permissions:**
+   - **Contents**: `Read-only` (to read content from the repository)
+   - **Metadata**: `Read-only` (automatically selected)
+
+5. **Where can this GitHub App be installed?**
+   - Select **"Only on this account"**
+
+6. **Click "Create GitHub App"**
+
+7. **After creation:**
+   - Scroll down to **"Private keys"** section
+   - **Click "Generate a private key"**
+   - A `.pem` file will be downloaded automatically
+   - **Note the App ID** (shown at the top of the page)
+
+8. **Install the GitHub App:**
+   - Click **"Install App"** in the left sidebar
+   - **Click "Install"** next to your organization/account
+   - Select **"Only select repositories"**
+   - Choose your **content repository**
+   - **Click "Install"**
+
+9. **Add to GitHub secrets** (in your website repository):
+   - `GH_APP_ID`: The App ID from step 7
+   - `GH_APP_PRIVATE_KEY`: The entire contents of the downloaded `.pem` file (including `-----BEGIN RSA PRIVATE KEY-----` and `-----END RSA PRIVATE KEY-----`)
 
 **TinaCMS Secrets:**
 
@@ -193,7 +147,7 @@ az ad sp create-for-rbac \
 
 ---
 
-### Step 7: Create GitHub Actions Workflow
+### Step 4: Create GitHub Actions Workflow
 
 1. **In your website repository**, create the following file structure:
 
@@ -239,12 +193,20 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Generate GitHub App token
+        uses: actions/create-github-app-token@v1
+        id: app-token
+        with:
+          app-id: ${{ secrets.GH_APP_ID }}
+          private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          repositories: "my-content"  # ⚠️ UPDATE THIS to your content repository name
+
       - name: Checkout content repository
         uses: actions/checkout@v4
         with:
           repository: your-org/my-content  # ⚠️ UPDATE THIS
           ref: ${{ github.event.inputs.content_branch || 'main' }}
-          token: ${{ secrets.CONTENT_REPO_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           path: content-temp
           fetch-depth: 0
 
@@ -358,7 +320,7 @@ repository: your-org/my-content  # Change this!
 
 ---
 
-### Step 8: Create Dockerfile
+### Step 5: Create Dockerfile
 
 **In your website repository root**, create a file named `Dockerfile`:
 
@@ -430,7 +392,7 @@ CMD ["node", "server.js"]
 
 ---
 
-### Step 9: Update Next.js Configuration
+### Step 6: Update Next.js Configuration
 
 **Ensure `next.config.js`** (or `next.config.ts`) has standalone output:
 
@@ -446,9 +408,17 @@ const nextConfig = {
 module.exports = nextConfig;
 ```
 
+#### Why ?
+
+It creates a self-contained production builds with only the necessary files to run the application which leads to:
+- Minimal dependencies (only necessary npm packages)
+- Production-Ready server (generate lightweight `server.js` file, no need full Next.js framework)
+
+It results on a Docker optimized structure: we get a much smaller, faster Docker image (often 50-80% size reduction) that starts up quicker and uses fewer resources.
+
 ---
 
-### Step 10: Deploy to Azure
+### Step 7: Deploy to Azure
 
 #### Manual Deployment:
 
@@ -463,7 +433,7 @@ If you want to deploy a specific branch or re-deploy:
 
 ---
 
-### Step 11: Configure Web App Environment Variables
+### Step 8: Configure Web App Environment Variables
 
 After first successful deployment, you may want to add runtime environment variables:
 
