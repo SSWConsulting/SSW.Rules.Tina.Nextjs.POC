@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { tinaField } from "tinacms/dist/react";
 import { Card } from "@/components/ui/card";
 
@@ -17,11 +17,7 @@ interface AuthorsCardProps {
 }
 
 export default function AuthorsCard({ authors }: AuthorsCardProps) {
-  if (!authors || authors.length === 0) {
-    return <></>;
-  }
-
-  const resolvedAuthors: Author[] = authors || [];
+  const resolvedAuthors: Author[] = useMemo(() => authors || [], [authors]);
   const placeholderImg = "/uploads/ssw-employee-profile-placeholder-sketch.jpg";
 
   const getImgSource = useCallback(
@@ -61,15 +57,19 @@ export default function AuthorsCard({ authors }: AuthorsCardProps) {
   const [imgSrcList, setImgSrcList] = useState<string[]>([]);
 
   useEffect(() => {
-    setImgSrcList(resolvedAuthors.map(getImgSource));
+    if (resolvedAuthors.length > 0) {
+      setImgSrcList(resolvedAuthors.map(getImgSource));
+    }
   }, [resolvedAuthors, getImgSource]);
 
   useEffect(() => {
-    resolvedAuthors.forEach((author) => {
-      if (!author.title) {
-        console.warn(`Profile title is missing for author with URL: ${author.url}`);
-      }
-    });
+    if (resolvedAuthors.length > 0) {
+      resolvedAuthors.forEach((author) => {
+        if (!author.title) {
+          console.warn(`Profile title is missing for author with URL: ${author.url}`);
+        }
+      });
+    }
   }, [resolvedAuthors]);
 
   const handleImageError = (index: number) => {
@@ -80,7 +80,7 @@ export default function AuthorsCard({ authors }: AuthorsCardProps) {
     });
   };
 
-  if (resolvedAuthors.length === 0) {
+  if (!authors || authors.length === 0) {
     return <></>;
   }
 
