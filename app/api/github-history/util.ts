@@ -20,6 +20,7 @@ export const EXCLUDED_COMMIT_SHAS: string[] = [
 //TODO: Add the tinaBot author to the excluded authors.
 export const EXCLUDED_AUTHORS: string[] = [
   "tina-cloud-app",
+  "github-actions[bot]",
   // Add author identifiers here (GitHub login, name, or email)
   // Example: "github-actions[bot]", "John Doe", "john@example.com",
 ];
