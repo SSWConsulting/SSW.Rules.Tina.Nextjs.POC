@@ -38,4 +38,5 @@ export interface GitHubMetadataResponse {
   latestCommit: GitHubCommit;
   firstCommit: GitHubCommit | null;
   historyUrl: string;
+  otherCoAuthorName?: string | null;
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type { GitHubCommit } from "@/components/last-updated-by/types";
-import { fetchGitHub, findLatestNonExcludedCommit, findRenameHistory } from "./util";
+import { fetchGitHub, findLatestNonExcludedCommit, findRenameHistory, getAlternateAuthorName } from "./util";
 
 const GITHUB_ACTIVE_BRANCH = process.env.NEXT_PUBLIC_TINA_BRANCH || "main";
 
@@ -55,6 +55,7 @@ export async function GET(request: Request) {
         latestCommit,
         firstCommit,
         historyUrl: `https://github.com/${owner}/${repo}/commits/${GITHUB_ACTIVE_BRANCH}/${path}`,
+        otherCoAuthorName: getAlternateAuthorName(latestCommit),
       });
     } else {
       // No path specified, just get latest commit for the branch
@@ -74,6 +75,7 @@ export async function GET(request: Request) {
         latestCommit,
         firstCommit: null,
         historyUrl: `https://github.com/${owner}/${repo}/commits/${GITHUB_ACTIVE_BRANCH}`,
+        otherCoAuthorName: getAlternateAuthorName(latestCommit),
       });
     }
   } catch (error) {

@@ -58,12 +58,14 @@ export default function GitHubMetadata({ owner = "tinacms", repo = "tina.io", pa
     return null;
   }
 
-  const { latestCommit, firstCommit, historyUrl } = data;
+  const { latestCommit, firstCommit, historyUrl, otherCoAuthorName } = data;
   const lastUpdatedDate = latestCommit.commit.author.date;
   const lastUpdateInRelativeTime = getRelativeTime(lastUpdatedDate);
   const lastUpdateInAbsoluteTime = formatDate(lastUpdatedDate, "dd MMM yyyy");
   const createdDate = firstCommit?.commit.author.date;
   const createdTime = createdDate ? formatDate(createdDate, "d MMM yyyy") : null;
+  const displayAuthorName = otherCoAuthorName ?? latestCommit.commit.author.name;
+  const shouldShowLink = !otherCoAuthorName && Boolean(latestCommit.author?.login);
 
   const tooltipContent = createdTime ? `Created ${createdTime}\nLast updated ${lastUpdateInAbsoluteTime}` : `Last updated ${lastUpdateInAbsoluteTime}`;
 
@@ -73,9 +75,13 @@ export default function GitHubMetadata({ owner = "tinacms", repo = "tina.io", pa
         <span>
           Last updated by{" "}
           <span className="font-bold text-black">
-            <a href={`https://github.com/${latestCommit.author?.login}`} target="_blank" rel="noopener noreferrer">
-              {latestCommit.commit.author.name}
-            </a>
+            {shouldShowLink ? (
+              <a href={`https://github.com/${latestCommit.author?.login}`} target="_blank" rel="noopener noreferrer">
+                {displayAuthorName}
+              </a>
+            ) : (
+              displayAuthorName
+            )}
           </span>
           {` ${lastUpdateInRelativeTime}.`}
         </span>
