@@ -1,9 +1,9 @@
 import { defineConfig } from "tinacms";
-import Global from "./collection/global";
 import nextConfig from "../next.config";
 import Category from "./collection/category";
-import Rule from "./collection/rule";
+import Global from "./collection/global";
 import { MegaMenu } from "./collection/megamenu";
+import Rule from "./collection/rule";
 
 const branch = process.env.NEXT_PUBLIC_TINA_BRANCH ?? "main";
 const localContentPath = process.env.LOCAL_CONTENT_RELATIVE_PATH ?? undefined;
@@ -37,14 +37,18 @@ export const config = defineConfig({
   schema: {
     collections: [Rule, Category, Global, MegaMenu],
   },
-  search: {
-    tina: {
-      indexerToken: searchToken,
-      stopwordLanguages: ['eng'],
-    },
-    indexBatchSize: 100,
-    maxSearchIndexFieldLength: 100,
-  },
+  ...(process.env.NODE_ENV !== "development"
+    ? {
+        search: {
+          tina: {
+            indexerToken: searchToken,
+            stopwordLanguages: ["eng"],
+          },
+          indexBatchSize: 100,
+          maxSearchIndexFieldLength: 100,
+        },
+      }
+    : {}),
 });
 
 export default config;

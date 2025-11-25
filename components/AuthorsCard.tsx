@@ -1,55 +1,62 @@
-'use client'
+"use client";
 
-import Image from 'next/image'
-import { useEffect, useState, useCallback } from 'react'
-import { Card } from '@/components/ui/card'
-import { tinaField } from 'tinacms/dist/react'
+import Image from "next/image";
+import { useCallback, useEffect, useState } from "react";
+import { tinaField } from "tinacms/dist/react";
+import { Card } from "@/components/ui/card";
 
 interface Author {
-  title?: string
-  url?: string
-  img?: string
-  noimage?: boolean
+  title?: string;
+  url?: string;
+  img?: string;
+  noimage?: boolean;
 }
 
 interface AuthorsCardProps {
-  authors?: Author[]
+  authors?: Author[];
 }
 
 export default function AuthorsCard({ authors }: AuthorsCardProps) {
-  const resolvedAuthors: Author[] = authors ?? [];
-  const placeholderImg = '/uploads/ssw-employee-profile-placeholder-sketch.jpg';
+  if (!authors || authors.length === 0) {
+    return <></>;
+  }
 
-  const getImgSource = useCallback((author: Author): string => {
-    const { noimage, img, url } = author;
+  const resolvedAuthors: Author[] = authors || [];
+  const placeholderImg = "/uploads/ssw-employee-profile-placeholder-sketch.jpg";
 
-    if (noimage) return placeholderImg;
+  const getImgSource = useCallback(
+    (author: Author): string => {
+      const { noimage, img, url } = author;
 
-    if (img?.includes('http')) return img;
+      if (noimage) return placeholderImg;
 
-    if (url?.includes('ssw.com.au/people')) {
-      // Extract the part after '/people/'
-      const match = url.match(/people\/([^/?#]+)/);
-      const slug = match ? match[1] : null;
+      if (img?.includes("http")) return img;
 
-      if (slug) {
-        // Capitalize each word
-        const formattedTitle = slug
-          .split('-')
-          .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-          .join('-');
+      if (url?.includes("ssw.com.au/people")) {
+        // Extract the part after '/people/'
+        const match = url.match(/people\/([^/?#]+)/);
+        const slug = match ? match[1] : null;
 
-        return `https://raw.githubusercontent.com/SSWConsulting/SSW.People.Profiles/main/${formattedTitle}/Images/${formattedTitle}-Profile.jpg`;
+        if (slug) {
+          // Capitalize each word
+          const formattedTitle = slug
+            .split("-")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join("-");
+
+          return `https://raw.githubusercontent.com/SSWConsulting/SSW.People.Profiles/main/${formattedTitle}/Images/${formattedTitle}-Profile.jpg`;
+        }
       }
-    }
 
-    if (url?.includes('github.com/')) {
-      const gitHubUsername = url.split('github.com/').pop();
-      return `https://avatars.githubusercontent.com/${gitHubUsername}`;
-    }
+      if (url?.includes("github.com/")) {
+        const gitHubUsername = url.split("github.com/").pop();
+        return `https://avatars.githubusercontent.com/${gitHubUsername}`;
+      }
 
-    return placeholderImg;
-  }, [placeholderImg]);
+      return placeholderImg;
+    },
+    [placeholderImg]
+  );
 
   const [imgSrcList, setImgSrcList] = useState<string[]>([]);
 
@@ -62,7 +69,7 @@ export default function AuthorsCard({ authors }: AuthorsCardProps) {
       if (!author.title) {
         console.warn(`Profile title is missing for author with URL: ${author.url}`);
       }
-    })
+    });
   }, [resolvedAuthors]);
 
   const handleImageError = (index: number) => {
@@ -70,26 +77,23 @@ export default function AuthorsCard({ authors }: AuthorsCardProps) {
       const updated = [...prev];
       updated[index] = placeholderImg;
       return updated;
-    })
-  }
+    });
+  };
 
   if (resolvedAuthors.length === 0) {
-    return <></>
+    return <></>;
   }
 
   return (
     <Card title="Authors">
       <div className="flex flex-row flex-wrap">
         {resolvedAuthors.map((author, index) => {
-          const title = author.title ?? 'Unknown'
-          const imgSrc = imgSrcList[index]
+          const title = author.title ?? "Unknown";
+          const imgSrc = imgSrcList[index];
 
           return (
-            <div
-              className="px-2 flex items-center my-2 justify-center"
-              key={`author_${index}`}
-            >
-         {/* @ts-expect-error tinacms types are wrong */}
+            <div className="px-2 flex items-center my-2 justify-center" key={`author_${index}`}>
+              {/* @ts-expect-error tinacms types are wrong */}
               <div className="w-12 h-12 overflow-hidden rounded-full relative" data-tina-field={tinaField(authors?.[index], "title")}>
                 <a href={author.url} target="_blank" rel="noopener noreferrer">
                   {imgSrc?.trim() && (
@@ -106,11 +110,9 @@ export default function AuthorsCard({ authors }: AuthorsCardProps) {
                 </a>
               </div>
             </div>
-          )
+          );
         })}
       </div>
     </Card>
-  )
+  );
 }
-
-
