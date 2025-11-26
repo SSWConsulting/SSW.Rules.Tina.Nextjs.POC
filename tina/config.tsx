@@ -37,18 +37,14 @@ export const config = defineConfig({
   schema: {
     collections: [Rule, Category, Global, MegaMenu],
   },
-  ...(process.env.NODE_ENV !== "development"
-    ? {
-        search: {
-          tina: {
-            indexerToken: searchToken,
-            stopwordLanguages: ["eng"],
-          },
-          indexBatchSize: 100,
-          maxSearchIndexFieldLength: 100,
-        },
-      }
-    : {}),
+  search: {
+    tina: {
+      indexerToken: searchToken,
+      stopwordLanguages: ["eng"],
+    },
+    indexBatchSize: 100,
+    maxSearchIndexFieldLength: 100,
+  },
 });
 
 export default config;
