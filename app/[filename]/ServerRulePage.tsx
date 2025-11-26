@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { RiHistoryLine } from "react-icons/ri";
 import { tinaField } from "tinacms/dist/react";
 import { TinaMarkdown } from "tinacms/dist/rich-text";
 import AuthorsCard from "@/components/AuthorsCard";
@@ -12,7 +11,6 @@ import RelatedRulesCard from "@/components/RelatedRulesCard";
 import RuleActionButtons from "@/components/RuleActionButtons";
 import { getMarkdownComponentMapping } from "@/components/tina-markdown/markdown-component-mapping";
 import { Card } from "@/components/ui/card";
-import { formatDateLong, timeAgo } from "@/lib/dateUtils";
 
 export interface ServerRulePageProps {
   rule: any;
@@ -30,11 +28,6 @@ export default function ServerRulePage({ serverRulePageProps, tinaProps }: Serve
   const rule = data?.rule;
 
   const { ruleCategoriesMapping, sanitizedBasePath } = serverRulePageProps;
-
-  const relativeTime = rule?.lastUpdated ? timeAgo(rule.lastUpdated) : "";
-  const created = rule?.created ? formatDateLong(rule.created) : "Unknown";
-  const updated = rule?.lastUpdated ? formatDateLong(rule.lastUpdated) : "Unknown";
-  const historyTooltip = `Created ${created}\nLast Updated ${updated}`;
 
   const primaryCategory = ruleCategoriesMapping?.[0];
   const breadcrumbCategories = primaryCategory ? [{ title: primaryCategory.title, link: `/${primaryCategory.uri}` }] : undefined;
