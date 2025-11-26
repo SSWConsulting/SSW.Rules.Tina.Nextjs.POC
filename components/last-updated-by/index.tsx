@@ -85,17 +85,17 @@ export default function GitHubMetadata({ owner = "tinacms", repo = "tina.io", pa
           </span>
           {` ${lastUpdateInRelativeTime}.`}
         </span>
-        <div className="relative group">
-          <Link
+        <div className="relative group text-black">
+          <a
             href={historyUrl}
             target="_blank"
             title={tooltipContent}
             rel="noopener noreferrer"
-            className="text-black hover:text-orange-600 underline flex flex-row items-center gap-1.5 mb-2 md:mb-0"
+            className="underline flex flex-row items-center gap-1.5 mb-2 md:mb-0"
           >
             See history
             <FaHistory className="w-3 h-3" />
-          </Link>
+          </a>
         </div>
       </div>
     </div>
