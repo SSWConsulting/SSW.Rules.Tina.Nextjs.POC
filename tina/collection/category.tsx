@@ -212,6 +212,7 @@ const Category: Collection = {
             itemProps: (item) => ({
               label: item.rule?.split("/").at(-2) || "Rule is not selected",
             }),
+            max: -1, // this disable the rules to be added to the category
           },
           fields: [
             {
