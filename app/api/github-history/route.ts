@@ -14,7 +14,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Missing owner or repo parameters" }, { status: 400 });
   }
 
-  const githubToken = process.env.GITHUB_API_PAT || process.env.NEXT_PUBLIC_GITHUB_API_PAT;
+  const githubToken = process.env.GITHUB_API_PAT;
 
   if (!githubToken) {
     return NextResponse.json({ error: "GitHub API token is not configured" }, { status: 500 });
