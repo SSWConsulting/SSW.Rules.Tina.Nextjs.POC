@@ -32,6 +32,7 @@ export default function Bookmark({ ruleGuid, isBookmarked, defaultIsBookmarked =
   const [initialLoading, setInitialLoading] = useState<boolean>(!controlled);
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
+  const [isRedirecting, setIsRedirecting] = useState<boolean>(false);
 
   useEffect(() => {
     if (controlled) setBookmarked(isBookmarked as boolean);
@@ -110,6 +111,7 @@ export default function Bookmark({ ruleGuid, isBookmarked, defaultIsBookmarked =
 
   const handleLoginRedirect = () => {
     const current = query ? `${pathname}?${query}` : pathname;
+    setIsRedirecting(true);
     router.push(`/auth/login?returnTo=${encodeURIComponent(current)}`);
   };
 
@@ -144,8 +146,13 @@ export default function Bookmark({ ruleGuid, isBookmarked, defaultIsBookmarked =
             <button onClick={() => setShowLoginModal(false)} className="px-4 py-2 rounded border border-gray-300 cursor-pointer hover:bg-gray-50">
               Cancel
             </button>
-            <button onClick={handleLoginRedirect} className="px-4 py-2 rounded bg-ssw-red text-white cursor-pointer hover:bg-ssw-red/90">
-              Sign in
+            <button
+              onClick={handleLoginRedirect}
+              disabled={isRedirecting}
+              aria-busy={isRedirecting}
+              className="px-4 py-2 rounded bg-ssw-red text-white cursor-pointer hover:bg-ssw-red/90"
+            >
+              {isRedirecting ? <Spinner size="sm" inline /> : "Sign in"}
             </button>
           </div>
         </div>
