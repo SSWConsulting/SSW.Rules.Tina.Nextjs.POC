@@ -63,9 +63,9 @@ To test changes to MDX rules:
   - **main** to the **staging** - https://ssw-rules-tina-staging-c5bwbjc4a8d2g8gm.australiaeast-01.azurewebsites.net/
   - latest **release/xx** to the **production** site - https://www.ssw.com.au/rules-beta/
 
+### -> How to deploy double repo in Azure
 
-
-
+Please find the way on how double repository is deployed on Azure [here](./docs//azure-2-repos-setupe.md).
 
 ## POC Progress Checklist
 
