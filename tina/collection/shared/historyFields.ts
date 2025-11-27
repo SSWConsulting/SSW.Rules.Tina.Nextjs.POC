@@ -83,12 +83,13 @@ export const historyFields: TinaField[] = [
         }
       },
       component: ConditionalHiddenField,
-      // @ts-expect-error - hideCondition is a custom property for ConditionalHiddenField
+      // @ts-expect-error - hideCondition and watchFields are custom properties for ConditionalHiddenField
       hideCondition: (values: any) => {
         // Hide the field if isArchived is false, undefined, or null
         // Show the field only when isArchived is explicitly true
         return values?.isArchived !== true;
       },
+      watchFields: ["isArchived"], // Specify which fields to watch for changes
     },
   },
 ];

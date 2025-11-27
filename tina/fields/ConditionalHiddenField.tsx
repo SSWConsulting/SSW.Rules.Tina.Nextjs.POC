@@ -15,6 +15,18 @@ import { GroupListFieldPlugin, ImageField, MdxFieldPluginExtendible, ToggleField
  * Additionally, if a custom condition is provided via field.ui.hideCondition, it will be evaluated
  * to determine if the field should be hidden. The condition function receives form values and should return a boolean.
  *
+ * Optionally, you can specify which fields to watch via field.ui.watchFields (array of field names).
+ * If not provided, the component will watch all form inputs for changes.
+ *
+ * Example usage:
+ * {
+ *   ui: {
+ *     component: ConditionalHiddenField,
+ *     hideCondition: (values) => values?.someField !== true,
+ *     watchFields: ["someField"] // Optional: specify which fields to watch
+ *   }
+ * }
+ *
  * Uses a combination of returning null and CSS to ensure both field and label are hidden.
  */
 export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
@@ -30,6 +42,7 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
 
   // Check custom condition if provided
   const customCondition = field.ui?.hideCondition;
+  const watchFields = field.ui?.watchFields as string[] | undefined; // Optional: specific fields to watch
   const [customShouldHide, setCustomShouldHide] = useState<boolean>(() => {
     if (customCondition && typeof customCondition === "function" && form) {
       try {
@@ -55,11 +68,24 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
         // Try multiple ways to access form values
         let formValues = form.values || form.getState?.()?.values || {};
         
-        // Fallback: try to read isArchived directly from DOM if not in form values
-        if (formValues.isArchived === undefined) {
-          const isArchivedInput = document.querySelector('input[name="isArchived"]') as HTMLInputElement;
-          if (isArchivedInput) {
-            formValues = { ...formValues, isArchived: isArchivedInput.checked };
+        // Fallback: read values directly from DOM for specified watch fields if not in form values
+        if (watchFields && Array.isArray(watchFields)) {
+          const domValues: Record<string, any> = {};
+          watchFields.forEach((fieldName) => {
+            if (formValues[fieldName] === undefined) {
+              // Try to find the input element for this field
+              const input = document.querySelector(`input[name="${fieldName}"], select[name="${fieldName}"], textarea[name="${fieldName}"]`) as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+              if (input) {
+                if (input.type === "checkbox") {
+                  domValues[fieldName] = (input as HTMLInputElement).checked;
+                } else {
+                  domValues[fieldName] = input.value;
+                }
+              }
+            }
+          });
+          if (Object.keys(domValues).length > 0) {
+            formValues = { ...formValues, ...domValues };
           }
         }
         
@@ -76,53 +102,66 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
     // Set up interval to check for changes (TinaCMS may not expose a proper watch API)
     const interval = setInterval(checkCondition, 150);
 
-    // Specifically watch the isArchived field if it exists
-    const watchIsArchivedField = () => {
-      // Try to find the isArchived checkbox/toggle
-      const findIsArchivedInput = (): HTMLElement | null => {
-        const selectors = [
-          'input[name="isArchived"]',
-          'input[type="checkbox"][name*="isArchived"]',
-          '[data-tina-field*="isArchived"] input',
-          '[data-tina-field*="isArchived"] button',
-        ];
-
-        for (const selector of selectors) {
-          const element = document.querySelector(selector);
-          if (element) {
-            return element as HTMLElement;
-          }
-        }
-        return null;
+    // Watch specific fields if provided, otherwise watch all form inputs
+    const watchFieldsForChanges = () => {
+      const handleChange = () => {
+        // Small delay to ensure form values are updated
+        setTimeout(checkCondition, 100);
       };
 
-      const isArchivedInput = findIsArchivedInput();
-      if (isArchivedInput) {
-        const handleChange = () => {
-          // Small delay to ensure form values are updated
-          setTimeout(checkCondition, 100);
-        };
+      const elements: HTMLElement[] = [];
 
-        isArchivedInput.addEventListener("change", handleChange);
-        isArchivedInput.addEventListener("click", handleChange);
-        isArchivedInput.addEventListener("input", handleChange);
+      if (watchFields && Array.isArray(watchFields) && watchFields.length > 0) {
+        // Watch only specified fields
+        watchFields.forEach((fieldName) => {
+          const selectors = [
+            `input[name="${fieldName}"]`,
+            `input[type="checkbox"][name*="${fieldName}"]`,
+            `select[name="${fieldName}"]`,
+            `textarea[name="${fieldName}"]`,
+            `[data-tina-field*="${fieldName}"] input`,
+            `[data-tina-field*="${fieldName}"] button`,
+            `[data-tina-field*="${fieldName}"] select`,
+          ];
 
-        return () => {
-          isArchivedInput.removeEventListener("change", handleChange);
-          isArchivedInput.removeEventListener("click", handleChange);
-          isArchivedInput.removeEventListener("input", handleChange);
-        };
+          selectors.forEach((selector) => {
+            const element = document.querySelector(selector);
+            if (element && !elements.includes(element as HTMLElement)) {
+              elements.push(element as HTMLElement);
+            }
+          });
+        });
+      } else {
+        // Watch all form inputs as fallback
+        document.querySelectorAll('input, select, textarea').forEach((el) => {
+          if (!elements.includes(el as HTMLElement)) {
+            elements.push(el as HTMLElement);
+          }
+        });
       }
-      return null;
+
+      elements.forEach((element) => {
+        element.addEventListener("change", handleChange);
+        element.addEventListener("click", handleChange);
+        element.addEventListener("input", handleChange);
+      });
+
+      return () => {
+        elements.forEach((element) => {
+          element.removeEventListener("change", handleChange);
+          element.removeEventListener("click", handleChange);
+          element.removeEventListener("input", handleChange);
+        });
+      };
     };
 
-    const cleanup = watchIsArchivedField();
+    const cleanup = watchFieldsForChanges();
 
     return () => {
       clearInterval(interval);
       if (cleanup) cleanup();
     };
-  }, [customCondition, form]);
+  }, [customCondition, form, watchFields]);
 
   // Check if we should hide this field (supports string, rich-text, boolean, image, and list types)
   const shouldHideByDefault =
