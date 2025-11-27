@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { GroupListFieldPlugin, ImageField, MdxFieldPluginExtendible, ToggleFieldPlugin, wrapFieldsWithMeta } from "tinacms";
 
 /**
@@ -11,6 +11,9 @@ import { GroupListFieldPlugin, ImageField, MdxFieldPluginExtendible, ToggleField
  * - crudType is "create"
  * - field type is "string", "rich-text", "boolean", "image", or has list: true
  * - field name is not "title" or "uri"
+ *
+ * Additionally, if a custom condition is provided via field.ui.hideCondition, it will be evaluated
+ * to determine if the field should be hidden. The condition function receives form values and should return a boolean.
  *
  * Uses a combination of returning null and CSS to ensure both field and label are hidden.
  */
@@ -25,26 +28,125 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
   // Check if this is a list field
   const isListField = field.list === true;
 
+  // Check custom condition if provided
+  const customCondition = field.ui?.hideCondition;
+  const [customShouldHide, setCustomShouldHide] = useState<boolean>(() => {
+    if (customCondition && typeof customCondition === "function" && form) {
+      try {
+        // Try multiple ways to access form values
+        const formValues = form.values || form.getState?.()?.values || {};
+        return customCondition(formValues);
+      } catch (error) {
+        console.error("Error evaluating hideCondition:", error);
+        return false;
+      }
+    }
+    return false;
+  });
+
+  // Watch form values when custom condition is present
+  useEffect(() => {
+    if (!customCondition || typeof customCondition !== "function" || !form) {
+      return;
+    }
+
+    const checkCondition = () => {
+      try {
+        // Try multiple ways to access form values
+        let formValues = form.values || form.getState?.()?.values || {};
+        
+        // Fallback: try to read isArchived directly from DOM if not in form values
+        if (formValues.isArchived === undefined) {
+          const isArchivedInput = document.querySelector('input[name="isArchived"]') as HTMLInputElement;
+          if (isArchivedInput) {
+            formValues = { ...formValues, isArchived: isArchivedInput.checked };
+          }
+        }
+        
+        const result = customCondition(formValues);
+        setCustomShouldHide(result);
+      } catch (error) {
+        console.error("Error evaluating hideCondition:", error);
+      }
+    };
+
+    // Check immediately
+    checkCondition();
+
+    // Set up interval to check for changes (TinaCMS may not expose a proper watch API)
+    const interval = setInterval(checkCondition, 150);
+
+    // Specifically watch the isArchived field if it exists
+    const watchIsArchivedField = () => {
+      // Try to find the isArchived checkbox/toggle
+      const findIsArchivedInput = (): HTMLElement | null => {
+        const selectors = [
+          'input[name="isArchived"]',
+          'input[type="checkbox"][name*="isArchived"]',
+          '[data-tina-field*="isArchived"] input',
+          '[data-tina-field*="isArchived"] button',
+        ];
+
+        for (const selector of selectors) {
+          const element = document.querySelector(selector);
+          if (element) {
+            return element as HTMLElement;
+          }
+        }
+        return null;
+      };
+
+      const isArchivedInput = findIsArchivedInput();
+      if (isArchivedInput) {
+        const handleChange = () => {
+          // Small delay to ensure form values are updated
+          setTimeout(checkCondition, 100);
+        };
+
+        isArchivedInput.addEventListener("change", handleChange);
+        isArchivedInput.addEventListener("click", handleChange);
+        isArchivedInput.addEventListener("input", handleChange);
+
+        return () => {
+          isArchivedInput.removeEventListener("change", handleChange);
+          isArchivedInput.removeEventListener("click", handleChange);
+          isArchivedInput.removeEventListener("input", handleChange);
+        };
+      }
+      return null;
+    };
+
+    const cleanup = watchIsArchivedField();
+
+    return () => {
+      clearInterval(interval);
+      if (cleanup) cleanup();
+    };
+  }, [customCondition, form]);
+
   // Check if we should hide this field (supports string, rich-text, boolean, image, and list types)
-  const shouldHide =
+  const shouldHideByDefault =
     tinaForm?.crudType === "create" &&
     (field.type === "string" || field.type === "rich-text" || field.type === "boolean" || field.type === "image" || isListField) &&
     !isRootLevelTitle &&
     !isRootLevelUri;
 
+  // If a custom condition is provided, use only that. Otherwise, use the default behavior.
+  const shouldHide = customCondition ? customShouldHide : shouldHideByDefault;
+
   // Hide the entire field wrapper (including label) using CSS
   useEffect(() => {
-    if (shouldHide && containerRef.current) {
+    if (containerRef.current) {
       // Traverse up the DOM to find the field wrapper that contains the label
       let element: HTMLElement | null = containerRef.current;
       for (let i = 0; i < 5 && element; i++) {
         element = element.parentElement;
         if (element) {
-          // Hide the parent that likely contains both label and field
+          // Hide or show the parent that likely contains both label and field
           // This is a common pattern in form libraries
           const hasLabel = element.querySelector("label") || element.querySelector('[class*="label"]') || element.getAttribute("data-tina-field");
           if (hasLabel || i >= 2) {
-            element.style.display = "none";
+            element.style.display = shouldHide ? "none" : "";
             break;
           }
         }
