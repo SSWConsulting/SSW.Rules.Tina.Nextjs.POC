@@ -138,12 +138,26 @@ export default function Bookmark({ ruleGuid, isBookmarked, defaultIsBookmarked =
         </button>
       </Tooltip>
 
-      <Popup showCloseIcon isVisible={showLoginModal} className="min-w-sm max-w-lg" onClose={() => setShowLoginModal(false)}>
+      <Popup
+        showCloseIcon
+        isVisible={showLoginModal}
+        className="min-w-sm max-w-lg"
+        onClose={() => {
+          setIsRedirecting(false);
+          setShowLoginModal(false);
+        }}
+      >
         <div className="p-6">
           <h3 className="text-lg font-semibold mb-2">Sign in required</h3>
           <p className="text-gray-700">Sign in to bookmark this rule.</p>
           <div className="mt-6 flex justify-end gap-3">
-            <button onClick={() => setShowLoginModal(false)} className="px-4 py-2 rounded border border-gray-300 cursor-pointer hover:bg-gray-50">
+            <button
+              onClick={() => {
+                setIsRedirecting(false);
+                setShowLoginModal(false);
+              }}
+              className="px-4 py-2 rounded border border-gray-300 cursor-pointer hover:bg-gray-50"
+            >
               Cancel
             </button>
             <button
@@ -152,7 +166,14 @@ export default function Bookmark({ ruleGuid, isBookmarked, defaultIsBookmarked =
               aria-busy={isRedirecting}
               className="px-4 py-2 rounded bg-ssw-red text-white cursor-pointer hover:bg-ssw-red/90"
             >
-              {isRedirecting ? <Spinner size="sm" inline /> : "Sign in"}
+              {isRedirecting ? (
+                <span className="flex items-center gap-2">
+                  <span>Signing in...</span>
+                  <Spinner size="sm" inline className="text-white" />
+                </span>
+              ) : (
+                "Sign in"
+              )}
             </button>
           </div>
         </div>
