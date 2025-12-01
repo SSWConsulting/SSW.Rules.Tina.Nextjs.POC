@@ -26,7 +26,7 @@ export async function POST(req: Request) {
 
     const routesToRevalidate = new Set<string>();
     let shouldRevalidateLatestRules = false;
-    
+
     for (const changedPath of changedPaths) {
       if (typeof changedPath !== "string") continue;
 
@@ -36,10 +36,10 @@ export async function POST(req: Request) {
         if (slug) {
           routesToRevalidate.add(`/${slug}`);
         }
+        // Any change to a rule (added or modified) should refresh latest rules
+        shouldRevalidateLatestRules = true;
         // If change type is add then we also need to revalidate the /api/rules route
         if (eventType === TINA_CONTENT_CHANGE_TYPE.Added) {
-          // Mark that we need to revalidate latest-rules tag when any rule is added
-          shouldRevalidateLatestRules = true;
           routesToRevalidate.add("/api/rules");
         }
       }
@@ -49,11 +49,16 @@ export async function POST(req: Request) {
         const rel = changedPath.replace("categories/", "");
         // Ignore main/top index files like categories/index.mdx or categories/<top>/index.mdx
         if (!rel.endsWith("/index.mdx") && rel.endsWith(".mdx")) {
-          const filename = rel.replace(/\.mdx$/, "").split("/").pop();
+          const filename = rel
+            .replace(/\.mdx$/, "")
+            .split("/")
+            .pop();
           if (filename) {
             routesToRevalidate.add(`/${filename}`);
           }
         }
+        // Category-based rule changes may affect latest lists (timestamps/order)
+        shouldRevalidateLatestRules = true;
         // If change type is add then we also need to revalidate the /api/categories route
         if (eventType === TINA_CONTENT_CHANGE_TYPE.Added) {
           routesToRevalidate.add("/api/categories");
@@ -61,9 +66,12 @@ export async function POST(req: Request) {
       }
     }
 
-    // Revalidate latest-rules tag if any rule was modified or added
+    // Revalidate latest-rules tag if any rule was modified or added,
+    // and rebuild pages that render latest rules
     if (shouldRevalidateLatestRules) {
       revalidateTag("latest-rules");
+      routesToRevalidate.add("/");
+      routesToRevalidate.add("/latest-rules");
     }
 
     for (const route of routesToRevalidate) {
