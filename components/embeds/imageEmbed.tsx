@@ -1,7 +1,7 @@
 import Image from "next/image";
 import React from "react";
 import { Template } from "tinacms";
-import { ComponentWithFigure, withFigureEmbedTemplateFields } from "./componentWithFigure";
+import { Figure, inlineFigureDefaultItem, inlineFigureFields } from "./figure";
 
 const normalizeSrc = (input?: string) => {
   if (!input) return "";
@@ -28,23 +28,24 @@ export function ImageEmbed({ data }: { data: any }) {
 
   const borderClass = data.showBorder ? "border-[10px] border-transparent" : "";
   const heightClass = data?.src?.trim() ? "h-auto" : "h-[300px]";
+  const figureText: string = data?.figureText || "";
+  const figurePreset: any = data?.figurePreset || "default";
 
   return (
-    <ComponentWithFigure data={data}>
-      <div className={`bg-gray-200 mt-4 w-auto ${sizeClasses[data.size]} ${borderClass} ${heightClass}`}>
-        {data?.src?.trim() && (
-          <>
-            <div className="border border-gray-200">
-              <Image src={src} alt={data.alt} width={0} height={0} sizes="100vw" placeholder="empty" className="w-full h-auto" unoptimized />
-            </div>
-          </>
-        )}
-      </div>
-    </ComponentWithFigure>
+    <div className={`bg-gray-200 mt-4 w-auto ${sizeClasses[data.size]} ${borderClass} ${heightClass}`}>
+      {data?.src?.trim() && (
+        <>
+          <div className="border border-gray-200">
+            <Image src={src} alt={data.alt} width={0} height={0} sizes="100vw" placeholder="empty" className="w-full h-auto" unoptimized />
+          </div>
+        </>
+      )}
+      <Figure preset={figurePreset} text={figureText} className="mt-2" />
+    </div>
   );
 }
 
-export const imageEmbedTemplate: Template = withFigureEmbedTemplateFields({
+export const imageEmbedTemplate: Template = ({
   name: "imageEmbed",
   label: "Image",
   ui: {
@@ -52,6 +53,7 @@ export const imageEmbedTemplate: Template = withFigureEmbedTemplateFields({
       alt: "Image",
       size: "small",
       showBorder: false,
+      ...inlineFigureDefaultItem,
     },
   },
   fields: [
@@ -60,7 +62,6 @@ export const imageEmbedTemplate: Template = withFigureEmbedTemplateFields({
       label: "Src",
       type: "image",
       required: true,
-      // @ts-expect-error tinacms types are wrong
       uploadDir: (file) => {
         return `rules/${file.uri || ""}`;
       },
@@ -91,6 +92,7 @@ export const imageEmbedTemplate: Template = withFigureEmbedTemplateFields({
       label: "Show Border?",
       type: "boolean",
     },
+    ...inlineFigureFields as any,
   ],
 });
 
