@@ -2,6 +2,7 @@ import React from "react";
 import { Collection, wrapFieldsWithMeta } from "tinacms";
 import { embedTemplates } from "@/components/embeds";
 import { generateGuid } from "@/utils/guidGenerationUtils";
+import { countEndOfIntro, removeEndOfIntroHiddenProp } from "@/utils/mdxNodeUtils";
 import { CategorySelectorInput } from "../fields/CategorySelector";
 import { ConditionalHiddenField } from "../fields/ConditionalHiddenField";
 import { PaginatedRuleSelectorInput } from "../fields/paginatedRuleSelector";
@@ -35,7 +36,29 @@ const Rule: Collection = {
       const slug = document?._sys?.relativePath?.split("/")?.[0] ?? "";
       return `/${slug}`;
     },
-    beforeSubmit: historyBeforeSubmit,
+    beforeSubmit: async (props) => {
+      const result = await historyBeforeSubmit(props);
+      const values = (result ?? props.values) as any;
+
+      const body = values.body;
+      if (!body || !Array.isArray(body.children) || body.children.length === 0) {
+        return values;
+      }
+
+      const count = countEndOfIntro(values.body);
+
+      if (count !== 1) {
+        const msg =
+          count === 0
+            ? "This rule is missing an <endOfIntro /> marker. Please add one to separate the introduction from the rest of the content."
+            : "There are multiple <endOfIntro /> markers in this rule. Please keep only one.";
+
+        props.cms.alerts?.error?.(msg);
+        throw new Error("Body must contain exactly one <endOfIntro /> component.");
+      }
+
+      return values;
+    },
   },
   fields: [
     {
@@ -192,6 +215,9 @@ const Rule: Collection = {
       toolbarOverride: toolbarFields,
       ui: {
         component: ConditionalHiddenField,
+        parse: (value: any) => {
+          return removeEndOfIntroHiddenProp(value);
+        },
       },
     },
     {
@@ -199,7 +225,6 @@ const Rule: Collection = {
       label: "Rule thumbnail",
       name: "thumbnail",
       description: "Use a JPG or PNG image that is at least 175 x 175px",
-      // @ts-expect-error tinacms types are wrong
       uploadDir: (file) => {
         return `rules/${file.uri || ""}`;
       },
