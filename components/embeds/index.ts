@@ -3,26 +3,23 @@ import { asideEmbedComponent, asideEmbedTemplate } from "./asideEmbed";
 import { emailEmbedComponent, emailEmbedTemplate } from "./emailEmbed";
 import { endOfIntroComponent, endOfIntroTemplate } from "./endOfIntro";
 import { figureEmbedComponent, figureEmbedTemplate } from "./figureEmbed";
-import { introEmbedComponent, introEmbedTemplate } from "./IntroEmbed";
 import { imageEmbedComponent, imageEmbedTemplate } from "./imageEmbed";
 import { youtubeEmbedComponent, youtubeEmbedTemplate } from "./youtubeEmbed";
 
 export const embedComponents = {
+  ...endOfIntroComponent,
   ...emailEmbedComponent,
   ...imageEmbedComponent,
   ...figureEmbedComponent,
   ...asideEmbedComponent,
   ...youtubeEmbedComponent,
-  ...introEmbedComponent,
-  ...endOfIntroComponent,
 };
 
 export const embedTemplates: Template[] = [
+  endOfIntroTemplate,
   emailEmbedTemplate,
   imageEmbedTemplate,
   figureEmbedTemplate,
   asideEmbedTemplate,
   youtubeEmbedTemplate,
-  introEmbedTemplate,
-  endOfIntroTemplate,
 ];
