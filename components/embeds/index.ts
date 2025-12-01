@@ -1,26 +1,28 @@
 import { Template } from "tinacms";
-import { emailEmbedComponent,  emailEmbedTemplate } from "./emailEmbed";
-import { figureEmbedComponent,  figureEmbedTemplate } from "./figureEmbed";
-import { imageEmbedComponent,  imageEmbedTemplate } from "./imageEmbed";
 import { asideEmbedComponent, asideEmbedTemplate } from "./asideEmbed";
-import { youtubeEmbedComponent, youtubeEmbedTemplate } from "./youtubeEmbed";
+import { emailEmbedComponent, emailEmbedTemplate } from "./emailEmbed";
+import { endOfIntroComponent, endOfIntroTemplate } from "./endOfIntro";
+import { figureEmbedComponent, figureEmbedTemplate } from "./figureEmbed";
 import { introEmbedComponent, introEmbedTemplate } from "./IntroEmbed";
+import { imageEmbedComponent, imageEmbedTemplate } from "./imageEmbed";
+import { youtubeEmbedComponent, youtubeEmbedTemplate } from "./youtubeEmbed";
 
+export const embedComponents = {
+  ...emailEmbedComponent,
+  ...imageEmbedComponent,
+  ...figureEmbedComponent,
+  ...asideEmbedComponent,
+  ...youtubeEmbedComponent,
+  ...introEmbedComponent,
+  ...endOfIntroComponent,
+};
 
-export const embedComponents={
-    ...emailEmbedComponent,
-    ...imageEmbedComponent,
-    ...figureEmbedComponent,
-    ...asideEmbedComponent,
-    ...youtubeEmbedComponent,
-    ...introEmbedComponent,
-}
-
-export const embedTemplates:Template[]=[
-    emailEmbedTemplate,
-    imageEmbedTemplate,
-    figureEmbedTemplate,
-    asideEmbedTemplate,
-    youtubeEmbedTemplate,
-    introEmbedTemplate
-]
+export const embedTemplates: Template[] = [
+  emailEmbedTemplate,
+  imageEmbedTemplate,
+  figureEmbedTemplate,
+  asideEmbedTemplate,
+  youtubeEmbedTemplate,
+  introEmbedTemplate,
+  endOfIntroTemplate,
+];
