@@ -5,7 +5,7 @@ import LatestRuleClientPage from "./client-page";
 
 export const revalidate = 300;
 
-const DEFAULT_SIZE = 5;
+const DEFAULT_SIZE = 10;
 
 export default async function LatestRulePage() {
   const [ruleCount, latestRulesByUpdated, latestRulesByCreated] = await Promise.all([

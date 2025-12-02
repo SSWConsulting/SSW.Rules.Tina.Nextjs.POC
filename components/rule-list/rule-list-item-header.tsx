@@ -15,10 +15,10 @@ const RuleListItemHeader: React.FC<RuleListItemHeaderProps> = ({ rule, index }) 
 
   return (
     <section className="my-1.5">
-      <div className="flex items-center flex-col justify-between sm:flex-row">
+      <div className="flex items-start flex-col justify-between sm:flex-row gap-2">
         <div className="flex flex-col gap-2">
-          <div className="flex">
-            <span className="text-sm text-gray-500 mr-2 w-6 shrink-0 mt-1">#{index + 1}</span>
+          <div className="flex gap-2">
+            <span className="text-sm text-gray-500 w-6 shrink-0 mt-1">#{index + 1}</span>
             <h2 className="m-0 text-2xl">
               <Link href={`/${rule.uri}`} title={rule.title} ref={linkRef} className="no-underline">
                 {rule.title}

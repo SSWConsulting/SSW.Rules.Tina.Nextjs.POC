@@ -15,7 +15,7 @@ type RuleQueryVars = PaginationVars & {
 
 // Internal function that performs the actual data fetching
 async function fetchLatestRulesData(
-  size: number = 5, 
+  size: number = 50, 
   sortOption: "lastUpdated" | "created" = "lastUpdated",
   includeBody: boolean = false
 ) {
@@ -42,7 +42,7 @@ async function fetchLatestRulesData(
 }
 
 export async function fetchLatestRules(
-  size: number = 5, 
+  size: number = 50, 
   sortOption: "lastUpdated" | "created" = "lastUpdated",
   includeBody: boolean = false
 ) {

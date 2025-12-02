@@ -6,13 +6,13 @@ import RuleListWrapper from "@/components/rule-list/rule-list-wrapper";
 import MarkdownComponentMapping from "@/components/tina-markdown/markdown-component-mapping";
 import { IconLink } from "@/components/ui";
 import { ICON_SIZE } from "@/constants";
-import { getSanitizedBasePath } from "@/lib/withBasePath";
+import { RuleListFilter } from "@/types/ruleListFilter";
 
 interface ServerCategoryPageProps {
   category: any;
   path?: string;
   includeArchived: boolean;
-  view: "titleOnly" | "blurb" | "all";
+  view: RuleListFilter;
   page: number;
   perPage: number;
 }
