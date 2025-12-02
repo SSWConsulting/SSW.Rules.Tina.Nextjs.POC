@@ -199,8 +199,8 @@ const Rule: Collection = {
           if (count !== 1) {
             const error =
               count === 0
-                ? "This rule is missing an <endOfIntro /> marker. Please add one to separate the introduction from the rest of the content."
-                : "There are multiple <endOfIntro /> markers in this rule. Please keep only one.";
+                ? "Please add an <endIntro /> embed component to separate the intro and body content."
+                : "There are multiple <endIntro /> embed components in this rule. Please keep only one.";
 
             return error;
           }
