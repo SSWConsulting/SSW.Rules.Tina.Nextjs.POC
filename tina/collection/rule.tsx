@@ -22,6 +22,7 @@ const Rule: Collection = {
     return {
       guid: generateGuid(),
       filename: "rule",
+      body: defaultBody,
     };
   },
   ui: {
@@ -233,6 +234,40 @@ const Rule: Collection = {
       },
     },
     ...historyFields,
+  ],
+};
+
+const defaultBody = {
+  type: "root",
+  children: [
+    {
+      type: "p",
+      children: [
+        {
+          type: "text",
+          text: "Intro",
+        },
+      ],
+    },
+    {
+      type: "mdxJsxFlowElement",
+      name: "endOfIntro",
+      children: [
+        {
+          type: "text",
+          text: "",
+        },
+      ],
+      props: {},
+    },
+    {
+      children: [
+        {
+          text: "Body",
+        },
+      ],
+      type: "p",
+    },
   ],
 };
 
