@@ -363,3 +363,15 @@ a[href$=".wma"]:has(img),
 a[href$=".mp3"]:has(img) {
   text-decoration: underline !important;
 }
+
+.icon-link {
+  @apply inline-flex items-center gap-1 hover:cursor-pointer hover:text-ssw-red;
+  text-decoration: underline !important;
+}
+
+.icon-link-image {
+  @apply inline-block;
+  margin: 0 !important;
+  padding: 0 !important;
+  vertical-align: middle !important;
+}
