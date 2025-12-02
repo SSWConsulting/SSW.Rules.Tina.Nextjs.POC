@@ -53,7 +53,8 @@ export const getMarkdownComponentMapping = (enableAnchors = false): Components<a
     return <p {...props} />;
   },
   table: (props) => {
-    return <table className="rule-content-table" {...props} />;
+    const { align, tableRows, ...htmlProps } = props;
+    return <table className="rule-content-table" {...htmlProps} />;
   }
 });
 
