@@ -28,24 +28,26 @@ export function ImageEmbed({ data }: { data: any }) {
 
   const borderClass = data.showBorder ? "border-[10px] border-transparent" : "";
   const heightClass = data?.src?.trim() ? "h-auto" : "h-[300px]";
-  const figureText: string = data?.figureText || "";
-  const figurePreset: any = data?.figurePreset || "default";
+  const captionText: string = data?.captionText || "";
+  const captionStyle: any = data?.captionStyle || "default";
 
   return (
-    <div className={`bg-gray-200 mt-4 w-auto ${sizeClasses[data.size]} ${borderClass} ${heightClass}`}>
-      {data?.src?.trim() && (
-        <>
-          <div className="border border-gray-200">
-            <Image src={src} alt={data.alt} width={0} height={0} sizes="100vw" placeholder="empty" className="w-full h-auto" unoptimized />
-          </div>
-        </>
-      )}
-      <Figure preset={figurePreset} text={figureText} className="mt-2" />
-    </div>
+    <>
+      <div className={`bg-gray-200 mt-4 w-auto ${sizeClasses[data.size]} ${borderClass} ${heightClass}`}>
+        {data?.src?.trim() && (
+          <>
+            <div className="border border-gray-200">
+              <Image src={src} alt={data.alt} width={0} height={0} sizes="100vw" placeholder="empty" className="w-full h-auto" unoptimized />
+            </div>
+          </>
+        )}
+      </div>
+      <Figure preset={captionStyle} text={captionText} className="mt-2" />
+    </>
   );
 }
 
-export const imageEmbedTemplate: Template = ({
+export const imageEmbedTemplate: Template = {
   name: "imageEmbed",
   label: "Image",
   ui: {
@@ -92,9 +94,9 @@ export const imageEmbedTemplate: Template = ({
       label: "Show Border?",
       type: "boolean",
     },
-    ...inlineFigureFields as any,
+    ...(inlineFigureFields as any),
   ],
-});
+};
 
 export const imageEmbedComponent = {
   imageEmbed: (props: any) => <ImageEmbed data={props} />,

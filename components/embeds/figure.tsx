@@ -28,43 +28,10 @@ export function Figure({ preset = "default", text, className }: { preset?: Figur
   );
 }
 
-export const figureEmbedFields = {
-  name: "figureEmbed",
-  label: "Figure",
-  type: "object",
-  fields: [
-    {
-      name: "preset",
-      label: "Preset",
-      type: "string",
-      required: true,
-      options: [
-        {
-          value: "default",
-          label: "Default",
-        },
-        {
-          value: "badExample",
-          label: "Bad Example",
-        },
-        {
-          value: "okExample",
-          label: "OK Example",
-        },
-        {
-          value: "goodExample",
-          label: "Good Example",
-        },
-      ],
-    },
-    { name: "figure", label: "Figure", type: "string", required: true },
-  ],
-};
-
 export const inlineFigureFields = [
   {
-    name: "figurePreset",
-    label: "Figure Preset",
+    name: "captionStyle",
+    label: "Caption Style",
     type: "string",
     options: [
       { value: "default", label: "Default" },
@@ -73,10 +40,10 @@ export const inlineFigureFields = [
       { value: "goodExample", label: "Good Example" },
     ],
   },
-  { name: "figureText", label: "Figure Text", type: "string" },
+  { name: "captionText", label: "Caption Text", type: "string" },
 ] as const;
 
 export const inlineFigureDefaultItem = {
-  figurePreset: "default",
-  figureText: "",
+  captionStyle: "default",
+  captionText: "",
 };

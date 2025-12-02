@@ -83,10 +83,10 @@ export function BoxEmbed(props: any) {
   }
 
   // Support both legacy 'variant' and new 'style' prop names
-  const variant: BoxVariant = (data?.variant || "info") as BoxVariant;
+  const variant: BoxVariant = (data?.style || "info") as BoxVariant;
   const config = variantConfig[variant];
-  const figureText: string = data?.figureText || "";
-  const figurePreset: any = data?.figurePreset || "default";
+  const captionText: string = data?.captionText || "";
+  const captionStyle: any = data?.captionStyle || "default";
 
   return (
     <>
@@ -100,7 +100,7 @@ export function BoxEmbed(props: any) {
           </div>
         </div>
       </div>
-      <Figure preset={figurePreset} text={figureText} />
+      <Figure preset={captionStyle} text={captionText} />
     </>
   );
 }
@@ -110,7 +110,7 @@ export const boxEmbedTemplate: Template = {
   label: "Box",
   ui: {
     defaultItem: {
-      variant: "info",
+      style: "info",
       body: {
         type: "root",
         children: [
@@ -125,8 +125,8 @@ export const boxEmbedTemplate: Template = {
   },
   fields: [
     {
-      name: "variant",
-      label: "Variant",
+      name: "style",
+      label: "style",
       type: "string",
       options: [
         { value: "greybox", label: "Greybox" },

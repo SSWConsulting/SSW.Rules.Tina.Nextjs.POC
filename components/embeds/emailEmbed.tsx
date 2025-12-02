@@ -19,34 +19,35 @@ export function EmailEmbed({ data }: { data: any }) {
   const contentRef = useRef<HTMLDivElement>(null);
   useMarkHighlight(contentRef, "ol li div");
 
-  const figureText: string = data?.figureText || "";
-  const figurePreset: any = data?.figurePreset || "default";
+  const captionText: string = data?.captionText || "";
+  const captionStyle: any = data?.captionStyle || "default";
 
   return (
-    <div className="bg-gray-100 p-6 rounded-md mt-4">
-      <div className="space-y-3">
-        {fields.map(({ label, value }) => (
-          <div key={label} className="flex items-start text-right">
-            <div className="w-24 pt-2 pr-2">{label}:</div>
-            <div className="flex-1">
-              <div className="bg-white border px-3 py-2 rounded text-sm min-h-[40px] flex items-center">{value}</div>
+    <>
+      <div className="bg-gray-100 p-6 rounded-md mt-4">
+        <div className="space-y-3">
+          {fields.map(({ label, value }) => (
+            <div key={label} className="flex items-start text-right">
+              <div className="w-24 pt-2 pr-2">{label}:</div>
+              <div className="flex-1">
+                <div className="bg-white border px-3 py-2 rounded text-sm min-h-[40px] flex items-center">{value}</div>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
-
-      {data.shouldDisplayBody && data.body && (
-        <div className="mt-6 pl-24">
-          <div className="bg-white border p-4 rounded">
-            <div ref={contentRef}>
-              <TinaMarkdown content={data.body} components={MarkdownComponentMapping} />
-            </div>
-          </div>
+          ))}
         </div>
-      )}
 
-      <Figure preset={figurePreset} text={figureText} className="mt-2" />
-    </div>
+        {data.shouldDisplayBody && data.body && (
+          <div className="mt-6 pl-24">
+            <div className="bg-white border p-4 rounded">
+              <div ref={contentRef}>
+                <TinaMarkdown content={data.body} components={MarkdownComponentMapping} />
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+      <Figure preset={captionStyle} text={captionText} className="mt-2" />
+    </>
   );
 }
 
