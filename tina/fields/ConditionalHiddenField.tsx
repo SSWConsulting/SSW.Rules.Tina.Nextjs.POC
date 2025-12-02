@@ -329,25 +329,30 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
 
   // Render appropriate input component based on field type
   const renderFieldInput = () => {
+    // Remove error from meta to prevent duplicate validation messages
+    // wrapFieldsWithMeta already handles validation display
+    const metaWithoutError = meta ? { ...meta, error: undefined } : {};
+    const propsWithoutError = { ...props, meta: metaWithoutError };
+
     switch (field.type) {
       case "boolean":
         return (
           <div ref={containerRef}>
-            <ToggleFieldPlugin.Component {...props} />
+            <ToggleFieldPlugin.Component {...propsWithoutError} />
           </div>
         );
 
       case "image":
         return (
           <div ref={containerRef}>
-            <ImageField {...props} />
+            <ImageField {...propsWithoutError} />
           </div>
         );
 
       case "rich-text":
         return (
           <div ref={containerRef}>
-            <MdxFieldPluginExtendible.Component {...props} />
+            <MdxFieldPluginExtendible.Component {...propsWithoutError} />
           </div>
         );
 
@@ -356,7 +361,7 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
         if (isListField) {
           return (
             <div ref={containerRef}>
-              <GroupListFieldPlugin.Component {...props} />
+              <GroupListFieldPlugin.Component {...propsWithoutError} />
             </div>
           );
         }
