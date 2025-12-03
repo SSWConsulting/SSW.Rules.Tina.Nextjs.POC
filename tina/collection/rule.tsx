@@ -2,7 +2,7 @@ import React from "react";
 import { Collection, wrapFieldsWithMeta } from "tinacms";
 import { embedTemplates } from "@/components/embeds";
 import { generateGuid } from "@/utils/guidGenerationUtils";
-import { countEndOfIntro } from "@/utils/mdxNodeUtils";
+import { countEndIntro } from "@/utils/mdxNodeUtils";
 import { CategorySelectorInput } from "../fields/CategorySelector";
 import { ConditionalHiddenField } from "../fields/ConditionalHiddenField";
 import { PaginatedRuleSelectorInput } from "../fields/paginatedRuleSelector";
@@ -195,7 +195,7 @@ const Rule: Collection = {
       ui: {
         component: ConditionalHiddenField,
         validate: (value: any) => {
-          const count = countEndOfIntro(value);
+          const count = countEndIntro(value);
           if (count !== 1) {
             const error =
               count === 0
@@ -237,7 +237,7 @@ const defaultBody = {
     },
     {
       type: "mdxJsxFlowElement",
-      name: "endOfIntro",
+      name: "endIntro",
       children: [
         {
           type: "text",
