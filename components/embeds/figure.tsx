@@ -40,10 +40,10 @@ export const inlineFigureFields = [
       { value: "goodExample", label: "Good Example" },
     ],
   },
-  { name: "captionText", label: "Caption Text", type: "string" },
+  { name: "caption", label: "Caption", type: "string" },
 ] as const;
 
 export const inlineFigureDefaultItem = {
   captionStyle: "default",
-  captionText: "",
+  caption: "",
 };
