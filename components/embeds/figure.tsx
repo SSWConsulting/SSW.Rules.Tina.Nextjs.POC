@@ -44,6 +44,6 @@ export const inlineFigureFields = [
 ] as const;
 
 export const inlineFigureDefaultItem = {
-  figurePrefix: "default",
+  figurePrefix: "none",
   figure: "",
 };
