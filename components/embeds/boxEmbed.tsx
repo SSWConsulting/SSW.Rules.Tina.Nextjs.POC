@@ -85,8 +85,8 @@ export function BoxEmbed(props: any) {
   // Support both legacy 'variant' and new 'style' prop names
   const variant: BoxVariant = (data?.style || "info") as BoxVariant;
   const config = variantConfig[variant];
-  const caption: string = data?.caption || "";
-  const captionStyle: any = data?.captionStyle || "default";
+  const figure: string = data?.figure || "";
+  const figurePrefix: any = data?.figurePrefix || "default";
 
   return (
     <>
@@ -100,7 +100,7 @@ export function BoxEmbed(props: any) {
           </div>
         </div>
       </div>
-      <Figure preset={captionStyle} text={caption} />
+      <Figure prefix={figurePrefix} text={figure} />
     </>
   );
 }

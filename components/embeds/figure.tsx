@@ -1,28 +1,28 @@
 import React from "react";
 
-export type FigurePreset = "default" | "badExample" | "okExample" | "goodExample";
+export type FigurePrefix = "none" | "bad" | "ok" | "good";
 
-export function getPrefix(preset?: FigurePreset): string {
-  switch (preset) {
-    case "badExample":
+export function getPrefix(prefix?: FigurePrefix): string {
+  switch (prefix) {
+    case "bad":
       return "❌ Figure: ";
-    case "okExample":
+    case "ok":
       return "😐 Figure: ";
-    case "goodExample":
+    case "good":
       return "✅ Figure: ";
-    case "default":
+    case "none":
     default:
       return "Figure: ";
   }
 }
 
-export function Figure({ preset = "default", text, className }: { preset?: FigurePreset; text?: string; className?: string }) {
+export function Figure({ prefix = "none", text, className }: { prefix?: FigurePrefix; text?: string; className?: string }) {
   const trimmed = text?.trim();
   if (!trimmed) return null;
-  const prefix = getPrefix(preset);
+  const prefixText = getPrefix(prefix);
   return (
     <p className={`font-bold mt-1 ${className ?? ""}`.trim()}>
-      {prefix}
+      {prefixText}
       {trimmed}
     </p>
   );
@@ -30,20 +30,20 @@ export function Figure({ preset = "default", text, className }: { preset?: Figur
 
 export const inlineFigureFields = [
   {
-    name: "captionStyle",
-    label: "Caption Style",
+    name: "figurePrefix",
+    label: "Figure Prefix",
     type: "string",
     options: [
-      { value: "default", label: "Default" },
-      { value: "badExample", label: "Bad Example" },
-      { value: "okExample", label: "OK Example" },
-      { value: "goodExample", label: "Good Example" },
+      { value: "none", label: "Default" },
+      { value: "bad", label: "Bad Example" },
+      { value: "ok", label: "OK Example" },
+      { value: "good", label: "Good Example" },
     ],
   },
-  { name: "caption", label: "Caption", type: "string" },
+  { name: "figure", label: "Figure", type: "string" },
 ] as const;
 
 export const inlineFigureDefaultItem = {
-  captionStyle: "default",
-  caption: "",
+  figurePrefix: "default",
+  figure: "",
 };

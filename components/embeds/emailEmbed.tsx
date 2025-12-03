@@ -19,8 +19,8 @@ export function EmailEmbed({ data }: { data: any }) {
   const contentRef = useRef<HTMLDivElement>(null);
   useMarkHighlight(contentRef, "ol li div");
 
-  const caption: string = data?.caption || "";
-  const captionStyle: any = data?.captionStyle || "default";
+  const figure: string = data?.figure || "";
+  const figurePrefix: any = data?.figurePrefix || "default";
 
   return (
     <>
@@ -46,7 +46,7 @@ export function EmailEmbed({ data }: { data: any }) {
           </div>
         )}
       </div>
-      <Figure preset={captionStyle} text={caption} className="mt-2" />
+      <Figure prefix={figurePrefix} text={figure} className="mt-2" />
     </>
   );
 }

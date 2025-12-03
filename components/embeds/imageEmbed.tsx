@@ -28,8 +28,8 @@ export function ImageEmbed({ data }: { data: any }) {
 
   const borderClass = data.showBorder ? "border-[10px] border-transparent" : "";
   const heightClass = data?.src?.trim() ? "h-auto" : "h-[300px]";
-  const caption: string = data?.caption || "";
-  const captionStyle: any = data?.captionStyle || "default";
+  const figure: string = data?.figure || "";
+  const figurePrefix: any = data?.figurePrefix || "default";
 
   return (
     <>
@@ -42,7 +42,7 @@ export function ImageEmbed({ data }: { data: any }) {
           </>
         )}
       </div>
-      <Figure preset={captionStyle} text={caption} className="mt-2" />
+      <Figure prefix={figurePrefix} text={figure} className="mt-2" />
     </>
   );
 }
