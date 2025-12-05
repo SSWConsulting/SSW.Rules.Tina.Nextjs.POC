@@ -6,6 +6,7 @@ import { TinaMarkdown } from "tinacms/dist/rich-text";
 import { toolbarFields } from "@/tina/collection/shared/toolbarFields";
 import MarkdownComponentMapping from "../tina-markdown/markdown-component-mapping";
 import { Figure, inlineFigureDefaultItem, inlineFigureFields } from "./figure";
+import { imageEmbedTemplate } from "./imageEmbed";
 
 type BoxVariant = "greybox" | "info" | "todo" | "china" | "codeauditor" | "highlight" | "warning" | "tips";
 
@@ -144,6 +145,8 @@ export const boxEmbedTemplate: Template = {
       label: "Body",
       type: "rich-text",
       toolbarOverride: toolbarFields,
+      // Allow inserting Image embed inside the box body
+      templates: [imageEmbedTemplate],
     },
     ...(inlineFigureFields as any),
   ],
