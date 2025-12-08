@@ -5,7 +5,6 @@ import { endOfIntroComponent, endOfIntroTemplate } from "./endOfIntro";
 import { figureEmbedComponent, figureEmbedTemplate } from "./figureEmbed";
 import { imageEmbedComponent, imageEmbedTemplate } from "./imageEmbed";
 import { youtubeEmbedComponent, youtubeEmbedTemplate } from "./youtubeEmbed";
-import { iconLinkComponent, iconLinkTemplate } from "./iconLink";
 
 export const embedComponents = {
   ...endOfIntroComponent,
@@ -14,7 +13,6 @@ export const embedComponents = {
   ...figureEmbedComponent,
   ...asideEmbedComponent,
   ...youtubeEmbedComponent,
-  ...iconLinkComponent,
 };
 
 export const embedTemplates: Template[] = [
@@ -24,5 +22,4 @@ export const embedTemplates: Template[] = [
   figureEmbedTemplate,
   asideEmbedTemplate,
   youtubeEmbedTemplate,
-  iconLinkTemplate,
 ];

@@ -7,6 +7,7 @@ import CategoriesCard from "@/components/CategoriesCard";
 import Discussion from "@/components/Discussion";
 import HelpCard from "@/components/HelpCard";
 import GitHubMetadata from "@/components/last-updated-by";
+import { LinkIconEnhancer } from "@/components/LinkIconEnhancer";
 import RelatedRulesCard from "@/components/RelatedRulesCard";
 import RuleActionButtons from "@/components/RuleActionButtons";
 import { getMarkdownComponentMapping } from "@/components/tina-markdown/markdown-component-mapping";
@@ -84,7 +85,9 @@ export default function ServerRulePage({ serverRulePageProps, tinaProps }: Serve
           )}
 
           <div className="mt-8" data-tina-field={tinaField(rule, "body")}>
-            <TinaMarkdown content={rule?.body} components={getMarkdownComponentMapping(true)} />
+            <LinkIconEnhancer>
+              <TinaMarkdown content={rule?.body} components={getMarkdownComponentMapping(true)} />
+            </LinkIconEnhancer>
           </div>
 
           <div className="hidden md:block">
