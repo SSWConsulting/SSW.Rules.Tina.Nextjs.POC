@@ -126,7 +126,7 @@ const Rule: Collection = {
       type: "object",
       label: "Related Rules",
       name: "related",
-      description: "List of related rules.",
+      description: "URIs of related rules to suggest.",
       list: true,
       searchable: false,
       ui: {
