@@ -360,14 +360,6 @@ export const ConditionalHiddenField = wrapFieldsWithMeta((props: any) => {
 
       default:
         // Handle list fields
-        // if (isListField) {
-        //   return (
-        //     <div ref={containerRef}>
-        //       <GroupListFieldPlugin.Component {...propsWithoutError} />
-        //     </div>
-        //   );
-        // }
-
         if (isListField) {
           // Object lists → GroupList
           if (isObjectListField) {
