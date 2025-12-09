@@ -7,9 +7,9 @@ import NotFound from "@/app/not-found";
 import categoryTitleIndex from "@/category-uri-title-map.json";
 import { useIsAdminPage } from "@/components/hooks/useIsAdminPage";
 import { Section } from "@/components/layout/section";
+import { getSanitizedBasePath } from "@/lib/withBasePath";
 import ruleToCategoryIndex from "@/rule-to-categories.json";
 import { TinaRuleWrapper } from "./TinaRuleWrapper";
-import { getSanitizedBasePath } from "@/lib/withBasePath";
 
 interface ClientFallbackPageProps {
   filename: string;
@@ -29,8 +29,14 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
     return basePath.replace(/\/+$/, "");
   };
 
+  const getHeaders = (isAdmin: boolean) => {
+    return {
+      "x-is-admin": isAdmin ? "true" : "false",
+    };
+  };
+
   // Helper function to get full relative path from filename
-  const getFullRelativePathFromFilename = async (filename: string): Promise<string | null> => {
+  const getFullRelativePathFromFilename = async (filename: string, isAdmin: boolean): Promise<string | null> => {
     let hasNextPage = true;
     let after: string | null = null;
     const basePath = getBasePath();
@@ -42,9 +48,13 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
           params.set("after", after);
         }
 
+        // Get isAdmin from the function parameter
+        const fetchHeaders: HeadersInit = getHeaders(isAdmin);
+
         const res = await fetch(`${basePath}/api/tina/top-categories?${params.toString()}`, {
           method: "GET",
           cache: "no-store",
+          headers: fetchHeaders,
         });
 
         if (!res.ok) {
@@ -87,8 +97,10 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
       try {
         const basePath = getBasePath();
 
+        const headers: HeadersInit = getHeaders(isAdminPage);
+
         // First, try to find the full relative path for category
-        const fullPath = await getFullRelativePathFromFilename(filename);
+        const fullPath = await getFullRelativePathFromFilename(filename, isAdminPage);
 
         // Try category first
         if (fullPath) {
@@ -97,6 +109,7 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
             const categoryRes = await fetch(`${basePath}/api/tina/category?${params.toString()}`, {
               method: "GET",
               cache: "no-store",
+              headers,
             });
 
             if (categoryRes.ok) {
@@ -132,6 +145,7 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
           const ruleRes = await fetch(`${basePath}/api/tina/rule?${params.toString()}`, {
             method: "GET",
             cache: "no-store",
+            headers,
           });
 
           if (ruleRes.ok) {
@@ -196,11 +210,6 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
       </Section>
     );
   }
-
-  // If this is not an admin page, return a not found response. This is called only when the page
-  // is not found in the actual branch. When a user is not in Tina mode and creates a new rule,
-  // it should appear only in Tina mode and should not attempt to load on the live site.
-  if (!isAdminPage) return notFound();
 
   if (loading) {
     return (

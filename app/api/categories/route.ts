@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { cookies } from "next/headers";
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import client from "@/tina/__generated__/client";
 import { getFetchOptions } from "@/utils/tina/get-branch";
 
@@ -13,10 +13,14 @@ async function fetchMainCategoryData(branch?: string) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Check if request is from admin mode
+    const isAdminHeader = request.headers.get("x-is-admin");
+    const isAdmin = isAdminHeader === "true";
+
     const cookieStore = await cookies();
-    const branch = cookieStore.get("x-branch")?.value || undefined;
+    const branch = isAdmin ? cookieStore.get("x-branch")?.value || undefined : "main";
 
     // Create a cached function that fetches main category data
     // Cache key includes branch to ensure different branches get different cache entries

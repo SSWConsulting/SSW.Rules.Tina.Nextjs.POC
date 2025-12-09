@@ -2,12 +2,12 @@ import { unstable_cache } from "next/cache";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 import client from "@/tina/__generated__/client";
-import { getFetchOptions } from "@/utils/tina/get-branch";
+import { getBranch, getFetchOptions } from "@/utils/tina/get-branch";
 
 // Helper function to fetch top categories data (will be wrapped with cache)
-async function fetchTopCategoriesData(first: number, after: string | null, branch?: string) {
+async function fetchTopCategoriesData(first: number, after: string | null, branch?: string, isAdmin?: boolean) {
   if (branch) {
-    return await client.queries.topCategoryWithIndexQuery({ first, after }, await getFetchOptions());
+    return await client.queries.topCategoryWithIndexQuery({ first, after }, await getFetchOptions(isAdmin));
   } else {
     return await client.queries.topCategoryWithIndexQuery({ first, after });
   }
@@ -19,8 +19,11 @@ export async function GET(request: NextRequest) {
     const first = parseInt(searchParams.get("first") || "50", 10);
     const after = searchParams.get("after") || null;
 
-    const cookieStore = await cookies();
-    const branch = cookieStore.get("x-branch")?.value || undefined;
+    // Check if request is from admin mode
+    const isAdminHeader = request.headers.get("x-is-admin");
+    const isAdmin = isAdminHeader === "true";
+
+    const branch: string = await getBranch(isAdmin);
 
     // Create a cached function that fetches top categories data
     // Cache key includes first, after, and branch to ensure different queries get different cache entries
@@ -33,7 +36,7 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    const result = await getCachedTopCategories(first, after, branch);
+    const result = await getCachedTopCategories(first, after, branch, isAdmin);
 
     return NextResponse.json(result, { status: 200 });
   } catch (error) {

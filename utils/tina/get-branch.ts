@@ -1,7 +1,12 @@
 import { cookies } from "next/headers";
 
-export const getBranch = async () => {
+export const getBranch = async (isAdmin?: boolean) => {
   try {
+    // If not admin, always return "main" branch
+    if (isAdmin === false) {
+      return "main";
+    }
+
     const cookieStore = await cookies();
     return cookieStore.get("x-branch")?.value || "";
   } catch (error) {
@@ -11,8 +16,8 @@ export const getBranch = async () => {
   }
 };
 
-export const getFetchOptions = async () => {
-  const branch = await getBranch();
+export const getFetchOptions = async (isAdmin?: boolean) => {
+  const branch = await getBranch(isAdmin);
   return branch
     ? {
         fetchOptions: {

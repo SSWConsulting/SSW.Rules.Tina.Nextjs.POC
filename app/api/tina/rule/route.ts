@@ -10,7 +10,12 @@ export async function GET(request: NextRequest) {
     if (!relativePath) {
       return NextResponse.json({ error: "relativePath is required" }, { status: 400 });
     }
-    const fetchOptions = await getFetchOptions();
+
+    // Check if request is from admin mode
+    const isAdminHeader = request.headers.get("x-is-admin");
+    const isAdmin = isAdminHeader === "true";
+
+    const fetchOptions = await getFetchOptions(isAdmin);
     // Fetch rule using the Tina client with branch support
     let result;
     if (fetchOptions) {
