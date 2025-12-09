@@ -7,7 +7,16 @@ import { getBranch, getFetchOptions } from "@/utils/tina/get-branch";
 // Helper function to fetch top categories data (will be wrapped with cache)
 async function fetchTopCategoriesData(first: number, after: string | null, branch?: string, isAdmin?: boolean) {
   if (branch) {
-    return await client.queries.topCategoryWithIndexQuery({ first, after }, await getFetchOptions(isAdmin));
+    return await client.queries.topCategoryWithIndexQuery(
+      { first, after },
+      {
+        fetchOptions: {
+          headers: {
+            "x-branch": branch,
+          },
+        },
+      }
+    );
   } else {
     return await client.queries.topCategoryWithIndexQuery({ first, after });
   }
@@ -24,19 +33,21 @@ export async function GET(request: NextRequest) {
     const isAdmin = isAdminHeader === "true";
 
     const branch: string = await getBranch(isAdmin);
+    // Normalize empty string to undefined for consistent handling
+    const normalizedBranch = branch || undefined;
 
     // Create a cached function that fetches top categories data
     // Cache key includes first, after, and branch to ensure different queries get different cache entries
     const getCachedTopCategories = unstable_cache(
       fetchTopCategoriesData,
-      [`top-categories-${first}-${after || "null"}-${branch || "main"}`], // Cache key includes branch and pagination
+      [`top-categories-${first}-${after || "null"}-${normalizedBranch || "main"}`], // Cache key includes branch and pagination
       {
         revalidate: 43200, // Revalidate every 12 hours (43200 seconds)
-        tags: ["top-categories", branch ? `branch-${branch}` : "branch-main"],
+        tags: ["top-categories", normalizedBranch ? `branch-${normalizedBranch}` : "branch-main"],
       }
     );
 
-    const result = await getCachedTopCategories(first, after, branch, isAdmin);
+    const result = await getCachedTopCategories(first, after, normalizedBranch, isAdmin);
 
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
