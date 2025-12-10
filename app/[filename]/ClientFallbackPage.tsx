@@ -9,6 +9,7 @@ import { useIsAdminPage } from "@/components/hooks/useIsAdminPage";
 import { Section } from "@/components/layout/section";
 import { getSanitizedBasePath } from "@/lib/withBasePath";
 import ruleToCategoryIndex from "@/rule-to-categories.json";
+import Loading from "./loading";
 import { TinaRuleWrapper } from "./TinaRuleWrapper";
 
 interface ClientFallbackPageProps {
@@ -212,16 +213,7 @@ export default function ClientFallbackPage({ filename, searchParams }: ClientFal
   }
 
   if (loading) {
-    return (
-      <Section>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-ssw-red mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading...</p>
-          </div>
-        </div>
-      </Section>
-    );
+    return <Loading />;
   }
 
   if (isNotFound || !data) {
