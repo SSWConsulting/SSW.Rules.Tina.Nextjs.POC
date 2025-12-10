@@ -334,9 +334,7 @@
 .rule-content a[href*="//"]:not([href*="ssw.com.au"], [href*="assets.tina.io"], [href*="youtube.com"], [href*="google.com/map"], .info-btn-container, .tooltip-button, .not-external):after {
   content: "\f08b ";
   font-family: FontAwesome;
-  opacity: .5;
-  padding-left: 4px;
-  display: inline-block;
+  @apply inline-block pl-1 opacity-50;
 }
 
 a[href$='.pdf']:before, 
@@ -352,8 +350,7 @@ a[href*='google.com/map']:before,
 a[href*='youtube.com']:before, a[href*='youtu.be']:before {
   content: "\F1C1 ";
   font-family: FontAwesome;
-  padding-right: 4px;
-  display: inline-block;
+  @apply inline-block pr-1;
 }
 
 a[href$='.pdf']:before {
