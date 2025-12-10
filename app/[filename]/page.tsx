@@ -13,7 +13,9 @@ import { TinaRuleWrapper } from "./TinaRuleWrapper";
 // Leaving this as a fallback in case the above goes wrong
 // export const revalidate = 3600;
 
-export const dynamic = "force-static";
+// Allow dynamic rendering for pages not in generateStaticParams
+// This ensures that dynamically generated pages show loading state instead of 404
+export const dynamic = "auto";
 
 const getFullRelativePathFromFilename = async (filename: string): Promise<string | null> => {
   let hasNextPage = true;
