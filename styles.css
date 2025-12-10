@@ -410,6 +410,5 @@ a[href*='youtube.com']:before, a[href*='youtu.be']:before {
 
 a[href*='google.com/map']:before {
   content: "\f041 ";
-  font-size: 1.1em;
   color: #FF0000;
 }
