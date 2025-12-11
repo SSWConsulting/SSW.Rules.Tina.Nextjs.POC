@@ -2,6 +2,7 @@
   "name": "my-tina-app",
   "version": "0.0.1",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "pnpm prepare:content && tinacms dev -c \"next dev --turbopack\"",
     "build": "tinacms build && next build",
