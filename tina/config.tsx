@@ -45,6 +45,12 @@ export const config = defineConfig({
     indexBatchSize: 100,
     maxSearchIndexFieldLength: 100,
   },
+  repoProvider: {
+    defaultBranchName: "tina-migration-main-content",
+    historyUrl: ({ relativePath, branch }) => ({
+      url: `https://github.com/SSWConsulting/SSW.Rules.Content/commits/${branch}/${relativePath}`,
+    }),
+  },
 });
 
 export default config;
