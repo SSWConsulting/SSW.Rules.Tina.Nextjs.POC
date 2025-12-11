@@ -6,7 +6,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    name: Build sample
+    name: Build PR
     environment: staging
     steps:
       - uses: actions/checkout@v4
