@@ -1,6 +1,6 @@
 {
   "schema": {
-    "version": { "fullVersion": "2.0.2", "major": "2", "minor": "0", "patch": "2" },
+    "version": { "fullVersion": "2.0.0", "major": "2", "minor": "0", "patch": "0" },
     "meta": { "flags": ["experimentalData"] },
     "collections": [
       {
@@ -335,7 +335,7 @@
                     "name": "body",
                     "label": "Body",
                     "type": "rich-text",
-                    "toolbarOverride": ["embed", "heading", "link", "quote", "ul", "ol", "bold", "italic", "code", "codeBlock", "mermaid", "table", "raw"],
+                    "toolbarOverride": ["embed", "heading", "link", "quote", "ul", "ol", "bold", "italic", "code", "codeBlock", "mermaid", "table"],
                     "namespace": ["rule", "body", "boxEmbed", "body"],
                     "searchable": true,
                     "parser": { "type": "mdx" },
@@ -390,7 +390,7 @@
                 "namespace": ["rule", "body", "youtubeEmbed"]
               }
             ],
-            "toolbarOverride": ["embed", "heading", "link", "quote", "ul", "ol", "bold", "italic", "code", "codeBlock", "mermaid", "table", "raw"],
+            "toolbarOverride": ["embed", "heading", "link", "quote", "ul", "ol", "bold", "italic", "code", "codeBlock", "mermaid", "table"],
             "ui": {},
             "namespace": ["rule", "body"],
             "parser": { "type": "mdx" },
@@ -900,7 +900,7 @@
                         "name": "body",
                         "label": "Body",
                         "type": "rich-text",
-                        "toolbarOverride": ["embed", "heading", "link", "quote", "ul", "ol", "bold", "italic", "code", "codeBlock", "mermaid", "table", "raw"],
+                        "toolbarOverride": ["embed", "heading", "link", "quote", "ul", "ol", "bold", "italic", "code", "codeBlock", "mermaid", "table"],
                         "namespace": ["category", "category", "body", "boxEmbed", "body"]
                       },
                       {
@@ -934,7 +934,7 @@
                     "namespace": ["category", "category", "body", "youtubeEmbed"]
                   }
                 ],
-                "toolbarOverride": ["embed", "heading", "link", "quote", "ul", "ol", "bold", "italic", "code", "codeBlock", "mermaid", "table", "raw"],
+                "toolbarOverride": ["embed", "heading", "link", "quote", "ul", "ol", "bold", "italic", "code", "codeBlock", "mermaid", "table"],
                 "namespace": ["category", "category", "body"],
                 "searchable": true,
                 "parser": { "type": "mdx" },
