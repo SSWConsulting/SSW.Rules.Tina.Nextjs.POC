@@ -31,27 +31,11 @@ const orphanedCheckScript = join(scriptsPath, "orphaned_rules_check.py");
 const buildRedirectMapScript = join(scriptsPath, "build-redirect-map.py");
 const rulesDirAbs = join(contentAbsPath, "public/uploads/rules");
 
-execSync(`python3 "${buildMapScript}"`, { stdio: "inherit", cwd: scriptsPath });
-execSync(`python3 "${orphanedCheckScript}"`, { stdio: "inherit", cwd: scriptsPath });
-
-// Only run redirect map script if it exists
-if (fs.existsSync(buildRedirectMapScript)) {
-  execSync(`python3 "${buildRedirectMapScript}"`, { stdio: "inherit", cwd: scriptsPath });
-} else {
-  console.warn(`Warning: ${buildRedirectMapScript} not found, skipping redirect map generation`);
-}
+execSync(`python "${buildMapScript}"`, { stdio: "inherit", cwd: scriptsPath });
+execSync(`python "${orphanedCheckScript}"`, { stdio: "inherit", cwd: scriptsPath });
+execSync(`python "${buildRedirectMapScript}"`, { stdio: "inherit", cwd: scriptsPath });
 
 copyAndMoveJsonFile("category-uri-title-map.json", scriptsPath);
 copyAndMoveJsonFile("rule-to-categories.json", scriptsPath);
 copyAndMoveJsonFile("orphaned_rules.json", scriptsPath);
-
-// Only copy redirects.json if it exists
-const redirectsPath = join(scriptsPath, "redirects.json");
-if (fs.existsSync(redirectsPath)) {
-  copyAndMoveJsonFile("redirects.json", scriptsPath);
-} else {
-  // Create an empty redirects.json if the script didn't run
-  const emptyRedirectsDest = resolve(__dirname, "../redirects.json");
-  fs.writeFileSync(emptyRedirectsDest, "[]");
-  console.warn("Created empty redirects.json");
-}
+copyAndMoveJsonFile("redirects.json", scriptsPath);
