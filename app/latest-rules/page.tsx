@@ -9,7 +9,7 @@ const DEFAULT_SIZE = 5;
 const MAX_SIZE = 50;
 
 type LatestRulePageProps = {
-  searchParams?: { size?: string | string[] };
+  searchParams?: Promise<{ size?: string | string[] }>;
 };
 
 export default async function LatestRulePage({ searchParams }: LatestRulePageProps) {
