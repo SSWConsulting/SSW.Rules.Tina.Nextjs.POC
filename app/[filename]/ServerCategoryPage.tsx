@@ -4,6 +4,7 @@ import { TinaMarkdown } from "tinacms/dist/rich-text";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import RuleListWrapper from "@/components/rule-list/rule-list-wrapper";
 import MarkdownComponentMapping from "@/components/tina-markdown/markdown-component-mapping";
+import IsrStatusBadge from "@/components/ui/isr-status-badge";
 import { IconLink } from "@/components/ui";
 import { ICON_SIZE } from "@/constants";
 
@@ -29,6 +30,7 @@ export default function ServerCategoryPage({ category, path, includeArchived, vi
   return (
     <div>
       <Breadcrumbs isCategory breadcrumbText={includeArchived ? `Archived Rules - ${title}` : title} />
+      <IsrStatusBadge />
       <div className="flex">
         <div className="w-full lg:w-2/3 bg-white pt-4 p-6 border border-[#CCC] rounded shadow-lg">
           <div className="flex justify-between">

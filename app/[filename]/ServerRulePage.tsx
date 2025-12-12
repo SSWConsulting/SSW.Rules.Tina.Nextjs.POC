@@ -11,6 +11,7 @@ import RelatedRulesCard from "@/components/RelatedRulesCard";
 import RuleActionButtons from "@/components/RuleActionButtons";
 import { getMarkdownComponentMapping } from "@/components/tina-markdown/markdown-component-mapping";
 import { Card } from "@/components/ui/card";
+import IsrStatusBadge from "@/components/ui/isr-status-badge";
 
 export interface ServerRulePageProps {
   rule: any;
@@ -49,8 +50,11 @@ export default function ServerRulePage({ serverRulePageProps, tinaProps }: Serve
                 {rule?.title}
               </h1>
 
-              <div className="flex justify-between my-2 flex-col md:flex-row">
-                <GitHubMetadata owner="SSWConsulting" repo="SSW.Rules.Content" path={rule?.id} className="mt-2" />
+              <div className="flex justify-between my-2 flex-col items-center md:flex-row">
+                <div className="flex gap-2 items-center">
+                  <IsrStatusBadge />
+                  <GitHubMetadata owner="SSWConsulting" repo="SSW.Rules.Content" path={rule?.id} />
+                </div>
                 <RuleActionButtons rule={rule} />
               </div>
             </div>
