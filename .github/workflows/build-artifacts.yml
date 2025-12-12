@@ -30,8 +30,6 @@ on:
                 required: true
             NEXT_PUBLIC_TINA_CLIENT_ID:
                 required: true
-            TOKEN:
-                required: true
             NEXT_PUBLIC_ALGOLIA_APP_ID:
                 required: false
             NEXT_PUBLIC_ALGOLIA_ADMIN_KEY:
@@ -85,6 +83,16 @@ jobs:
             version_deployed: ${{ env.VERSION_DEPLOYED }}
             deployment_url: ${{ env.DEPLOYMENT_URL }}
         steps:
+            # ────────────────────────────── GITHUB APP TOKEN ───────────────────────
+            - name: Generate GitHub App token
+              id: generate-token
+              uses: actions/create-github-app-token@v2
+              with:
+                app-id: ${{ vars.GH_APP_ID }}
+                private-key: ${{ secrets.GH_APP_PRIVATE_KEY }}
+                owner: SSWConsulting
+                repositories: SSW.Rules.Content
+
             # ────────────────────────────── BUILD INFO ─────────────────────────────
             - name: Generate build information
               id: build_info
@@ -175,7 +183,7 @@ jobs:
               with:
                   repository: SSWConsulting/SSW.Rules.Content
                   ref: ${{ inputs.tina_branch || vars.NEXT_PUBLIC_TINA_BRANCH }}
-                  token: ${{ secrets.TOKEN }}
+                  token: ${{ steps.generate-token.outputs.token }}
                   path: content-temp
                   fetch-depth: 0
                   lfs: true
