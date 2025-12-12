@@ -39,11 +39,7 @@ export default async function ArchivedPage() {
     fetchQuickLinks(),
   ]);
 
-  console.log("Archived rules count:", archivedRules.length);
-
   const archivedRulesWithReason = archivedRules.filter((rule) => rule.archivedreason?.trim());
-
-  console.log("archivedRulesWithReason rules count:", archivedRulesWithReason.length);
 
   return (
     <Section>
