@@ -109,7 +109,7 @@ const RuleList: React.FC<RuleListProps> = ({
         <div className="flex flex-col items-center sm:flex-row sm:items-center gap-2 text-center lg:grid-cols-5">
           {showFilterControls && (
             <div className="flex items-center py-4">
-              <span className="mr-4 hidden sm:block">Show Me</span>
+              <span className="mr-4 hidden sm:block">Show me</span>
               <RadioButton
                 id="customRadioInline1"
                 value="titleOnly"
