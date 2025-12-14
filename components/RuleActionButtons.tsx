@@ -7,8 +7,8 @@ import { useIsAdminPage } from "@/components/hooks/useIsAdminPage";
 import ChatGPTSummaryButton from "@/components/OpenInChatGptButton";
 import { IconLink } from "@/components/ui";
 import { ICON_SIZE } from "@/constants";
-import { Rule } from "@/types/rule";
 import { getSanitizedBasePath } from "@/lib/withBasePath";
+import { Rule } from "@/types/rule";
 
 interface RuleActionButtonsProps {
   rule: Rule;

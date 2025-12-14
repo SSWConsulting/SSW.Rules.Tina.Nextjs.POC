@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import React from "react";
 import { cn } from "@/lib/utils";
+import Tooltip from "../tooltip/tooltip";
 
 type NextCacheState = "HIT" | "STALE" | "MISS" | "unknown";
 
@@ -105,10 +106,8 @@ export default function IsrStatusBadge() {
   }
 
   return (
-    <span
-      className={cn("inline-block h-2 w-2 rounded-full", getStyle(cacheState, isLoading))}
-      title={tooltipCopy[cacheState]}
-      aria-label={tooltipCopy[cacheState]}
-    />
+    <Tooltip text={tooltipCopy[cacheState]} opaque={true}>
+      <span className={cn("inline-block h-2 w-2 rounded-full", getStyle(cacheState, isLoading))} aria-label={tooltipCopy[cacheState]} />
+    </Tooltip>
   );
 }
