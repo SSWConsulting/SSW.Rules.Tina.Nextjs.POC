@@ -18,6 +18,7 @@ interface ServerCategoryPageProps {
 
 export default function ServerCategoryPage({ category, path, includeArchived, view, page, perPage }: ServerCategoryPageProps) {
   const title = category?.title ?? "";
+  const breadCrumbTitle = category?.title.replace("Rules to Better", "") ?? "";
   const baseRules: any[] = Array.isArray(category?.index) ? category.index.flatMap((i: any) => (i?.rule ? [i.rule] : [])) : [];
 
   const activeRules = baseRules.filter((r) => r?.isArchived !== true);
@@ -28,7 +29,7 @@ export default function ServerCategoryPage({ category, path, includeArchived, vi
 
   return (
     <div>
-      <Breadcrumbs isCategory breadcrumbText={includeArchived ? `Archived Rules - ${title}` : title} />
+      <Breadcrumbs isCategory breadcrumbText={includeArchived ? `Archived Rules - ${breadCrumbTitle}` : breadCrumbTitle} />
       <div className="flex">
         <div className="w-full lg:w-2/3 bg-white pt-4 p-6 border border-[#CCC] rounded shadow-lg">
           <div className="flex justify-between">
