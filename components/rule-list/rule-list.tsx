@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { RiGithubLine, RiPencilLine } from "react-icons/ri";
 import RadioButton from "@/components/radio-button";
 import Pagination from "@/components/ui/pagination";
@@ -15,8 +15,6 @@ export interface RuleListProps {
   type?: string;
   noContentMessage?: string;
   onBookmarkRemoved?: (ruleGuid: string) => void;
-  includeArchived?: boolean;
-  onIncludeArchivedChange?: (include: boolean) => void;
   showPagination?: boolean;
   showFilterControls?: boolean;
   initialFilter?: RuleListFilter;
@@ -28,12 +26,10 @@ export interface RuleListProps {
 
 const RuleList: React.FC<RuleListProps> = ({
   categoryUri,
-  rules,
+  rules = [],
   type,
   noContentMessage,
   onBookmarkRemoved,
-  includeArchived = false,
-  onIncludeArchivedChange,
   showPagination = true,
   showFilterControls = true,
   initialFilter = RuleListFilter.Blurb,
@@ -47,11 +43,19 @@ const RuleList: React.FC<RuleListProps> = ({
   const [itemsPerPage, setItemsPerPage] = useState(initialItemsPerPage);
   const filterSectionRef = useRef<HTMLDivElement>(null);
 
+  // Keep state in sync when props change (e.g. URL navigation)
+  useEffect(() => setFilter(initialFilter), [initialFilter]);
+  useEffect(() => setCurrentPage(initialPage), [initialPage]);
+  useEffect(() => setItemsPerPage(initialItemsPerPage), [initialItemsPerPage]);
+
   // Use external pagination values if provided, otherwise use internal state
   const effectiveCurrentPage = externalCurrentPage ?? currentPage;
   const effectiveItemsPerPage = externalItemsPerPage ?? itemsPerPage;
 
-  const displayItemsPerPage = useMemo(() => (showPagination ? effectiveItemsPerPage : rules.length), [showPagination, effectiveItemsPerPage, rules.length]);
+  const displayItemsPerPage = useMemo(
+    () => (showPagination ? effectiveItemsPerPage : rules.length),
+    [showPagination, effectiveItemsPerPage, rules.length]
+  );
 
   const totalPages = displayItemsPerPage >= rules.length ? 1 : Math.ceil(rules.length / displayItemsPerPage);
 
@@ -83,13 +87,6 @@ const RuleList: React.FC<RuleListProps> = ({
 
   const handleOptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFilter(e.target.value as RuleListFilter);
-  };
-
-  const handleIncludeArchivedChange = (include: boolean) => {
-    setCurrentPage(1); // Reset to first page when toggling archived
-    if (onIncludeArchivedChange) {
-      onIncludeArchivedChange(include);
-    }
   };
 
   if (rules.length === 0) {
@@ -133,36 +130,26 @@ const RuleList: React.FC<RuleListProps> = ({
               />
             </div>
           )}
-
-          {onIncludeArchivedChange && (
-            <label className="flex items-center gap-2 px-4 py-1 text-sm cursor-pointer hover:bg-gray-50 transition-colors bg-white sm:ml-2">
-              <input
-                type="checkbox"
-                checked={includeArchived}
-                onChange={(e) => handleIncludeArchivedChange(e.target.checked)}
-                className="w-4 h-4 border-gray-300 rounded focus:ring-ssw-red focus:ring-2 accent-ssw-red"
+        </div>
+        <div className="flex items-center gap-2 sm:ml-auto">
+          {type === "category" && (
+            <div className="hidden md:flex gap-2">
+              <IconLink
+                href={`admin/index.html#/collections/edit/category/${categoryUri?.slice(0, -4)}`}
+                title="Edit category"
+                tooltipOpaque={true}
+                children={<RiPencilLine size={ICON_SIZE} />}
               />
-              <span className="text-gray-700">Include Archived</span>
-            </label>
+              <IconLink
+                href={`https://github.com/SSWConsulting/SSW.Rules.Content/blob/${process.env.NEXT_PUBLIC_TINA_BRANCH}/categories/${categoryUri}`}
+                target="_blank"
+                title="View category on GitHub"
+                tooltipOpaque={true}
+                children={<RiGithubLine size={ICON_SIZE} className="rule-icon" />}
+              />
+            </div>
           )}
         </div>
-        {type === "category" && (
-          <div className="hidden md:flex gap-2">
-            <IconLink
-              href={`admin/index.html#/collections/edit/category/${categoryUri?.slice(0, -4)}`}
-              title="Edit category"
-              tooltipOpaque={true}
-              children={<RiPencilLine size={ICON_SIZE} />}
-            />
-            <IconLink
-              href={`https://github.com/SSWConsulting/SSW.Rules.Content/blob/${process.env.NEXT_PUBLIC_TINA_BRANCH}/categories/${categoryUri}`}
-              target="_blank"
-              title="View category on GitHub"
-              tooltipOpaque={true}
-              children={<RiGithubLine size={ICON_SIZE} className="rule-icon" />}
-            />
-          </div>
-        )}
       </div>
 
       <ol className="flex flex-col justify-between gap-2 p-0 list-none">

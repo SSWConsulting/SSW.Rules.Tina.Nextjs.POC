@@ -9,4 +9,5 @@ export interface Rule {
   lastUpdated: string;
   lastUpdatedBy: string;
   isArchived?: boolean;
+  archivedReason?: string;
 }

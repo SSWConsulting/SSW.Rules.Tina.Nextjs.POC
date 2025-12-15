@@ -10,30 +10,28 @@ import { ICON_SIZE } from "@/constants";
 interface ServerCategoryPageProps {
   category: any;
   path?: string;
-  includeArchived: boolean;
   view: "titleOnly" | "blurb" | "all";
   page: number;
   perPage: number;
 }
 
-export default function ServerCategoryPage({ category, path, includeArchived, view, page, perPage }: ServerCategoryPageProps) {
+export default function ServerCategoryPage({ category, path, view, page, perPage }: ServerCategoryPageProps) {
   const title = category?.title ?? "";
   const breadCrumbTitle = category?.title.replace("Rules to Better", "") ?? "";
   const baseRules: any[] = Array.isArray(category?.index) ? category.index.flatMap((i: any) => (i?.rule ? [i.rule] : [])) : [];
 
   const activeRules = baseRules.filter((r) => r?.isArchived !== true);
-  const archivedRules = baseRules.filter((r) => r?.isArchived === true);
-  const finalRules = includeArchived ? [...activeRules, ...archivedRules] : activeRules;
 
-  const sidebarRules = finalRules.map((r) => ({ guid: r.guid, uri: r.uri, title: r.title }));
+  // Sidebar is a static server-rendered list.
+  const sidebarRules = activeRules.map((r) => ({ guid: r.guid, uri: r.uri, title: r.title }));
 
   return (
     <div>
-      <Breadcrumbs isCategory breadcrumbText={includeArchived ? `Archived Rules - ${breadCrumbTitle}` : breadCrumbTitle} />
+      <Breadcrumbs isCategory breadcrumbText={breadCrumbTitle} />
       <div className="flex">
         <div className="w-full lg:w-2/3 bg-white pt-4 p-6 border border-[#CCC] rounded shadow-lg">
           <div className="flex justify-between">
-            <h1 className="m-0 mb-4 text-ssw-red font-bold">{includeArchived ? `Archived Rules - ${title}` : title}</h1>
+            <h1 className="m-0 mb-4 text-ssw-red font-bold">{title}</h1>
 
             <div className="flex gap-2 justify-center items-start sm:items-center">
               <IconLink href={`admin/index.html#/collections/edit/category/${path?.slice(0, -4)}`} title="Edit category" tooltipOpaque={true}>
@@ -56,11 +54,10 @@ export default function ServerCategoryPage({ category, path, includeArchived, vi
 
           <RuleListWrapper
             categoryUri={path}
-            rules={finalRules}
+            rules={activeRules}
             initialView={view}
             initialPage={page}
             initialPerPage={perPage}
-            includeArchived={includeArchived}
             showFilterControls={true}
           />
         </div>

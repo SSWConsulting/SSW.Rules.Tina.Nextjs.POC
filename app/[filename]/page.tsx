@@ -231,7 +231,6 @@ export default async function Page({
   const category = await getCategoryData(filename);
   if (category?.data) {
     const sp = (await searchParams) ?? {};
-    const includeArchived = String(sp.archived ?? "") === "true";
     const view = String(sp.view ?? "blurb") as "titleOnly" | "blurb" | "all";
     const page = Math.max(1, parseInt(String(sp.page ?? "1"), 10) || 1);
     const perPage = Math.max(1, Math.min(50, parseInt(String(sp.perPage ?? "10"), 10) || 10));
@@ -241,7 +240,6 @@ export default async function Page({
         <ServerCategoryPage
           category={category.data.category}
           path={category.variables?.relativePath}
-          includeArchived={includeArchived}
           view={view}
           page={page}
           perPage={perPage}

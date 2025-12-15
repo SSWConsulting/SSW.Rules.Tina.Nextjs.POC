@@ -1,7 +1,7 @@
 "use client";
-import React, { useState, useEffect } from 'react';
-import RuleList from './rule-list';
-import { RuleListFilter } from '@/types/ruleListFilter';
+import React, { useEffect, useState } from "react";
+import RuleList from "./rule-list";
+import { RuleListFilter } from "@/types/ruleListFilter";
 
 export interface RuleListWrapperProps {
   categoryUri?: string;
@@ -9,8 +9,6 @@ export interface RuleListWrapperProps {
   type?: string;
   noContentMessage?: string;
   onBookmarkRemoved?: (ruleGuid: string) => void;
-  includeArchived?: boolean;
-  onIncludeArchivedChange?: (include: boolean) => void;
   showPagination?: boolean;
   showFilterControls?: boolean;
   initialView?: 'titleOnly' | 'blurb' | 'all';
@@ -18,11 +16,12 @@ export interface RuleListWrapperProps {
   initialPerPage?: number;
 }
 
-const RuleListWrapper: React.FC<RuleListWrapperProps> = ({ 
-  initialView = 'blurb',
+const RuleListWrapper: React.FC<RuleListWrapperProps> = ({
+  rules,
+  initialView = "blurb",
   initialPage = 1,
   initialPerPage = 10,
-  ...props 
+  ...props
 }) => {
   const [filter, setFilter] = useState<RuleListFilter>(() => {
     // Map the view prop to RuleListFilter enum
@@ -67,6 +66,7 @@ const RuleListWrapper: React.FC<RuleListWrapperProps> = ({
   return (
     <RuleList
       {...props}
+      rules={rules}
       initialFilter={filter}
       initialPage={currentPage}
       initialItemsPerPage={itemsPerPage}
