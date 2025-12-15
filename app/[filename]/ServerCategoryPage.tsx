@@ -30,7 +30,7 @@ export default function ServerCategoryPage({ category, path, includeArchived, vi
   return (
     <div>
       <Breadcrumbs isCategory breadcrumbText={includeArchived ? `Archived Rules - ${breadCrumbTitle}` : breadCrumbTitle} />
-      <div className="flex">
+      <div className="relative">
         <div className="w-full lg:w-2/3 bg-white pt-4 p-6 border border-[#CCC] rounded shadow-lg">
           <div className="flex justify-between">
             <h1 className="m-0 mb-4 text-ssw-red font-bold">{includeArchived ? `Archived Rules - ${title}` : title}</h1>
@@ -65,16 +65,18 @@ export default function ServerCategoryPage({ category, path, includeArchived, vi
           />
         </div>
 
-        <div className="hidden lg:block lg:w-1/3 p-6 pr-0">
-          <ol className="border-l-3 border-gray-300 pl-6">
-            {sidebarRules.map((rule, index) => (
-              <li key={`sidebar-${rule.guid}-${index}`} className="py-1 ml-4">
-                <Link href={`/${rule.uri}`} className="text-gray-700 hover:text-ssw-red">
-                  {rule.title}
-                </Link>
-              </li>
-            ))}
-          </ol>
+        <div className="hidden lg:flex lg:flex-col lg:absolute lg:top-0 lg:right-0 lg:bottom-0 lg:w-1/3 pl-6">
+          <div className="flex-1 overflow-y-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <ol className="border-l-3 border-gray-300 pl-6">
+              {sidebarRules.map((rule, index) => (
+                <li key={`sidebar-${rule.guid}-${index}`} className="py-1 ml-4">
+                  <Link href={`/${rule.uri}`} className="text-gray-700 hover:text-ssw-red">
+                    {rule.title}
+                  </Link>
+                </li>
+              ))}
+            </ol>
+          </div>
         </div>
       </div>
     </div>
