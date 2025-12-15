@@ -24,7 +24,7 @@ export async function GET() {
       fetchMainCategoryData,
       [`main-category-${branch || "main"}`], // Cache key includes branch
       {
-        revalidate: 3600, // Revalidate every 1 hour (3600 seconds)
+        revalidate: 86400, // Revalidate every 24 hours (86400 seconds)
         tags: ["main-category", branch ? `branch-${branch}` : "branch-main"],
       }
     );

@@ -26,6 +26,7 @@ export async function POST(req: Request) {
 
     const routesToRevalidate = new Set<string>();
     let shouldRevalidateLatestRules = false;
+    let shouldRevalidateMainCategory = false;
     
     for (const changedPath of changedPaths) {
       if (typeof changedPath !== "string") continue;
@@ -54,8 +55,9 @@ export async function POST(req: Request) {
             routesToRevalidate.add(`/${filename}`);
           }
         }
-        // If change type is add then we also need to revalidate the /api/categories route
+        // If change type is add then we also need to revalidate the /api/categories route and tag
         if (eventType === TINA_CONTENT_CHANGE_TYPE.Added) {
+          shouldRevalidateMainCategory = true;
           routesToRevalidate.add("/api/categories");
         }
       }
@@ -64,6 +66,11 @@ export async function POST(req: Request) {
     // Revalidate latest-rules tag if any rule was modified or added
     if (shouldRevalidateLatestRules) {
       revalidateTag("latest-rules");
+    }
+
+    // Revalidate main-category tag if any category was added
+    if (shouldRevalidateMainCategory) {
+      revalidateTag("main-category");
     }
 
     for (const route of routesToRevalidate) {

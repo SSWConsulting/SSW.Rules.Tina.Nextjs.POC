@@ -100,6 +100,34 @@ export const historyBeforeSubmit = async ({ form, cms, values }: { form: Form; c
   let userEmail: string | undefined;
   let userName: string | undefined;
 
+  // Check if this is a category collection form
+  const isCategoryCollection = form.id?.includes("category") ?? false;
+  const isCategoryCreate = isCategoryCollection && form.crudType === "create";
+  const isCategoryTemplate = values._template === "main" || values._template === "top_category" || values._template === "category";
+
+  // Revalidate main-category cache tag when a new category is created
+  if (isCategoryCreate && isCategoryTemplate) {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/revalidate-tag`, {
+        method: "POST",
+        headers: {
+          ...getBearerAuthHeader(),
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          tag: "main-category",
+        }),
+      });
+
+      if (!response.ok) {
+        console.error("Failed to revalidate main-category tag:", await response.text().catch(() => "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Error revalidating main-category tag:", error);
+      // Don't throw - allow form submission to continue even if revalidation fails
+    }
+  }
+
   // Update categories for both create and update forms
   // The API will read the category index from file to preserve existing rules (including non-existent ones)
   // For create forms, the API constructs the rule path from URI without validation
