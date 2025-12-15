@@ -18,20 +18,26 @@ const Rule: Collection = {
   match: {
     include: "**/rule",
   },
-  async defaultItem() {
-    const cms = useCMS();
-    const user = await cms.api.tina?.authProvider?.getUser();
+  async defaultItem({ cms }: { cms?: any }) {
     let userEmail = "";
     let userName = "";
-    if (user) {
-      userEmail = user.email;
-      userName = user.fullName;
+
+    try {
+      const user = await cms?.api?.tina?.authProvider?.getUser();
+      if (user) {
+        userEmail = user.email || "";
+        userName = user.fullName || "";
+      }
+    } catch (err) {
+      console.error("Auth error in defaultItem:", err);
+      // Fall back to defaults if auth fails
     }
+
     return {
       guid: generateGuid(),
       created: new Date().toISOString(),
-      createdBy: userName,
-      createdByEmail: userEmail,
+      createdBy: userName || "Unknown",
+      createdByEmail: userEmail || "Unknown",
       filename: "rule",
       body: defaultBody,
     };
