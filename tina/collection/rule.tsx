@@ -7,7 +7,7 @@ import { CategorySelectorInput } from "../fields/CategorySelector";
 import { ConditionalHiddenField } from "../fields/ConditionalHiddenField";
 import { ReadonlyUriInput } from "../fields/ReadonlyUriInput";
 import { RuleSelector } from "../fields/RuleSelector";
-import { UserInfoField } from "../fields/UserInfoField";
+import { createdInfoFields } from "./shared/createdInfoFields";
 import { historyBeforeSubmit, historyFields } from "./shared/historyFields";
 import { toolbarFields } from "./shared/toolbarFields";
 
@@ -219,33 +219,7 @@ const Rule: Collection = {
         component: ConditionalHiddenField,
       },
     },
-    {
-      type: "datetime",
-      name: "created",
-      description: "If you see this field, contact a dev immediately 😳 (should be a hidden field generated in the background).",
-      label: "Created",
-      ui: {
-        component: "hidden",
-      },
-    },
-    {
-      type: "string",
-      name: "createdBy",
-      label: "Created By",
-      description: "If you see this field, contact a dev immediately 😳 (should be a hidden field generated in the background).",
-      ui: {
-        component: UserInfoField,
-      },
-    },
-    {
-      type: "string",
-      name: "createdByEmail",
-      label: "Created By Email",
-      description: "If you see this field, contact a dev immediately 😳 (should be a hidden field generated in the background).",
-      ui: {
-        component: UserInfoField,
-      },
-    },
+    ...createdInfoFields,
     ...historyFields,
   ],
 };
