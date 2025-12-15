@@ -1,5 +1,5 @@
 import React from "react";
-import { Collection, wrapFieldsWithMeta } from "tinacms";
+import { Collection, useCMS, wrapFieldsWithMeta } from "tinacms";
 import { embedTemplates } from "@/components/embeds";
 import { generateGuid } from "@/utils/guidGenerationUtils";
 import { countEndIntro } from "@/utils/mdxNodeUtils";
@@ -18,9 +18,20 @@ const Rule: Collection = {
   match: {
     include: "**/rule",
   },
-  defaultItem() {
+  async defaultItem() {
+    const cms = useCMS();
+    const user = await cms.api.tina?.authProvider?.getUser();
+    let userEmail = "";
+    let userName = "";
+    if (user) {
+      userEmail = user.email;
+      userName = user.fullName;
+    }
     return {
       guid: generateGuid(),
+      created: new Date().toISOString(),
+      createdBy: userName,
+      createdByEmail: userEmail,
       filename: "rule",
       body: defaultBody,
     };
@@ -212,6 +223,33 @@ const Rule: Collection = {
       },
       ui: {
         component: ConditionalHiddenField,
+      },
+    },
+    {
+      type: "datetime",
+      name: "created",
+      description: "If you see this field, contact a dev immediately 😳 (should be a hidden field generated in the background).",
+      label: "Created",
+      ui: {
+        component: "hidden",
+      },
+    },
+    {
+      type: "string",
+      name: "createdBy",
+      label: "Created By",
+      description: "If you see this field, contact a dev immediately 😳 (should be a hidden field generated in the background).",
+      ui: {
+        component: "hidden",
+      },
+    },
+    {
+      type: "string",
+      name: "createdByEmail",
+      label: "Created By Email",
+      description: "If you see this field, contact a dev immediately 😳 (should be a hidden field generated in the background).",
+      ui: {
+        component: "hidden",
       },
     },
     ...historyFields,
