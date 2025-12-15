@@ -81,7 +81,7 @@ export default function ArchivedClientPage(props: ArchivedClientPageProps) {
 
   return (
     <>
-      <SearchBar />
+      {/* <SearchBar /> */}
       <div className="max-sm:h-auto m-4">
         <h1 className="m-0 mb-4 flex items-end max-sm:flex-col max-sm:items-start">
           <span className="text-ssw-red font-bold">{groupedArchivedData.totalCount.toLocaleString("en-US")}&nbsp; Archived Rules</span>
