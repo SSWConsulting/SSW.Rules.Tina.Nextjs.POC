@@ -7,6 +7,7 @@ import { CategorySelectorInput } from "../fields/CategorySelector";
 import { ConditionalHiddenField } from "../fields/ConditionalHiddenField";
 import { ReadonlyUriInput } from "../fields/ReadonlyUriInput";
 import { RuleSelector } from "../fields/RuleSelector";
+import { UserInfoField } from "../fields/UserInfoField";
 import { historyBeforeSubmit, historyFields } from "./shared/historyFields";
 import { toolbarFields } from "./shared/toolbarFields";
 
@@ -18,26 +19,13 @@ const Rule: Collection = {
   match: {
     include: "**/rule",
   },
-  async defaultItem({ cms }: { cms?: any }) {
-    let userEmail = "";
-    let userName = "";
-
-    try {
-      const user = await cms?.api?.tina?.authProvider?.getUser();
-      if (user) {
-        userEmail = user.email || "";
-        userName = user.fullName || "";
-      }
-    } catch (err) {
-      console.error("Auth error in defaultItem:", err);
-      // Fall back to defaults if auth fails
-    }
-
+  defaultItem() {
+    // User info will be set by UserInfoField component after form initialization
     return {
       guid: generateGuid(),
       created: new Date().toISOString(),
-      createdBy: userName || "Unknown",
-      createdByEmail: userEmail || "Unknown",
+      createdBy: "Unknown",
+      createdByEmail: "Unknown",
       filename: "rule",
       body: defaultBody,
     };
@@ -246,7 +234,7 @@ const Rule: Collection = {
       label: "Created By",
       description: "If you see this field, contact a dev immediately 😳 (should be a hidden field generated in the background).",
       ui: {
-        component: "hidden",
+        component: UserInfoField,
       },
     },
     {
@@ -255,7 +243,7 @@ const Rule: Collection = {
       label: "Created By Email",
       description: "If you see this field, contact a dev immediately 😳 (should be a hidden field generated in the background).",
       ui: {
-        component: "hidden",
+        component: UserInfoField,
       },
     },
     ...historyFields,

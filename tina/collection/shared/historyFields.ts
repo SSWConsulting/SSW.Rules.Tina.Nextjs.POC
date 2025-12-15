@@ -130,9 +130,6 @@ export const historyBeforeSubmit = async ({ form, cms, values }: { form: Form; c
   if (form.crudType === "create") {
     return {
       ...values,
-      created: new Date().toISOString(),
-      createdBy: userName ?? "",
-      createdByEmail: userEmail ?? "",
       lastUpdated: new Date().toISOString(),
       lastUpdatedBy: userName ?? "",
       lastUpdatedByEmail: userEmail ?? "",
