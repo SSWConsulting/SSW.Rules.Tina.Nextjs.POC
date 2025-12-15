@@ -8,7 +8,7 @@ import HelpImproveCard from "@/components/HelpImproveCard";
 import JoinConversationCard from "@/components/JoinConversationCard";
 import LatestRulesCard from "@/components/LatestRulesCard";
 import QuickLinksCard from "@/components/QuickLinksCard";
-import SearchBar from "@/components/SearchBar";
+import SearchBar from "@/components/SearchBarWrapper";
 import { Card } from "@/components/ui/card";
 import WhyRulesCard from "@/components/WhyRulesCard";
 import { Rule } from "@/models/Rule";
@@ -81,7 +81,7 @@ export default function ArchivedClientPage(props: ArchivedClientPageProps) {
 
   return (
     <>
-      {/* <SearchBar /> */}
+      <SearchBar />
       <div className="max-sm:h-auto m-4">
         <h1 className="m-0 mb-4 flex items-end max-sm:flex-col max-sm:items-start">
           <span className="text-ssw-red font-bold">{groupedArchivedData.totalCount.toLocaleString("en-US")}&nbsp; Archived Rules</span>
