@@ -271,7 +271,6 @@ export default async function Page({
           serverRulePageProps={{
             rule: rule.data.rule,
             ruleCategoriesMapping: ruleCategoriesMapping,
-            sanitizedBasePath: sanitizedBasePath,
           }}
         />
       </Section>

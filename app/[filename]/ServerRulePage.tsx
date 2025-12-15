@@ -16,7 +16,6 @@ import IsrStatusBadge from "@/components/ui/isr-status-badge";
 export interface ServerRulePageProps {
   rule: any;
   ruleCategoriesMapping: { title: string; uri: string }[];
-  sanitizedBasePath: string;
 }
 
 export type ServerRulePagePropsWithTinaProps = {
@@ -28,7 +27,7 @@ export default function ServerRulePage({ serverRulePageProps, tinaProps }: Serve
   const { data } = tinaProps;
   const rule = data?.rule;
 
-  const { ruleCategoriesMapping, sanitizedBasePath } = serverRulePageProps;
+  const { ruleCategoriesMapping } = serverRulePageProps;
 
   const primaryCategory = ruleCategoriesMapping?.[0];
   const breadcrumbCategories = primaryCategory ? [{ title: primaryCategory.title, link: `/${primaryCategory.uri}` }] : undefined;

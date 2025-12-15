@@ -1,7 +1,6 @@
 "use client";
 
 import { formatDate } from "date-fns";
-import Link from "next/link";
 import { useEffect, useState } from "react";
 import { FaHistory } from "react-icons/fa";
 import { getRelativeTime } from "./get-relative-time";
@@ -47,11 +46,11 @@ export default function GitHubMetadata({ owner = "tinacms", repo = "tina.io", pa
   }, [owner, repo, path]);
 
   if (loading) {
-    return <div className={`text-slate-500 text-sm mb-2 ${className}`}>Loading last updated info...</div>;
+    return <div className={`text-slate-700 text-sm ${className}`}>Loading last updated info...</div>;
   }
 
   if (error) {
-    return <div className={`text-slate-400 text-sm mb-2 ${className}`}>Unable to load last updated info</div>;
+    return <div className={`text-slate-700 text-sm ${className}`}>Unable to load last updated info</div>;
   }
 
   if (!data) {
