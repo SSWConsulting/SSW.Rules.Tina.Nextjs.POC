@@ -95,6 +95,12 @@ const Rule: Collection = {
       ],
     },
     {
+      type: "string",
+      name: "sidebarVideo",
+      label: "Sidebar Video",
+      description: "Add Sidebar Video here",
+    },
+    {
       type: "object",
       name: "authors",
       label: "Authors",
