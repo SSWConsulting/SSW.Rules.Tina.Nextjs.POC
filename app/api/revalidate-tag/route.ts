@@ -1,6 +1,8 @@
 import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
+const isDev = process.env.NODE_ENV === "development";
+
 export async function POST(req: NextRequest) {
   try {
     // Validate using either bearer token (from Tina CMS) or webhook secret
@@ -11,7 +13,7 @@ export async function POST(req: NextRequest) {
     // Allow if bearer token is present (Tina CMS auth) or webhook secret matches
     const isAuthenticated = bearerToken || (secret && secret === process.env.TINA_WEBHOOK_SECRET);
 
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !isDev) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
@@ -34,4 +36,3 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   return NextResponse.json({ message: "Method Not Allowed" }, { status: 405 });
 }
-
