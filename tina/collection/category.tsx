@@ -144,6 +144,7 @@ const Category: Collection = {
             },
           ],
         },
+        ...createdInfoFields,
         ...historyFields,
       ],
     },
