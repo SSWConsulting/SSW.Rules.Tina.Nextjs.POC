@@ -74,7 +74,7 @@ export const historyBeforeSubmit = async ({ form, cms, values }: { form: Form; c
   let userName: string | undefined;
 
   // Check if this is a category collection form
-  const isCategoryCollection = form.id?.includes("category") ?? false;
+  const isCategoryCollection = form.id?.startsWith("categories") ?? false;
   const isCategoryCreate = isCategoryCollection && form.crudType === "create";
   const isCategoryTemplate = values._template === "main" || values._template === "top_category" || values._template === "category";
 
