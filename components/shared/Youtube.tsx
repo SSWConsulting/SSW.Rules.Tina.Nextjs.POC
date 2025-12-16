@@ -48,16 +48,16 @@ export function YouTubeShorts({ url = "", description = "" }: { url?: string; de
 
   return (
     <div className="my-0 space-y-2">
-      <div className="relative w-full max-w-[280px] mx-auto aspect-9/16">
+      <div className="relative w-full max-w-full sm:max-w-sm md:max-w-[280px] mx-auto aspect-9/16">
         <iframe
           src={`https://www.youtube.com/embed/${videoId}`}
           title={description || "YouTube Shorts video"}
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
-          className="absolute left-0 top-0 h-full w-full border-0"
+          className="absolute left-0 top-0 h-full w-full border-0 rounded-lg"
         />
       </div>
-      {description ? <div className="text-base font-bold">{description}</div> : null}
+      {description ? <div className="text-sm sm:text-base font-bold px-2 sm:px-0">{description}</div> : null}
     </div>
   );
 }
