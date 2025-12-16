@@ -117,7 +117,7 @@ export const historyBeforeSubmit = async ({ form, cms, values }: { form: Form; c
         ? categories.length > 0 // For create, only call if there are categories to add
         : true; // For update, always call (even if empty, to remove from all categories)
 
-    if (shouldCallAPI) {
+    if (shouldCallAPI && !isCategoryTemplate) {
       try {
         const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH}/api/update-category`, {
           method: "POST",

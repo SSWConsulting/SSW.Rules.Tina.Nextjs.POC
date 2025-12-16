@@ -4,13 +4,40 @@ import { NextResponse } from "next/server";
 import client from "@/tina/__generated__/client";
 import { getFetchOptions } from "@/utils/tina/get-branch";
 
-// Helper function to fetch main category data (will be wrapped with cache)
-async function fetchMainCategoryData(branch?: string) {
-  if (branch) {
+// Helper function to fetch main category data for main branch
+async function fetchMainCategoryDataMain() {
+  return await client.queries.mainCategoryQuery({});
+}
+
+// Helper function factory to create branch-specific fetch functions
+function createBranchFetchFunction(branch: string) {
+  return async () => {
     return await client.queries.mainCategoryQuery({}, await getFetchOptions());
-  } else {
-    return await client.queries.mainCategoryQuery({});
+  };
+}
+
+// Create main branch cache at module level - this ensures tag revalidation works
+const getCachedMainCategoryMain = unstable_cache(fetchMainCategoryDataMain, ["main-category-main"], {
+  revalidate: 86400, // Revalidate every 24 hours (86400 seconds)
+  tags: ["main-category", "branch-main"],
+});
+
+// Store branch-specific caches - created on first use but persist for the module lifetime
+// All include "main-category" tag so revalidateTag("main-category") will invalidate them
+const branchCacheMap = new Map<string, ReturnType<typeof unstable_cache>>();
+
+function getCachedMainCategoryForBranch(branch: string) {
+  // Create cache on first use for this branch
+  // This is safe because unstable_cache with the same key returns the same cache
+  if (!branchCacheMap.has(branch)) {
+    const fetchFn = createBranchFetchFunction(branch);
+    const cachedFn = unstable_cache(fetchFn, [`main-category-branch-${branch}`], {
+      revalidate: 86400,
+      tags: ["main-category", `branch-${branch}`],
+    });
+    branchCacheMap.set(branch, cachedFn);
   }
+  return branchCacheMap.get(branch)!;
 }
 
 export async function GET() {
@@ -18,18 +45,8 @@ export async function GET() {
     const cookieStore = await cookies();
     const branch = cookieStore.get("x-branch")?.value || undefined;
 
-    // Create a cached function that fetches main category data
-    // Cache key includes branch to ensure different branches get different cache entries
-    const getCachedMainCategory = unstable_cache(
-      fetchMainCategoryData,
-      [`main-category-${branch || "main"}`], // Cache key includes branch
-      {
-        revalidate: 86400, // Revalidate every 24 hours (86400 seconds)
-        tags: ["main-category", branch ? `branch-${branch}` : "branch-main"],
-      }
-    );
-
-    const result = await getCachedMainCategory(branch);
+    // Use the appropriate cached function based on branch
+    const result = branch ? await getCachedMainCategoryForBranch(branch)() : await getCachedMainCategoryMain();
 
     if (!result?.data?.category || result.data.category.__typename !== "CategoryMain") {
       return NextResponse.json({ categories: [] }, { status: 200 });

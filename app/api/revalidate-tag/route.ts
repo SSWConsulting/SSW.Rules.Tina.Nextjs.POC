@@ -1,4 +1,4 @@
-import { revalidateTag } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
 const isDev = process.env.NODE_ENV === "development";
@@ -25,6 +25,11 @@ export async function POST(req: NextRequest) {
     }
 
     revalidateTag(tag);
+
+    // Also revalidate the route path for main-category tag to ensure the API route cache is cleared
+    if (tag === "main-category") {
+      revalidatePath("/api/categories");
+    }
 
     return NextResponse.json({ revalidated: true, tag });
   } catch (err) {
