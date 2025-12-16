@@ -56,7 +56,6 @@ export default function IsrStatusBadge() {
   const pathname = usePathname();
 
   const [cacheState, setCacheState] = React.useState<NextCacheState>("unknown");
-  const [headerName, setHeaderName] = React.useState<string>("x-nextjs-cache");
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
@@ -81,7 +80,6 @@ export default function IsrStatusBadge() {
         const state = normalizeCacheState(header.value);
 
         if (!cancelled) {
-          setHeaderName(header.name);
           setCacheState(state);
           setIsLoading(false);
         }
@@ -102,7 +100,7 @@ export default function IsrStatusBadge() {
   if (!enabled) return null;
 
   if (isLoading) {
-    return <span className="inline-block h-2 w-2 rounded-full opacity-0" aria-hidden="true" />;
+    return <span className="inline-block h-2 w-2 rounded-full bg-zinc-300 animate-pulse" aria-hidden="true" />;
   }
 
   return (
