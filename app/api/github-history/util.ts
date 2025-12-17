@@ -21,6 +21,7 @@ const CACHE_TTL = 3600; // 1 hour in seconds
  * These commits will be skipped, and the next non-excluded commit will be shown instead
  */
 export const EXCLUDED_COMMIT_SHAS: string[] = [
+  "a11c5bdf0e2c601ecc19e06972135ca247ea9e9b",
   "e6a4f720c383f7013fd009a0aa6b52e8fe779ee2",
   "0a57480c7730685582dd67f12d3e49a12ce0af32",
 ];
