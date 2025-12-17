@@ -30,7 +30,7 @@ export const EXCLUDED_COMMIT_SHAS: string[] = [
  * Commits by these authors (by GitHub login, name, or email) will be skipped
  * If a commit has co-authors, the first non-excluded co-author will be used instead
  */
-export const EXCLUDED_AUTHORS: string[] = ["tina-cloud-app[bot]", "github-actions[bot]", "Aibono1225"];
+export const EXCLUDED_AUTHORS: string[] = ["tina-cloud-app[bot]", "github-actions[bot]"];
 
 // ---------------- API ----------------
 
