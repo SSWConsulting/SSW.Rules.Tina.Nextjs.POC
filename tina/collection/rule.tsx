@@ -98,7 +98,7 @@ const Rule: Collection = {
       type: "string",
       name: "sidebarVideo",
       label: "Sidebar Video",
-      description: "Add Sidebar Video here",
+      description: "Add Sidebar Video here. e.g. YouTube Shorts",
     },
     {
       type: "object",
